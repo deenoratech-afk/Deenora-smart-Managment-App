@@ -79,6 +79,7 @@ const App: React.FC = () => {
                   onNavigateToWallet={() => setView('wallet-sms')}
                   onNavigateToAccounting={() => setView('accounting')}
                   onNavigateToAttendance={() => setView('attendance')}
+                  onNavigateToExams={() => setView('exams')}
                 />;
       case 'classes':
         return <Classes onClassClick={(cls) => { setSelectedClass(cls); setView('students'); }} lang={lang} madrasah={madrasah} dataVersion={dataVersion} triggerRefresh={triggerRefresh} readOnly={role === 'teacher'} />;
@@ -138,6 +139,7 @@ const App: React.FC = () => {
                   onNavigateToWallet={() => setView('wallet-sms')}
                   onNavigateToAccounting={() => setView('accounting')}
                   onNavigateToAttendance={() => setView('attendance')}
+                  onNavigateToExams={() => setView('exams')}
                 />;
     }
   };

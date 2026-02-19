@@ -195,10 +195,7 @@ const Home: React.FC<HomeProps> = ({ onStudentClick, lang, dataVersion, triggerR
             </button>
 
             <button 
-              onClick={() => { if(window.location.hash) window.location.hash = ''; // Simple trigger
-                const examsTab = document.querySelector('button[onClick*="setView(\'exams\')"]');
-                if(examsTab) (examsTab as HTMLElement).click();
-              }}
+              onClick={onNavigateToExams}
               className="bg-white/95 p-5 rounded-[2.2rem] text-[#2E0B5E] flex items-center justify-between shadow-xl active:scale-[0.98] transition-all group overflow-hidden border border-white"
             >
                <div className="flex items-center gap-5 relative z-10">
