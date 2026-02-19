@@ -56,7 +56,33 @@ export interface Student {
   classes?: Class;
 }
 
-// Added missing Teacher interface
+export interface Exam {
+  id: string;
+  madrasah_id: string;
+  class_id: string;
+  exam_name: string;
+  exam_date: string;
+  is_published: boolean;
+  created_at: string;
+  classes?: Class;
+}
+
+export interface ExamSubject {
+  id: string;
+  exam_id: string;
+  subject_name: string;
+  full_marks: number;
+  pass_marks: number;
+}
+
+export interface ExamMark {
+  id: string;
+  exam_id: string;
+  student_id: string;
+  subject_id: string;
+  marks_obtained: number;
+}
+
 export interface Teacher {
   id: string;
   madrasah_id: string;
@@ -94,12 +120,23 @@ export interface LedgerEntry {
   created_at: string;
 }
 
+export interface FeeStructure {
+  id: string;
+  madrasah_id: string;
+  class_id: string;
+  fee_name: string;
+  amount: number;
+  created_at: string;
+}
+
 export interface Fee {
   id: string;
   madrasah_id: string;
   student_id: string;
-  amount: number;
-  month: string;
+  class_id: string;
+  amount_paid: number;
+  amount_due: number;
+  month: string; // YYYY-MM
   status: 'paid' | 'unpaid' | 'partial';
   paid_at?: string;
   students?: Student;
@@ -121,7 +158,8 @@ export type View =
   | 'data-management' 
   | 'teachers' 
   | 'accounting' 
-  | 'attendance';
+  | 'attendance'
+  | 'exams';
 
 export interface AppState {
   currentView: View;
