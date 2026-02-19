@@ -2,8 +2,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { Student, Madrasah } from './types';
 
-const supabaseUrl = 'https://uiqzzuqpgwziufghmqee.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVpcXp6dXFwZ3d6aXVmZ2htcWVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEyNDk2MzMsImV4cCI6MjA4NjgyNTYzM30.CpkKwO1_49WjM-jQk9H08elomIESQBzV9hUmiT218sg';
+const supabaseUrl = 'https://jtbhesczfjwjqivtmkqw.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0Ymhlc2N6Zmp3anFpdnRta3F3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1MDI4ODQsImV4cCI6MjA4NzA3ODg4NH0.zKxOZlvjiZwaLprMBGeObcmf2VqjGoJtdxgF_nFpKvI';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
