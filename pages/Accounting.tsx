@@ -14,7 +14,8 @@ interface AccountingProps {
 }
 
 const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role }) => {
-  const [activeTab, setActiveTab] = useState<'summary' | 'ledger' | 'fees' | 'structures'>('summary');
+  // Set default tab to 'fees' so users find "ছাত্র ফি" immediately
+  const [activeTab, setActiveTab] = useState<'summary' | 'ledger' | 'fees' | 'structures'>('fees');
   const [ledger, setLedger] = useState<LedgerEntry[]>([]);
   const [feesReport, setFeesReport] = useState<any[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
@@ -144,7 +145,7 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
           <button onClick={onBack} className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-white border border-white/20">
             <Calculator size={20}/>
           </button>
-          <h1 className="text-xl font-black text-white font-noto">{t('financial_summary', lang)}</h1>
+          <h1 className="text-xl font-black text-white font-noto">ফি ও হিসাব</h1>
         </div>
         <div className="flex gap-2">
             <button onClick={() => setShowAddLedger(true)} className="w-10 h-10 bg-white text-[#8D30F4] rounded-xl shadow-xl flex items-center justify-center active:scale-95 transition-all"><Plus size={20}/></button>
@@ -152,7 +153,7 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
       </div>
 
       <div className="flex p-1 bg-white/10 rounded-2xl border border-white/20 overflow-x-auto no-scrollbar">
-        {(['summary', 'ledger', 'fees', 'structures'] as const).map(tab => (
+        {(['fees', 'summary', 'ledger', 'structures'] as const).map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 min-w-[80px] py-3 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all ${activeTab === tab ? 'bg-white text-[#8D30F4]' : 'text-white/60'}`}>
             {tab === 'summary' ? t('dashboard', lang) : tab === 'ledger' ? 'লেনদেন' : tab === 'fees' ? 'ছাত্র ফি' : 'ফি সেটিংস'}
           </button>

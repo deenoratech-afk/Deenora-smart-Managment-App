@@ -114,7 +114,7 @@ const Layout: React.FC<LayoutProps> = ({ children, currentView, setView, lang, m
               {(role === 'madrasah_admin' || role === 'accountant') && (
                 <button onClick={() => setView('accounting')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('accounting') ? 'text-[#8D30F4]' : 'text-[#A179FF]'}`}>
                   <Banknote size={20} />
-                  <span className="text-[9px] font-black font-noto opacity-80">হিসাব</span>
+                  <span className="text-[9px] font-black font-noto opacity-80">ফি ও হিসাব</span>
                 </button>
               )}
               <button onClick={() => setView('classes')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('classes') ? 'text-[#8D30F4]' : 'text-[#A179FF]'}`}>
