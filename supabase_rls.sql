@@ -17,7 +17,6 @@ END $$;
 
 -- ==========================================
 -- 2. RECURSION-PROOF HELPER FUNCTIONS
--- Using SECURITY DEFINER bypasses RLS for queries inside the function
 -- ==========================================
 
 -- Check if user is super admin
@@ -51,19 +50,21 @@ ALTER TABLE public.classes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.students ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.teachers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.exams ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.exam_subjects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.exam_marks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.attendance ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.ledger ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.fees ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.fee_structures ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.recent_calls ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.sms_templates ENABLE ROW LEVEL SECURITY;
 
 -- ==========================================
 -- 4. THE RECURSION FIX: PROFILES TABLE
--- We split self-access from admin-access to stop the loop
 -- ==========================================
 
--- Standard user: only see your own profile (No subquery = No recursion)
+-- Standard user: only see your own profile
 CREATE POLICY "profiles_self_access" ON public.profiles
 FOR SELECT USING (auth.uid() = id);
 
@@ -75,44 +76,75 @@ FOR ALL USING (public.check_is_super_admin());
 -- 5. TENANT ISOLATION POLICIES
 -- ==========================================
 
--- MADRASAHS (Access your own or if super admin)
+-- MADRASAHS
 CREATE POLICY "madrasah_access" ON public.madrasahs
 FOR SELECT USING (
   id = public.get_authenticated_madrasah_id() 
   OR public.check_is_super_admin()
 );
 
--- CLASSES (Tenant Isolation)
+-- CLASSES
 CREATE POLICY "class_isolation" ON public.classes
 FOR ALL USING (
   madrasah_id = public.get_authenticated_madrasah_id() 
   OR public.check_is_super_admin()
 );
 
--- STUDENTS (Tenant Isolation)
+-- STUDENTS
 CREATE POLICY "student_isolation" ON public.students
 FOR ALL USING (
   madrasah_id = public.get_authenticated_madrasah_id() 
   OR public.check_is_super_admin()
 );
 
--- TEACHERS (Tenant Isolation)
+-- TEACHERS
 CREATE POLICY "teacher_isolation" ON public.teachers
 FOR ALL USING (
   madrasah_id = public.get_authenticated_madrasah_id() 
   OR public.check_is_super_admin()
 );
 
--- RECENT CALLS (Tenant Isolation)
-CREATE POLICY "calls_isolation" ON public.recent_calls
+-- FEE STRUCTURES (The Fix)
+CREATE POLICY "fee_structures_isolation" ON public.fee_structures
 FOR ALL USING (
-  madrasah_id = public.get_authenticated_madrasah_id()
+  madrasah_id = public.get_authenticated_madrasah_id() 
+  OR public.check_is_super_admin()
 );
 
--- SMS TEMPLATES (Tenant Isolation)
-CREATE POLICY "templates_isolation" ON public.sms_templates
+-- ATTENDANCE
+CREATE POLICY "attendance_isolation" ON public.attendance
 FOR ALL USING (
-  madrasah_id = public.get_authenticated_madrasah_id()
+  madrasah_id = public.get_authenticated_madrasah_id() 
+  OR public.check_is_super_admin()
+);
+
+-- EXAMS
+CREATE POLICY "exams_isolation" ON public.exams
+FOR ALL USING (
+  madrasah_id = public.get_authenticated_madrasah_id() 
+  OR public.check_is_super_admin()
+);
+
+-- EXAM SUBJECTS (Linked via exam_id)
+CREATE POLICY "exam_subjects_isolation" ON public.exam_subjects
+FOR ALL USING (
+  EXISTS (
+    SELECT 1 FROM public.exams 
+    WHERE exams.id = exam_subjects.exam_id 
+    AND exams.madrasah_id = public.get_authenticated_madrasah_id()
+  )
+  OR public.check_is_super_admin()
+);
+
+-- EXAM MARKS (Linked via exam_id)
+CREATE POLICY "exam_marks_isolation" ON public.exam_marks
+FOR ALL USING (
+  EXISTS (
+    SELECT 1 FROM public.exams 
+    WHERE exams.id = exam_marks.exam_id 
+    AND exams.madrasah_id = public.get_authenticated_madrasah_id()
+  )
+  OR public.check_is_super_admin()
 );
 
 -- FINANCIALS (Ledger/Fees)
@@ -128,20 +160,19 @@ FOR ALL USING (
   OR public.check_is_super_admin()
 );
 
--- ATTENDANCE / EXAMS
-CREATE POLICY "attendance_isolation" ON public.attendance
+-- RECENT CALLS
+CREATE POLICY "calls_isolation" ON public.recent_calls
 FOR ALL USING (
-  madrasah_id = public.get_authenticated_madrasah_id() 
-  OR public.check_is_super_admin()
+  madrasah_id = public.get_authenticated_madrasah_id()
 );
 
-CREATE POLICY "exams_isolation" ON public.exams
+-- SMS TEMPLATES
+CREATE POLICY "templates_isolation" ON public.sms_templates
 FOR ALL USING (
-  madrasah_id = public.get_authenticated_madrasah_id() 
-  OR public.check_is_super_admin()
+  madrasah_id = public.get_authenticated_madrasah_id()
 );
 
--- TRANSACTIONS (Recharge Requests)
+-- TRANSACTIONS
 CREATE POLICY "transaction_view" ON public.transactions
 FOR SELECT USING (
   madrasah_id = public.get_authenticated_madrasah_id() 
