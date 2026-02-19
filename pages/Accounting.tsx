@@ -26,7 +26,6 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
   const [showAddStructure, setShowAddStructure] = useState(false);
   const [showFeeCollection, setShowFeeCollection] = useState(false);
 
-  // Form states
   const [selectedClass, setSelectedClass] = useState<string>('');
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
   const [type, setType] = useState<'income' | 'expense'>('income');
@@ -34,7 +33,6 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
   const [category, setCategory] = useState('');
   const [desc, setDesc] = useState('');
 
-  // Collection form states
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [collectAmount, setCollectAmount] = useState('');
   const [showClassDropdown, setShowClassDropdown] = useState(false);
@@ -60,11 +58,12 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
       }
       
       if (activeTab === 'fees') {
-        const { data } = await supabase.rpc('get_monthly_dues_report', {
+        const { data, error } = await supabase.rpc('get_monthly_dues_report', {
           p_madrasah_id: madrasah?.id,
           p_class_id: selectedClass || null,
           p_month: selectedMonth
         });
+        if (error) throw error;
         if (data) setFeesReport(data);
       }
 
@@ -72,7 +71,12 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
         const { data } = await supabase.from('fee_structures').select('*, classes(class_name)').eq('madrasah_id', madrasah?.id);
         if (data) setStructures(data);
       }
-    } catch (e) { console.error(e); } finally { setLoading(false); }
+    } catch (e: any) { 
+      console.error(e);
+      if (activeTab === 'fees' && e.message.includes('get_monthly_dues_report')) {
+        alert("Database error: Please run the fees RPC function in SQL Editor.");
+      }
+    } finally { setLoading(false); }
   };
 
   const handleAddLedger = async () => {
@@ -99,18 +103,16 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
     setIsSaving(true);
     try {
       const amt = parseFloat(collectAmount);
-      // 1. Record Fee Payment
       const { error: feeErr } = await supabase.from('fees').insert({
         madrasah_id: madrasah.id,
         student_id: selectedStudent.student_id,
-        class_id: selectedClass,
+        class_id: selectedStudent.class_id || selectedClass,
         amount_paid: amt,
         month: selectedMonth,
-        status: amt >= selectedStudent.total_payable ? 'paid' : 'partial'
+        status: (Number(selectedStudent.total_paid) + amt) >= selectedStudent.total_payable ? 'paid' : 'partial'
       });
       if (feeErr) throw feeErr;
 
-      // 2. Add to Ledger automatically
       await supabase.from('ledger').insert({
         madrasah_id: madrasah.id,
         type: 'income',
@@ -216,7 +218,7 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
                  </div>
                  <div className="relative">
                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1 mb-1 block">মাস</label>
-                    <input type="month" className="w-full h-12 px-4 bg-slate-50 border rounded-xl text-xs font-black" value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} />
+                    <input type="month" className="w-full h-12 px-4 bg-slate-50 border rounded-xl text-xs font-black outline-none" value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} />
                  </div>
               </div>
            </div>
@@ -224,22 +226,25 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
            <div className="space-y-2">
               {loading ? <div className="flex justify-center py-10"><Loader2 className="animate-spin text-white" /></div> : feesReport.length > 0 ? (
                   feesReport.map((item: any) => (
-                    <div key={item.student_id} className="bg-white/95 p-4 rounded-[1.8rem] border border-white shadow-md flex items-center justify-between">
+                    <div key={item.student_id} className="bg-white/95 p-4 rounded-[1.8rem] border border-white shadow-md flex items-center justify-between group active:scale-[0.98] transition-all">
                        <div className="flex items-center gap-3">
                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black ${item.status === 'paid' ? 'bg-green-50 text-green-500' : item.status === 'partial' ? 'bg-orange-50 text-orange-500' : 'bg-red-50 text-red-500'}`}>
                              {item.roll || '-'}
                           </div>
                           <div>
                              <h5 className="font-black text-[#2E0B5E] font-noto leading-none mb-1">{item.student_name}</h5>
-                             <p className="text-[9px] text-slate-400 font-bold uppercase">{t('amount_due', lang)}: ৳{item.balance_due}</p>
+                             <div className="flex items-center gap-2">
+                                <p className="text-[9px] text-slate-400 font-bold uppercase">{t('amount_due', lang)}: ৳{item.balance_due}</p>
+                                {item.status === 'partial' && <span className="text-[8px] bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-md font-black uppercase">Partial</span>}
+                             </div>
                           </div>
                        </div>
-                       <button onClick={() => { setSelectedStudent(item); setShowFeeCollection(true); }} className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all ${item.status === 'paid' ? 'bg-green-500 text-white' : 'bg-[#8D30F4] text-white shadow-md active:scale-95'}`}>
+                       <button onClick={() => { setSelectedStudent(item); setCollectAmount(item.balance_due.toString()); setShowFeeCollection(true); }} disabled={item.status === 'paid'} className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all ${item.status === 'paid' ? 'bg-green-100 text-green-600 border border-green-200' : 'bg-[#8D30F4] text-white shadow-md active:scale-95'}`}>
                           {item.status === 'paid' ? 'PAID' : t('collect_now', lang)}
                        </button>
                     </div>
                   ))
-              ) : <div className="text-center py-10 text-white/40 uppercase text-xs font-black">No student data found</div>}
+              ) : <div className="text-center py-20 text-white/40 uppercase text-xs font-black">No student data found</div>}
            </div>
         </div>
       )}
@@ -273,42 +278,56 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
               <Plus size={24} strokeWidth={3} /> ফি-র ধরণ যোগ করুন
            </button>
            <div className="space-y-3">
-              {structures.map(s => (
+              {structures.length > 0 ? structures.map(s => (
                 <div key={s.id} className="bg-white/95 p-5 rounded-[2rem] border border-white shadow-md flex items-center justify-between">
-                   <div>
-                      <h5 className="font-black text-[#2E0B5E] font-noto text-lg">{s.fee_name}</h5>
+                   <div className="min-w-0">
+                      <h5 className="font-black text-[#2E0B5E] font-noto text-lg truncate">{s.fee_name}</h5>
                       <p className="text-[10px] font-black text-[#A179FF] uppercase tracking-widest">{s.classes?.class_name}</p>
                    </div>
-                   <div className="text-2xl font-black text-[#8D30F4]">৳{s.amount}</div>
+                   <div className="text-2xl font-black text-[#8D30F4] shrink-0">৳{s.amount}</div>
                 </div>
-              ))}
+              )) : (
+                <div className="text-center py-20 text-white/40 uppercase text-xs font-black">No Fee Structures Set</div>
+              )}
            </div>
         </div>
       )}
 
-      {/* MODALS */}
+      {/* COLLECT FEE MODAL */}
       {showFeeCollection && selectedStudent && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-[999] flex items-center justify-center p-6">
-              <div className="bg-white w-full max-w-sm rounded-[3rem] p-8 space-y-6 animate-in zoom-in-95 overflow-y-auto max-h-[80vh]">
+              <div className="bg-white w-full max-w-sm rounded-[3rem] p-8 space-y-6 animate-in zoom-in-95 overflow-y-auto max-h-[80vh] shadow-2xl">
                   <div className="flex items-center justify-between">
                       <h3 className="text-xl font-black text-[#2E0B5E] font-noto">ফি সংগ্রহ করুন</h3>
-                      <button onClick={() => setShowFeeCollection(false)}><X size={24} className="text-slate-300" /></button>
+                      <button onClick={() => setShowFeeCollection(false)} className="w-9 h-9 bg-slate-50 text-slate-300 rounded-xl flex items-center justify-center"><X size={20} /></button>
                   </div>
-                  <div className="bg-slate-50 p-5 rounded-3xl border border-slate-100 text-center">
+                  <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 text-center">
                       <p className="text-[10px] font-black text-slate-400 uppercase mb-1">ছাত্রের নাম</p>
-                      <h4 className="text-lg font-black text-[#2E0B5E] font-noto">{selectedStudent.student_name}</h4>
-                      <div className="flex justify-between mt-3 px-4">
-                          <div className="text-center"><p className="text-[8px] font-black text-slate-400 uppercase"> Payable </p><p className="font-black text-blue-600">৳{selectedStudent.total_payable}</p></div>
-                          <div className="text-center"><p className="text-[8px] font-black text-slate-400 uppercase"> Paid </p><p className="font-black text-green-600">৳{selectedStudent.total_paid}</p></div>
-                          <div className="text-center"><p className="text-[8px] font-black text-slate-400 uppercase"> Due </p><p className="font-black text-red-600">৳{selectedStudent.balance_due}</p></div>
+                      <h4 className="text-xl font-black text-[#2E0B5E] font-noto">{selectedStudent.student_name}</h4>
+                      <div className="grid grid-cols-3 gap-2 mt-4">
+                          <div className="bg-white p-2.5 rounded-2xl border border-slate-100 shadow-sm">
+                            <p className="text-[7px] font-black text-slate-400 uppercase"> Payable </p>
+                            <p className="font-black text-blue-600 text-sm">৳{selectedStudent.total_payable}</p>
+                          </div>
+                          <div className="bg-white p-2.5 rounded-2xl border border-slate-100 shadow-sm">
+                            <p className="text-[7px] font-black text-slate-400 uppercase"> Paid </p>
+                            <p className="font-black text-green-600 text-sm">৳{selectedStudent.total_paid}</p>
+                          </div>
+                          <div className="bg-white p-2.5 rounded-2xl border border-slate-100 shadow-sm">
+                            <p className="text-[7px] font-black text-slate-400 uppercase"> Due </p>
+                            <p className="font-black text-red-600 text-sm">৳{selectedStudent.balance_due}</p>
+                          </div>
                       </div>
                   </div>
                   <div className="space-y-4">
-                      <div className="relative">
-                          <input type="number" className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-lg outline-none border-2 border-transparent focus:border-[#8D30F4]/20" placeholder="জমা টাকা" value={collectAmount} onChange={(e) => setCollectAmount(e.target.value)} />
-                          <DollarSign className="absolute left-4 top-4 text-slate-300" size={20}/>
+                      <div className="space-y-1.5">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">জমা টাকার পরিমাণ</label>
+                          <div className="relative">
+                            <input type="number" className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-lg outline-none border-2 border-transparent focus:border-[#8D30F4]/20" placeholder="0.00" value={collectAmount} onChange={(e) => setCollectAmount(e.target.value)} />
+                            <DollarSign className="absolute left-4 top-4 text-[#8D30F4]" size={20}/>
+                          </div>
                       </div>
-                      <button onClick={handleCollectFee} disabled={isSaving || !collectAmount} className="w-full py-5 bg-[#8D30F4] text-white font-black rounded-full shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-all">
+                      <button onClick={handleCollectFee} disabled={isSaving || !collectAmount} className="w-full py-5 premium-btn text-white font-black rounded-full shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-all text-base">
                           {isSaving ? <Loader2 className="animate-spin" /> : <><CheckCircle2 size={20}/> পেমেন্ট নিশ্চিত করুন</>}
                       </button>
                   </div>
@@ -316,22 +335,23 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
           </div>
       )}
 
+      {/* ADD LEDGER MODAL */}
       {showAddLedger && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-[999] flex items-center justify-center p-6">
-          <div className="bg-white w-full max-w-sm rounded-[3rem] p-8 space-y-6 animate-in zoom-in-95">
+          <div className="bg-white w-full max-w-sm rounded-[3rem] p-8 space-y-6 animate-in zoom-in-95 shadow-2xl">
              <div className="flex items-center justify-between">
-               <h3 className="text-xl font-black text-[#2E0B5E]">নতুন এন্ট্রি যোগ করুন</h3>
-               <button onClick={() => setShowAddLedger(false)}><X size={24} className="text-slate-300" /></button>
+               <h3 className="text-xl font-black text-[#2E0B5E]">নতুন লেনদেন যোগ করুন</h3>
+               <button onClick={() => setShowAddLedger(false)} className="w-9 h-9 bg-slate-50 text-slate-300 rounded-xl flex items-center justify-center"><X size={20} /></button>
              </div>
-             <div className="flex p-1 bg-slate-50 rounded-2xl border border-slate-100">
-                <button onClick={() => setType('income')} className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase ${type === 'income' ? 'bg-white text-green-500 shadow-sm' : 'text-slate-400'}`}>আয় (Income)</button>
-                <button onClick={() => setType('expense')} className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase ${type === 'expense' ? 'bg-white text-red-500 shadow-sm' : 'text-slate-400'}`}>ব্যয় (Expense)</button>
+             <div className="flex p-1.5 bg-slate-100 rounded-2xl border border-slate-200">
+                <button onClick={() => setType('income')} className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all ${type === 'income' ? 'bg-white text-green-500 shadow-md' : 'text-slate-400'}`}>আয় (Income)</button>
+                <button onClick={() => setType('expense')} className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all ${type === 'expense' ? 'bg-white text-red-500 shadow-md' : 'text-slate-400'}`}>ব্যয় (Expense)</button>
              </div>
              <div className="space-y-4">
                 <div className="relative"><input type="number" className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-lg outline-none border-2 border-transparent focus:border-[#8D30F4]/20" placeholder="টাকার পরিমাণ" value={amount} onChange={(e) => setAmount(e.target.value)} /><DollarSign className="absolute left-4 top-4 text-slate-300" size={20}/></div>
                 <div className="relative"><input type="text" className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-sm outline-none border-2 border-transparent focus:border-[#8D30F4]/20" placeholder="ক্যাটাগরি (যেমন: বেতন, বিদ্যুৎ)" value={category} onChange={(e) => setCategory(e.target.value)} /><Tag className="absolute left-4 top-4 text-slate-300" size={20}/></div>
-                <div className="relative"><textarea className="w-full h-24 bg-slate-50 rounded-2xl px-12 py-4 font-bold text-sm outline-none border-2 border-transparent focus:border-[#8D30F4]/20" placeholder="বিবরণ" value={desc} onChange={(e) => setDesc(e.target.value)} /><FileText className="absolute left-4 top-4 text-slate-300" size={20}/></div>
-                <button onClick={handleAddLedger} disabled={isSaving} className="w-full py-5 bg-[#8D30F4] text-white font-black rounded-full shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-all">
+                <div className="relative"><textarea className="w-full h-24 bg-slate-50 rounded-2xl px-12 py-4 font-bold text-sm outline-none border-2 border-transparent focus:border-[#8D30F4]/20 resize-none" placeholder="বিবরণ" value={desc} onChange={(e) => setDesc(e.target.value)} /><FileText className="absolute left-4 top-4 text-slate-300" size={20}/></div>
+                <button onClick={handleAddLedger} disabled={isSaving} className="w-full py-5 premium-btn text-white font-black rounded-full shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-all">
                   {isSaving ? <Loader2 className="animate-spin" /> : <><Save size={20}/> সংরক্ষণ করুন</>}
                 </button>
              </div>
@@ -339,29 +359,39 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
         </div>
       )}
 
+      {/* ADD STRUCTURE MODAL */}
       {showAddStructure && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-[999] flex items-center justify-center p-6">
-           <div className="bg-white w-full max-w-sm rounded-[3rem] p-8 space-y-6 animate-in zoom-in-95">
+           <div className="bg-white w-full max-w-sm rounded-[3rem] p-8 space-y-6 animate-in zoom-in-95 shadow-2xl relative">
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-black text-[#2E0B5E]">ফি সেটআপ করুন</h3>
-                <button onClick={() => setShowAddStructure(false)}><X size={24} className="text-slate-300" /></button>
+                <button onClick={() => setShowAddStructure(false)} className="w-9 h-9 bg-slate-50 text-slate-300 rounded-xl flex items-center justify-center"><X size={20} /></button>
               </div>
               <div className="space-y-4">
                  <div className="relative">
-                    <button onClick={() => setShowClassDropdown(!showClassDropdown)} className="w-full h-14 px-6 rounded-2xl border bg-slate-50 flex items-center justify-between font-black text-[#2E0B5E]">
-                       <span>{classes.find(c => c.id === selectedClass)?.class_name || 'শ্রেণি বেছে নিন'}</span>
-                       <ChevronDown size={20} />
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2 mb-1.5 block">শ্রেণি নির্বাচন করুন</label>
+                    <button onClick={() => setShowClassDropdown(!showClassDropdown)} className="w-full h-14 px-6 rounded-2xl border-2 border-slate-100 bg-slate-50 flex items-center justify-between font-black text-[#2E0B5E]">
+                       <span className="truncate">{classes.find(c => c.id === selectedClass)?.class_name || 'শ্রেণি বেছে নিন'}</span>
+                       <ChevronDown size={20} className="text-slate-300" />
                     </button>
                     {showClassDropdown && (
-                        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border z-[1001] p-2 max-h-48 overflow-y-auto">
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 z-[1001] p-2 max-h-48 overflow-y-auto">
                             {classes.map(c => (
-                                <button key={c.id} onClick={() => { setSelectedClass(c.id); setShowClassDropdown(false); }} className="w-full text-left px-5 py-3 rounded-xl hover:bg-slate-50 font-black">{c.class_name}</button>
+                                <button key={c.id} onClick={() => { setSelectedClass(c.id); setShowClassDropdown(false); }} className="w-full text-left px-5 py-3 rounded-xl hover:bg-slate-50 font-black text-[#2E0B5E]">{c.class_name}</button>
                             ))}
                         </div>
                     )}
                  </div>
-                 <div className="relative"><input type="text" className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-sm outline-none border-2 border-transparent focus:border-[#8D30F4]/20" placeholder="ফি-র নাম (যেমন: মাসিক বেতন)" value={category} onChange={(e) => setCategory(e.target.value)} /><Tag className="absolute left-4 top-4 text-slate-300" size={20}/></div>
-                 <div className="relative"><input type="number" className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-lg outline-none border-2 border-transparent focus:border-[#8D30F4]/20" placeholder="টাকার পরিমাণ" value={amount} onChange={(e) => setAmount(e.target.value)} /><DollarSign className="absolute left-4 top-4 text-slate-300" size={20}/></div>
+                 <div className="relative">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2 mb-1.5 block">ফি-র নাম</label>
+                    <input type="text" className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-sm outline-none border-2 border-transparent focus:border-[#8D30F4]/20" placeholder="যেমন: মাসিক বেতন" value={category} onChange={(e) => setCategory(e.target.value)} />
+                    <Tag className="absolute left-4 top-[44px] text-slate-300" size={20}/>
+                 </div>
+                 <div className="relative">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2 mb-1.5 block">টাকার পরিমাণ</label>
+                    <input type="number" className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-lg outline-none border-2 border-transparent focus:border-[#8D30F4]/20" placeholder="0" value={amount} onChange={(e) => setAmount(e.target.value)} />
+                    <DollarSign className="absolute left-4 top-[44px] text-[#8D30F4]" size={20}/>
+                 </div>
                  
                  <button onClick={async () => {
                     if (!selectedClass || !category || !amount) return;
@@ -378,7 +408,7 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
                         setCategory(''); setAmount(''); setSelectedClass('');
                         fetchData();
                     } catch (e: any) { alert(e.message); } finally { setIsSaving(false); }
-                 }} className="w-full py-5 bg-[#8D30F4] text-white font-black rounded-full shadow-xl active:scale-95 transition-all">
+                 }} className="w-full py-5 premium-btn text-white font-black rounded-full shadow-xl active:scale-95 transition-all text-base">
                     {isSaving ? <Loader2 className="animate-spin" /> : 'সেভ করুন'}
                  </button>
               </div>
