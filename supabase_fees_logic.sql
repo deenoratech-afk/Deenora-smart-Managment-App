@@ -9,6 +9,7 @@ RETURNS TABLE (
     student_id UUID,
     student_name TEXT,
     roll INTEGER,
+    class_id UUID,
     total_payable NUMERIC,
     total_paid NUMERIC,
     balance_due NUMERIC,
@@ -39,11 +40,12 @@ BEGIN
         s.id as student_id,
         s.student_name,
         s.roll,
-        COALESCE(cf.total_fixed_fee, 0) as total_payable,
-        COALESCE(sp.total_collected, 0) as total_paid,
-        (COALESCE(cf.total_fixed_fee, 0) - COALESCE(sp.total_collected, 0)) as balance_due,
+        s.class_id,
+        COALESCE(cf.total_fixed_fee, 0)::NUMERIC as total_payable,
+        COALESCE(sp.total_collected, 0)::NUMERIC as total_paid,
+        (COALESCE(cf.total_fixed_fee, 0) - COALESCE(sp.total_collected, 0))::NUMERIC as balance_due,
         CASE 
-            WHEN COALESCE(sp.total_collected, 0) >= COALESCE(cf.total_fixed_fee, 0) THEN 'paid'
+            WHEN COALESCE(sp.total_collected, 0) >= COALESCE(cf.total_fixed_fee, 0) AND COALESCE(cf.total_fixed_fee, 0) > 0 THEN 'paid'
             WHEN COALESCE(sp.total_collected, 0) > 0 THEN 'partial'
             ELSE 'unpaid'
         END as status

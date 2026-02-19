@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { Madrasah, LedgerEntry, Fee, Language, UserRole, Class, Student } from '../types';
-import { Calculator, Plus, ArrowUpCircle, ArrowDownCircle, Wallet, History, Users, Loader2, Save, X, Calendar, DollarSign, Tag, FileText, CheckCircle2, TrendingUp, AlertCircle, Send, Search, ChevronDown, BarChart3, Settings2 } from 'lucide-react';
+import { Calculator, Plus, ArrowUpCircle, ArrowDownCircle, Wallet, History, Users, Loader2, Save, X, Calendar, DollarSign, Tag, FileText, CheckCircle2, TrendingUp, AlertCircle, Send, Search, ChevronDown, BarChart3, Settings2, RefreshCw } from 'lucide-react';
 import { t } from '../translations';
 import { sortMadrasahClasses } from './Classes';
 
@@ -59,9 +59,11 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
       }
       
       if (activeTab === 'fees') {
+        // Ensure empty string is passed as null to the RPC
+        const classId = selectedClass === '' ? null : selectedClass;
         const { data, error } = await supabase.rpc('get_monthly_dues_report', {
           p_madrasah_id: madrasah.id,
-          p_class_id: selectedClass || null,
+          p_class_id: classId,
           p_month: selectedMonth
         });
         if (error) throw error;
@@ -77,10 +79,6 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
     } finally { setLoading(false); }
   };
 
-  /**
-   * FIX: Added missing handleAddLedger function.
-   * Logic: Inserts a new income or expense entry into the ledger table.
-   */
   const handleAddLedger = async () => {
     if (!madrasah || !amount || !category) return;
     setIsSaving(true);
@@ -114,7 +112,7 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
       const { error: feeErr } = await supabase.from('fees').insert({
         madrasah_id: madrasah.id,
         student_id: selectedStudent.student_id,
-        class_id: selectedStudent.class_id || selectedClass,
+        class_id: selectedStudent.class_id,
         amount_paid: amt,
         month: selectedMonth,
         status: (Number(selectedStudent.total_paid) + amt) >= selectedStudent.total_payable ? 'paid' : 'partial'
@@ -155,6 +153,7 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
           <h1 className="text-xl font-black text-white font-noto">ফি ও হিসাব</h1>
         </div>
         <div className="flex gap-2">
+            <button onClick={() => fetchData()} className={`w-10 h-10 bg-white/10 text-white rounded-xl flex items-center justify-center active:scale-95 transition-all ${loading ? 'animate-spin' : ''}`}><RefreshCw size={18}/></button>
             <button onClick={() => setShowAddLedger(true)} className="w-10 h-10 bg-white text-[#8D30F4] rounded-xl shadow-xl flex items-center justify-center active:scale-95 transition-all"><Plus size={20}/></button>
         </div>
       </div>
@@ -248,11 +247,12 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
                              <h5 className="font-black text-[#2E0B5E] font-noto truncate leading-tight mb-1">{item.student_name}</h5>
                              <div className="flex items-center gap-2">
                                 <p className="text-[10px] text-slate-400 font-bold uppercase">বকেয়া: ৳{item.balance_due}</p>
+                                {Number(item.total_payable) === 0 && <span className="text-[8px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-md font-black uppercase">No Fee Set</span>}
                                 {item.status === 'partial' && <span className="text-[8px] bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-md font-black uppercase">Partial</span>}
                              </div>
                           </div>
                        </div>
-                       <button onClick={() => { setSelectedStudent(item); setCollectAmount(item.balance_due.toString()); setShowFeeCollection(true); }} disabled={item.status === 'paid'} className={`px-5 py-3 rounded-xl text-[10px] font-black uppercase transition-all shadow-sm ${item.status === 'paid' ? 'bg-green-100 text-green-600 border border-green-200' : 'bg-[#8D30F4] text-white active:scale-95'}`}>
+                       <button onClick={() => { setSelectedStudent(item); setCollectAmount(item.balance_due.toString()); setShowFeeCollection(true); }} disabled={item.status === 'paid' || Number(item.total_payable) === 0} className={`px-5 py-3 rounded-xl text-[10px] font-black uppercase transition-all shadow-sm ${item.status === 'paid' ? 'bg-green-100 text-green-600 border border-green-200' : Number(item.total_payable) === 0 ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-[#8D30F4] text-white active:scale-95'}`}>
                           {item.status === 'paid' ? 'PAID' : 'ফি জমা নিন'}
                        </button>
                     </div>
@@ -260,13 +260,10 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
               ) : (
                 <div className="text-center py-16 bg-white/10 rounded-[3rem] border-2 border-dashed border-white/20 mx-2 px-6 flex flex-col items-center">
                    <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center text-white/40 mb-5"><AlertCircle size={32} /></div>
-                   <h3 className="text-white text-lg font-black font-noto leading-tight">কোনো তথ্য পাওয়া যায়নি</h3>
+                   <h3 className="text-white text-lg font-black font-noto leading-tight">কোনো ছাত্র পাওয়া যায়নি</h3>
                    <p className="text-white/60 text-[10px] font-bold mt-2 uppercase tracking-wide leading-relaxed">
-                     সম্ভবত আপনি এখনো এই শ্রেণির জন্য ফি নির্ধারণ করেননি। অনুগ্রহ করে ফি সেটিংস চেক করুন।
+                     এই শ্রেণির অধীনে কোনো ছাত্র খুঁজে পাওয়া যায়নি। দয়া করে নিশ্চিত হোন যে ছাত্ররা এই শ্রেণিতে নিবন্ধিত।
                    </p>
-                   <button onClick={() => setActiveTab('structures')} className="mt-6 px-6 py-3 bg-white text-[#8D30F4] rounded-xl text-[11px] font-black uppercase flex items-center gap-2 active:scale-95 transition-all">
-                      <Settings2 size={16} /> ফি সেটিংস এ যান
-                   </button>
                 </div>
               )}
            </div>
@@ -310,7 +307,15 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
                         <span className="text-[10px] font-black text-[#A179FF] uppercase tracking-widest">{s.classes?.class_name}</span>
                       </div>
                    </div>
-                   <div className="text-2xl font-black text-[#8D30F4] shrink-0">৳{s.amount}</div>
+                   <div className="flex items-center gap-3">
+                       <div className="text-2xl font-black text-[#8D30F4] shrink-0">৳{s.amount}</div>
+                       <button onClick={async () => {
+                           if(confirm('এটি ডিলিট করতে চান?')) {
+                               await supabase.from('fee_structures').delete().eq('id', s.id);
+                               fetchData();
+                           }
+                       }} className="p-2 text-red-300 hover:text-red-500"><X size={18}/></button>
+                   </div>
                 </div>
               )) : (
                 <div className="text-center py-20 text-white/40 uppercase text-xs font-black">No Fee Structures Set</div>
