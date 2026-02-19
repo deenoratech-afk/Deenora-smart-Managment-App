@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Home, User, BookOpen, Wallet, ShieldCheck, BarChart3, CreditCard, RefreshCw, Smartphone, Bell, X, Info, AlertTriangle, CheckCircle2, Clock, Calculator, ClipboardList, GraduationCap } from 'lucide-react';
+import { Home, User, BookOpen, Wallet, ShieldCheck, BarChart3, CreditCard, RefreshCw, Smartphone, Bell, X, Info, AlertTriangle, CheckCircle2, Clock, Calculator, ClipboardList, GraduationCap, Banknote } from 'lucide-react';
 import { View, Language, Madrasah, Transaction, Profile } from '../types';
 import { t } from '../translations';
 import { supabase } from '../supabase';
@@ -82,44 +82,50 @@ const Layout: React.FC<LayoutProps> = ({ children, currentView, setView, lang, m
         {children}
       </main>
 
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[94%] max-w-md z-[200]">
-        <nav className="bg-white/95 backdrop-blur-[25px] border border-white/50 flex justify-around items-center py-4 px-2 rounded-[3rem] shadow-[0_25px_60px_-15px_rgba(46,11,94,0.4)]">
+      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[96%] max-w-md z-[200]">
+        <nav className="bg-white/95 backdrop-blur-[25px] border border-white/50 flex justify-around items-center py-4 px-1 rounded-[3rem] shadow-[0_25px_60px_-15px_rgba(46,11,94,0.4)]">
           <button onClick={() => setView('home')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('home') ? 'text-[#8D30F4]' : 'text-[#A179FF]'}`}>
-            <Home size={22} strokeWidth={isTabActive('home') ? 3 : 2} />
-            <span className="text-[10px] font-black font-noto opacity-80">{t('home', lang)}</span>
+            <Home size={20} strokeWidth={isTabActive('home') ? 3 : 2} />
+            <span className="text-[9px] font-black font-noto opacity-80">{t('home', lang)}</span>
           </button>
           
           {isSuperAdmin ? (
             <>
               <button onClick={() => setView('admin-approvals')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('approvals') ? 'text-[#8D30F4]' : 'text-[#A179FF]'}`}>
-                <CreditCard size={22} />
-                <span className="text-[10px] font-black font-noto opacity-80">{t('approvals', lang)}</span>
+                <CreditCard size={20} />
+                <span className="text-[9px] font-black font-noto opacity-80">{t('approvals', lang)}</span>
               </button>
               <button onClick={() => setView('admin-dashboard')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('dashboard') ? 'text-[#8D30F4]' : 'text-[#A179FF]'}`}>
-                <BarChart3 size={22} />
-                <span className="text-[10px] font-black font-noto opacity-80">{t('dashboard', lang)}</span>
+                <BarChart3 size={20} />
+                <span className="text-[9px] font-black font-noto opacity-80">{t('dashboard', lang)}</span>
               </button>
             </>
           ) : (
             <>
               <button onClick={() => setView('attendance')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('attendance') ? 'text-[#8D30F4]' : 'text-[#A179FF]'}`}>
-                <ClipboardList size={22} />
-                <span className="text-[10px] font-black font-noto opacity-80">হাজিরা</span>
+                <ClipboardList size={20} />
+                <span className="text-[9px] font-black font-noto opacity-80">হাজিরা</span>
               </button>
               <button onClick={() => setView('exams')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('exams') ? 'text-[#8D30F4]' : 'text-[#A179FF]'}`}>
-                <GraduationCap size={22} />
-                <span className="text-[10px] font-black font-noto opacity-80">পরীক্ষা</span>
+                <GraduationCap size={20} />
+                <span className="text-[9px] font-black font-noto opacity-80">পরীক্ষা</span>
               </button>
+              {(role === 'madrasah_admin' || role === 'accountant') && (
+                <button onClick={() => setView('accounting')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('accounting') ? 'text-[#8D30F4]' : 'text-[#A179FF]'}`}>
+                  <Banknote size={20} />
+                  <span className="text-[9px] font-black font-noto opacity-80">হিসাব</span>
+                </button>
+              )}
               <button onClick={() => setView('classes')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('classes') ? 'text-[#8D30F4]' : 'text-[#A179FF]'}`}>
-                <BookOpen size={22} />
-                <span className="text-[10px] font-black font-noto opacity-80">ছাত্র</span>
+                <BookOpen size={20} />
+                <span className="text-[9px] font-black font-noto opacity-80">ছাত্র</span>
               </button>
             </>
           )}
           
           <button onClick={() => setView('account')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('account') ? 'text-[#8D30F4]' : 'text-[#A179FF]'}`}>
-            <User size={22} />
-            <span className="text-[10px] font-black font-noto opacity-80">{t('account', lang)}</span>
+            <User size={20} />
+            <span className="text-[9px] font-black font-noto opacity-80">{t('account', lang)}</span>
           </button>
         </nav>
       </div>

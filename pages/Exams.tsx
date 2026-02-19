@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { Madrasah, Class, Student, Exam, ExamSubject, Language, UserRole } from '../types';
-// Fixed: Added AlertCircle to the import list from lucide-react
 import { GraduationCap, Plus, ChevronRight, BookOpen, Trophy, Save, X, Edit3, Trash2, Loader2, ArrowLeft, Calendar, LayoutGrid, CheckCircle2, FileText, Send, User, Hash, Star, AlertCircle } from 'lucide-react';
 import { t } from '../translations';
 import { sortMadrasahClasses } from './Classes';
@@ -143,17 +142,6 @@ const Exams: React.FC<ExamsProps> = ({ lang, madrasah, onBack, role }) => {
     setIsSaving(false);
   };
 
-  const calculateGrade = (obtained: number, full: number) => {
-    const pct = (obtained / full) * 100;
-    if (pct >= 80) return 'A+';
-    if (pct >= 70) return 'A';
-    if (pct >= 60) return 'A-';
-    if (pct >= 50) return 'B';
-    if (pct >= 40) return 'C';
-    if (pct >= 33) return 'D';
-    return 'F';
-  };
-
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-20">
       <div className="flex items-center justify-between px-2">
@@ -179,10 +167,13 @@ const Exams: React.FC<ExamsProps> = ({ lang, madrasah, onBack, role }) => {
                         <div className="w-12 h-12 bg-[#F2EBFF] text-[#8D30F4] rounded-2xl flex items-center justify-center shadow-inner"><GraduationCap size={24}/></div>
                         <div>
                             <h3 className="text-lg font-black text-[#2E0B5E] font-noto leading-tight">{exam.exam_name}</h3>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{exam.classes?.class_name}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{exam.classes?.class_name}</span>
+                                {exam.is_published && <span className="px-2 py-0.5 bg-green-50 text-green-500 rounded-full text-[8px] font-black uppercase">Published</span>}
+                            </div>
                         </div>
                     </div>
-                    <div className="text-[10px] font-black text-slate-300 uppercase">{new Date(exam.exam_date).toLocaleDateString()}</div>
+                    <div className="text-[10px] font-black text-slate-300 uppercase">{new Date(exam.exam_date).toLocaleDateString('bn-BD')}</div>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                     <button onClick={() => { setSelectedExam(exam); setView('subjects'); fetchSubjects(exam.id); }} className="py-2.5 bg-slate-50 text-slate-500 rounded-xl text-[9px] font-black uppercase tracking-widest border border-slate-100">{t('subject', lang)}</button>
@@ -330,7 +321,7 @@ const Exams: React.FC<ExamsProps> = ({ lang, madrasah, onBack, role }) => {
                <button onClick={() => setShowAddSubject(false)}><X size={24} className="text-slate-300" /></button>
              </div>
              <div className="space-y-4">
-                <div className="relative"><input type="text" className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-sm outline-none border-2 border-transparent focus:border-[#8D30F4]/20" placeholder="বিষয়ের নাম (যেমন: কুরআন)" value={subName} onChange={(e) => setSubName(e.target.value)} /><Tag className="absolute left-4 top-4 text-slate-300" size={20}/></div>
+                <div className="relative"><input type="text" className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-sm outline-none border-2 border-transparent focus:border-[#8D30F4]/20" placeholder="বিষয়ের নাম (যেমন: কুরআন)" value={subName} onChange={(e) => setSubName(e.target.value)} /><BookOpen size={20} className="absolute left-4 top-4 text-slate-300" /></div>
                 <div className="grid grid-cols-2 gap-4">
                     <div className="relative"><input type="number" className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-sm outline-none border-2 border-transparent focus:border-[#8D30F4]/20" placeholder="পূর্ণমান" value={fullMarks} onChange={(e) => setFullMarks(e.target.value)} /><Star className="absolute left-4 top-4 text-slate-300" size={20}/></div>
                     <div className="relative"><input type="number" className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-sm outline-none border-2 border-transparent focus:border-[#8D30F4]/20" placeholder="পাস" value={passMarks} onChange={(e) => setPassMarks(e.target.value)} /><AlertCircle className="absolute left-4 top-4 text-slate-300" size={20}/></div>
@@ -345,7 +336,5 @@ const Exams: React.FC<ExamsProps> = ({ lang, madrasah, onBack, role }) => {
     </div>
   );
 };
-
-const Tag = ({ size, className }: { size: number, className: string }) => <BookOpen size={size} className={className} />;
 
 export default Exams;

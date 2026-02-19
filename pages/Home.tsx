@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Search, Clock, User as UserIcon, RefreshCw, PhoneCall, X, MessageCircle, Phone, AlertCircle, Trash2, AlertTriangle, Loader2 } from 'lucide-react';
+// Fix: Added CheckCircle2 to the imports from lucide-react
+import { Search, Clock, User as UserIcon, RefreshCw, PhoneCall, X, MessageCircle, Phone, AlertCircle, Trash2, AlertTriangle, Loader2, Users, BookOpen, GraduationCap, Wallet, TrendingUp, DollarSign, CheckCircle2 } from 'lucide-react';
 import { supabase, offlineApi } from '../supabase';
 import { Student, RecentCall, Language } from '../types';
 import { t } from '../translations';
@@ -22,9 +23,43 @@ const Home: React.FC<HomeProps> = ({ onStudentClick, lang, dataVersion, triggerR
   const [loadingRecent, setLoadingRecent] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   
-  // Deletion States (Only Clear All is kept)
+  // Dashboard Stats
+  const [stats, setStats] = useState({
+    totalStudents: 0,
+    totalClasses: 0,
+    smsBalance: 0,
+    attendanceToday: 0
+  });
+  const [loadingStats, setLoadingStats] = useState(true);
+
+  // Deletion States
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
+
+  const fetchDashboardStats = async () => {
+    if (!madrasahId) return;
+    setLoadingStats(true);
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const [stdRes, clsRes, mRes, attRes] = await Promise.all([
+        supabase.from('students').select('*', { count: 'exact', head: true }).eq('madrasah_id', madrasahId),
+        supabase.from('classes').select('*', { count: 'exact', head: true }).eq('madrasah_id', madrasahId),
+        supabase.from('madrasahs').select('sms_balance').eq('id', madrasahId).maybeSingle(),
+        supabase.from('attendance').select('*', { count: 'exact', head: true }).eq('madrasah_id', madrasahId).eq('date', today).eq('status', 'present')
+      ]);
+
+      setStats({
+        totalStudents: stdRes.count || 0,
+        totalClasses: clsRes.count || 0,
+        smsBalance: mRes.data?.sms_balance || 0,
+        attendanceToday: attRes.count || 0
+      });
+    } catch (e) {
+      console.error("Dashboard Stats Error:", e);
+    } finally {
+      setLoadingStats(false);
+    }
+  };
 
   const fetchRecentCalls = async (isManual = false) => {
     if (!madrasahId) {
@@ -103,7 +138,8 @@ const Home: React.FC<HomeProps> = ({ onStudentClick, lang, dataVersion, triggerR
   };
 
   useEffect(() => { 
-    fetchRecentCalls(); 
+    fetchRecentCalls();
+    fetchDashboardStats();
   }, [dataVersion, madrasahId]);
 
   const recordCall = async (studentId: string) => {
@@ -190,7 +226,40 @@ const Home: React.FC<HomeProps> = ({ onStudentClick, lang, dataVersion, triggerR
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-500 pb-20">
+      
+      {/* QUICK DASHBOARD CARDS */}
+      <div className="grid grid-cols-2 gap-3 px-1">
+        <div className="bg-white/95 backdrop-blur-md p-5 rounded-[2rem] border border-white shadow-xl flex flex-col items-center text-center animate-in zoom-in duration-300">
+           <div className="w-10 h-10 bg-indigo-50 text-indigo-500 rounded-2xl flex items-center justify-center mb-2 shadow-inner">
+             <Users size={20} />
+           </div>
+           <h4 className="text-xl font-black text-[#2E0B5E]">{loadingStats ? '...' : stats.totalStudents}</h4>
+           <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">{t('students', lang)}</p>
+        </div>
+        <div className="bg-white/95 backdrop-blur-md p-5 rounded-[2rem] border border-white shadow-xl flex flex-col items-center text-center animate-in zoom-in duration-300 delay-75">
+           <div className="w-10 h-10 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center mb-2 shadow-inner">
+             <CheckCircle2 size={20} />
+           </div>
+           <h4 className="text-xl font-black text-[#2E0B5E]">{loadingStats ? '...' : stats.attendanceToday}</h4>
+           <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">আজকের হাজিরা</p>
+        </div>
+        <div className="bg-white/95 backdrop-blur-md p-5 rounded-[2rem] border border-white shadow-xl flex flex-col items-center text-center animate-in zoom-in duration-300 delay-100">
+           <div className="w-10 h-10 bg-purple-50 text-purple-500 rounded-2xl flex items-center justify-center mb-2 shadow-inner">
+             <Wallet size={20} />
+           </div>
+           <h4 className="text-xl font-black text-[#2E0B5E]">{loadingStats ? '...' : stats.smsBalance}</h4>
+           <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">{t('sms', lang)} ব্যালেন্স</p>
+        </div>
+        <div className="bg-white/95 backdrop-blur-md p-5 rounded-[2rem] border border-white shadow-xl flex flex-col items-center text-center animate-in zoom-in duration-300 delay-150">
+           <div className="w-10 h-10 bg-orange-50 text-orange-500 rounded-2xl flex items-center justify-center mb-2 shadow-inner">
+             <BookOpen size={20} />
+           </div>
+           <h4 className="text-xl font-black text-[#2E0B5E]">{loadingStats ? '...' : stats.totalClasses}</h4>
+           <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">{t('classes', lang)}</p>
+        </div>
+      </div>
+
       <div className="relative z-20 group px-1">
         <div className="absolute -inset-1 bg-gradient-to-r from-[#8D30F4] to-[#A179FF] rounded-[2.2rem] blur opacity-10 group-focus-within:opacity-30 transition duration-500"></div>
         <div className="relative flex items-center">

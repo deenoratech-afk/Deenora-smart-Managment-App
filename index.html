@@ -4,7 +4,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" />
-    <title>Madrasah Contact App</title>
+    <title>Deenora Madrasah Management</title>
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#9D50FF">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -128,6 +128,13 @@
         0% { transform: translateX(-100%); }
         100% { transform: translateX(250%); }
       }
+      
+      /* Disable default select arrow in some browsers */
+      select {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+      }
     </style>
   <script type="importmap">
 {
@@ -152,6 +159,5 @@
   <body class="mesh-bg-vibrant">
     <div id="root"></div>
     <script type="module" src="./index.tsx"></script>
-<script type="module" src="/index.tsx"></script>
 </body>
 </html>
