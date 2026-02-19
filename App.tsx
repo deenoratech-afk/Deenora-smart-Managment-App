@@ -70,7 +70,16 @@ const App: React.FC = () => {
 
     switch (view) {
       case 'home':
-        return <Home onStudentClick={(s) => { setSelectedStudent(s); setView('student-details'); }} lang={lang} dataVersion={dataVersion} triggerRefresh={triggerRefresh} madrasahId={madrasah?.id} onNavigateToWallet={() => setView('wallet-sms')} />;
+        return <Home 
+                  onStudentClick={(s) => { setSelectedStudent(s); setView('student-details'); }} 
+                  lang={lang} 
+                  dataVersion={dataVersion} 
+                  triggerRefresh={triggerRefresh} 
+                  madrasahId={madrasah?.id} 
+                  onNavigateToWallet={() => setView('wallet-sms')}
+                  onNavigateToAccounting={() => setView('accounting')}
+                  onNavigateToAttendance={() => setView('attendance')}
+                />;
       case 'classes':
         return <Classes onClassClick={(cls) => { setSelectedClass(cls); setView('students'); }} lang={lang} madrasah={madrasah} dataVersion={dataVersion} triggerRefresh={triggerRefresh} readOnly={role === 'teacher'} />;
       case 'students':
@@ -120,7 +129,16 @@ const App: React.FC = () => {
       case 'exams':
         return <Exams lang={lang} madrasah={madrasah} onBack={() => setView('home')} role={role} />;
       default:
-        return <Home onStudentClick={(s) => { setSelectedStudent(s); setView('student-details'); }} lang={lang} dataVersion={dataVersion} triggerRefresh={triggerRefresh} madrasahId={madrasah?.id} onNavigateToWallet={() => setView('wallet-sms')} />;
+        return <Home 
+                  onStudentClick={(s) => { setSelectedStudent(s); setView('student-details'); }} 
+                  lang={lang} 
+                  dataVersion={dataVersion} 
+                  triggerRefresh={triggerRefresh} 
+                  madrasahId={madrasah?.id} 
+                  onNavigateToWallet={() => setView('wallet-sms')}
+                  onNavigateToAccounting={() => setView('accounting')}
+                  onNavigateToAttendance={() => setView('attendance')}
+                />;
     }
   };
 
