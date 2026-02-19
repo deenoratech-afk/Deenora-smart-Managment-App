@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { Madrasah, LedgerEntry, Fee, Language, UserRole, Class, Student } from '../types';
-import { Calculator, Plus, ArrowUpCircle, ArrowDownCircle, Wallet, History, Users, Loader2, Save, X, Calendar, DollarSign, Tag, FileText, CheckCircle2, TrendingUp, AlertCircle, Send, Search, ChevronDown, BarChart3 } from 'lucide-react';
+import { Calculator, Plus, ArrowUpCircle, ArrowDownCircle, Wallet, History, Users, Loader2, Save, X, Calendar, DollarSign, Tag, FileText, CheckCircle2, TrendingUp, AlertCircle, Send, Search, ChevronDown, BarChart3, Settings2 } from 'lucide-react';
 import { t } from '../translations';
 import { sortMadrasahClasses } from './Classes';
 
@@ -14,14 +14,13 @@ interface AccountingProps {
 }
 
 const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role }) => {
-  // Set default tab to 'fees' so users find "ছাত্র ফি" immediately
   const [activeTab, setActiveTab] = useState<'summary' | 'ledger' | 'fees' | 'structures'>('fees');
   const [ledger, setLedger] = useState<LedgerEntry[]>([]);
   const [feesReport, setFeesReport] = useState<any[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
   const [structures, setStructures] = useState<any[]>([]);
   
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showAddLedger, setShowAddLedger] = useState(false);
   const [showAddStructure, setShowAddStructure] = useState(false);
@@ -51,35 +50,37 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
   };
 
   const fetchData = async () => {
+    if (!madrasah?.id) return;
     setLoading(true);
     try {
       if (activeTab === 'summary' || activeTab === 'ledger') {
-        const { data } = await supabase.from('ledger').select('*').eq('madrasah_id', madrasah?.id).order('transaction_date', { ascending: false });
+        const { data } = await supabase.from('ledger').select('*').eq('madrasah_id', madrasah.id).order('transaction_date', { ascending: false });
         if (data) setLedger(data);
       }
       
       if (activeTab === 'fees') {
         const { data, error } = await supabase.rpc('get_monthly_dues_report', {
-          p_madrasah_id: madrasah?.id,
+          p_madrasah_id: madrasah.id,
           p_class_id: selectedClass || null,
           p_month: selectedMonth
         });
         if (error) throw error;
-        if (data) setFeesReport(data);
+        setFeesReport(data || []);
       }
 
       if (activeTab === 'structures') {
-        const { data } = await supabase.from('fee_structures').select('*, classes(class_name)').eq('madrasah_id', madrasah?.id);
+        const { data } = await supabase.from('fee_structures').select('*, classes(class_name)').eq('madrasah_id', madrasah.id);
         if (data) setStructures(data);
       }
     } catch (e: any) { 
-      console.error(e);
-      if (activeTab === 'fees' && e.message.includes('get_monthly_dues_report')) {
-        alert("Database error: Please run the fees RPC function in SQL Editor.");
-      }
+      console.error("Accounting Fetch Error:", e);
     } finally { setLoading(false); }
   };
 
+  /**
+   * FIX: Added missing handleAddLedger function.
+   * Logic: Inserts a new income or expense entry into the ledger table.
+   */
   const handleAddLedger = async () => {
     if (!madrasah || !amount || !category) return;
     setIsSaving(true);
@@ -88,15 +89,21 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
         madrasah_id: madrasah.id,
         type,
         amount: parseFloat(amount),
-        category,
-        description: desc,
+        category: category.trim(),
+        description: desc.trim(),
         transaction_date: new Date().toISOString().split('T')[0]
       });
       if (error) throw error;
       setShowAddLedger(false);
-      setAmount(''); setCategory(''); setDesc('');
+      setAmount('');
+      setCategory('');
+      setDesc('');
       fetchData();
-    } catch (err: any) { alert(err.message); } finally { setIsSaving(false); }
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCollectFee = async () => {
@@ -152,10 +159,10 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
         </div>
       </div>
 
-      <div className="flex p-1 bg-white/10 rounded-2xl border border-white/20 overflow-x-auto no-scrollbar">
+      <div className="flex p-1.5 bg-white/10 rounded-[1.5rem] border border-white/20 overflow-x-auto no-scrollbar">
         {(['fees', 'summary', 'ledger', 'structures'] as const).map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 min-w-[80px] py-3 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all ${activeTab === tab ? 'bg-white text-[#8D30F4]' : 'text-white/60'}`}>
-            {tab === 'summary' ? t('dashboard', lang) : tab === 'ledger' ? 'লেনদেন' : tab === 'fees' ? 'ছাত্র ফি' : 'ফি সেটিংস'}
+          <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 min-w-[85px] py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${activeTab === tab ? 'bg-white text-[#8D30F4] shadow-lg' : 'text-white/60'}`}>
+            {tab === 'summary' ? 'ড্যাশবোর্ড' : tab === 'ledger' ? 'লেনদেন' : tab === 'fees' ? 'ছাত্র ফি' : 'ফি সেটিংস'}
           </button>
         ))}
       </div>
@@ -164,7 +171,7 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
         <div className="space-y-4 animate-in slide-in-from-bottom-5">
           <div className="bg-white/95 p-6 rounded-[2.5rem] border border-white shadow-xl flex items-center justify-between">
             <div className="text-left">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('total_revenue', lang)}</p>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">মোট কালেকশন</p>
               <h2 className="text-3xl font-black text-[#2E0B5E]">৳ {totals.income.toLocaleString('bn-BD')}</h2>
             </div>
             <div className="w-12 h-12 bg-green-50 text-green-500 rounded-2xl flex items-center justify-center shadow-inner">
@@ -174,7 +181,7 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
 
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-white/95 p-5 rounded-[2rem] border border-white shadow-lg">
-              <p className="text-[9px] font-black uppercase text-slate-400 mb-1">ব্যয় (Expense)</p>
+              <p className="text-[9px] font-black uppercase text-slate-400 mb-1">মোট ব্যয়</p>
               <h4 className="text-xl font-black text-red-500">৳ {totals.expense.toLocaleString('bn-BD')}</h4>
             </div>
             <div className="bg-white/95 p-5 rounded-[2rem] border border-white shadow-lg">
@@ -224,28 +231,44 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
               </div>
            </div>
 
-           <div className="space-y-2">
-              {loading ? <div className="flex justify-center py-10"><Loader2 className="animate-spin text-white" /></div> : feesReport.length > 0 ? (
+           <div className="space-y-2.5">
+              {loading ? (
+                <div className="flex flex-col items-center justify-center py-16 text-white/50">
+                  <Loader2 className="animate-spin mb-4" size={32} />
+                  <p className="text-[10px] font-black uppercase tracking-widest">ডাটা লোড হচ্ছে...</p>
+                </div>
+              ) : feesReport.length > 0 ? (
                   feesReport.map((item: any) => (
                     <div key={item.student_id} className="bg-white/95 p-4 rounded-[1.8rem] border border-white shadow-md flex items-center justify-between group active:scale-[0.98] transition-all">
-                       <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black ${item.status === 'paid' ? 'bg-green-50 text-green-500' : item.status === 'partial' ? 'bg-orange-50 text-orange-500' : 'bg-red-50 text-red-500'}`}>
+                       <div className="flex items-center gap-3.5 min-w-0">
+                          <div className={`w-11 h-11 rounded-[1rem] flex items-center justify-center font-black shrink-0 ${item.status === 'paid' ? 'bg-green-50 text-green-500' : item.status === 'partial' ? 'bg-orange-50 text-orange-500' : 'bg-red-50 text-red-500'}`}>
                              {item.roll || '-'}
                           </div>
-                          <div>
-                             <h5 className="font-black text-[#2E0B5E] font-noto leading-none mb-1">{item.student_name}</h5>
+                          <div className="min-w-0">
+                             <h5 className="font-black text-[#2E0B5E] font-noto truncate leading-tight mb-1">{item.student_name}</h5>
                              <div className="flex items-center gap-2">
-                                <p className="text-[9px] text-slate-400 font-bold uppercase">{t('amount_due', lang)}: ৳{item.balance_due}</p>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase">বকেয়া: ৳{item.balance_due}</p>
                                 {item.status === 'partial' && <span className="text-[8px] bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-md font-black uppercase">Partial</span>}
                              </div>
                           </div>
                        </div>
-                       <button onClick={() => { setSelectedStudent(item); setCollectAmount(item.balance_due.toString()); setShowFeeCollection(true); }} disabled={item.status === 'paid'} className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all ${item.status === 'paid' ? 'bg-green-100 text-green-600 border border-green-200' : 'bg-[#8D30F4] text-white shadow-md active:scale-95'}`}>
-                          {item.status === 'paid' ? 'PAID' : t('collect_now', lang)}
+                       <button onClick={() => { setSelectedStudent(item); setCollectAmount(item.balance_due.toString()); setShowFeeCollection(true); }} disabled={item.status === 'paid'} className={`px-5 py-3 rounded-xl text-[10px] font-black uppercase transition-all shadow-sm ${item.status === 'paid' ? 'bg-green-100 text-green-600 border border-green-200' : 'bg-[#8D30F4] text-white active:scale-95'}`}>
+                          {item.status === 'paid' ? 'PAID' : 'ফি জমা নিন'}
                        </button>
                     </div>
                   ))
-              ) : <div className="text-center py-20 text-white/40 uppercase text-xs font-black">No student data found</div>}
+              ) : (
+                <div className="text-center py-16 bg-white/10 rounded-[3rem] border-2 border-dashed border-white/20 mx-2 px-6 flex flex-col items-center">
+                   <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center text-white/40 mb-5"><AlertCircle size={32} /></div>
+                   <h3 className="text-white text-lg font-black font-noto leading-tight">কোনো তথ্য পাওয়া যায়নি</h3>
+                   <p className="text-white/60 text-[10px] font-bold mt-2 uppercase tracking-wide leading-relaxed">
+                     সম্ভবত আপনি এখনো এই শ্রেণির জন্য ফি নির্ধারণ করেননি। অনুগ্রহ করে ফি সেটিংস চেক করুন।
+                   </p>
+                   <button onClick={() => setActiveTab('structures')} className="mt-6 px-6 py-3 bg-white text-[#8D30F4] rounded-xl text-[11px] font-black uppercase flex items-center gap-2 active:scale-95 transition-all">
+                      <Settings2 size={16} /> ফি সেটিংস এ যান
+                   </button>
+                </div>
+              )}
            </div>
         </div>
       )}
@@ -276,14 +299,16 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
       {activeTab === 'structures' && (
         <div className="space-y-4 animate-in slide-in-from-bottom-5">
            <button onClick={() => setShowAddStructure(true)} className="w-full py-5 bg-white rounded-[2.2rem] text-[#8D30F4] font-black flex items-center justify-center gap-3 shadow-xl active:scale-95 transition-all">
-              <Plus size={24} strokeWidth={3} /> ফি-র ধরণ যোগ করুন
+              <Plus size={24} strokeWidth={3} /> নতুন ফি আইটেম যোগ করুন
            </button>
            <div className="space-y-3">
               {structures.length > 0 ? structures.map(s => (
                 <div key={s.id} className="bg-white/95 p-5 rounded-[2rem] border border-white shadow-md flex items-center justify-between">
                    <div className="min-w-0">
-                      <h5 className="font-black text-[#2E0B5E] font-noto text-lg truncate">{s.fee_name}</h5>
-                      <p className="text-[10px] font-black text-[#A179FF] uppercase tracking-widest">{s.classes?.class_name}</p>
+                      <h5 className="font-black text-[#2E0B5E] font-noto text-[17px] truncate">{s.fee_name}</h5>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[10px] font-black text-[#A179FF] uppercase tracking-widest">{s.classes?.class_name}</span>
+                      </div>
                    </div>
                    <div className="text-2xl font-black text-[#8D30F4] shrink-0">৳{s.amount}</div>
                 </div>
@@ -353,7 +378,7 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
                 <div className="relative"><input type="text" className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-sm outline-none border-2 border-transparent focus:border-[#8D30F4]/20" placeholder="ক্যাটাগরি (যেমন: বেতন, বিদ্যুৎ)" value={category} onChange={(e) => setCategory(e.target.value)} /><Tag className="absolute left-4 top-4 text-slate-300" size={20}/></div>
                 <div className="relative"><textarea className="w-full h-24 bg-slate-50 rounded-2xl px-12 py-4 font-bold text-sm outline-none border-2 border-transparent focus:border-[#8D30F4]/20 resize-none" placeholder="বিবরণ" value={desc} onChange={(e) => setDesc(e.target.value)} /><FileText className="absolute left-4 top-4 text-slate-300" size={20}/></div>
                 <button onClick={handleAddLedger} disabled={isSaving} className="w-full py-5 premium-btn text-white font-black rounded-full shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-all">
-                  {isSaving ? <Loader2 className="animate-spin" /> : <><Save size={20}/> সংরক্ষণ করুন</>}
+                  {isSaving ? <Loader2 className="animate-spin" size={20} /> : <><Save size={20}/> সংরক্ষণ করুন</>}
                 </button>
              </div>
           </div>
