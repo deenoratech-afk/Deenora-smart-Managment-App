@@ -1,0 +1,19 @@
+
+{
+  "name": "Madrasah Contact",
+  "short_name": "Madrasah",
+  "description": "Madrasah Student Contact Management App",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#d35132",
+  "theme_color": "#d35132",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://img.icons8.com/ios-filled/512/FFFFFF/mosque.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
