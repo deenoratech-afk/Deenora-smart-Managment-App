@@ -1,58 +1,106 @@
 
 -- ==========================================
--- AUTH SYNC AUTOMATION
--- This script ensures that when you create a user in Supabase Auth,
--- they automatically get a Madrasah and a Profile record.
+-- 1. CORE TABLES DEFINITION
 -- ==========================================
 
--- 1. Create the function that handles the new user
+-- Madrasahs Table
+CREATE TABLE IF NOT EXISTS public.madrasahs (
+  id UUID PRIMARY KEY, -- Will match Auth User ID for 1:1 admins
+  name TEXT NOT NULL,
+  phone TEXT,
+  logo_url TEXT,
+  is_active BOOLEAN DEFAULT true,
+  is_super_admin BOOLEAN DEFAULT false,
+  balance NUMERIC DEFAULT 0,
+  sms_balance INTEGER DEFAULT 0,
+  reve_api_key TEXT,
+  reve_secret_key TEXT,
+  reve_caller_id TEXT,
+  reve_client_id TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- User Profiles Table
+CREATE TABLE IF NOT EXISTS public.profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  madrasah_id UUID REFERENCES public.madrasahs(id) ON DELETE CASCADE,
+  full_name TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT 'madrasah_admin', -- super_admin, madrasah_admin, teacher, accountant
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ==========================================
+-- 2. AUTH SYNC AUTOMATION
+-- ==========================================
+
+-- Resilient Trigger Function
 CREATE OR REPLACE FUNCTION public.handle_new_auth_user()
 RETURNS TRIGGER AS $$
 DECLARE
-  new_madrasah_id UUID;
-  user_full_name TEXT;
+    v_full_name TEXT;
+    v_madrasah_name TEXT;
 BEGIN
-  -- Extract name from metadata if it exists, otherwise use email prefix
-  user_full_name := COALESCE(
-    (new.raw_user_meta_data->>'name'), 
-    split_part(new.email, '@', 1)
-  );
+    -- 1. Determine names from metadata or email
+    v_full_name := COALESCE(new.raw_user_meta_data->>'name', split_part(new.email, '@', 1));
+    v_madrasah_name := COALESCE(new.raw_user_meta_data->>'madrasah_name', v_full_name || ' Madrasah');
 
-  -- 1. Create a new Madrasah for this admin
-  -- We use the same ID as the auth user for the madrasah to keep it simple,
-  -- or you can let it generate a new UUID.
-  INSERT INTO public.madrasahs (id, name, is_active, balance, sms_balance)
-  VALUES (new.id, user_full_name || ' Madrasah', true, 0, 0)
-  RETURNING id INTO new_madrasah_id;
+    -- 2. Create the Madrasah record
+    -- We use 'new.id' as the PK for the madrasah created for the first admin
+    INSERT INTO public.madrasahs (
+        id, 
+        name, 
+        is_active, 
+        is_super_admin, 
+        balance, 
+        sms_balance
+    )
+    VALUES (
+        new.id, 
+        v_madrasah_name, 
+        true, 
+        false, 
+        0, 
+        0
+    )
+    ON CONFLICT (id) DO NOTHING;
 
-  -- 2. Create the User Profile linked to the Madrasah
-  INSERT INTO public.profiles (id, madrasah_id, full_name, role, is_active)
-  VALUES (new.id, new_madrasah_id, user_full_name, 'madrasah_admin', true);
+    -- 3. Create the Profile record
+    INSERT INTO public.profiles (
+        id, 
+        madrasah_id, 
+        full_name, 
+        role, 
+        is_active
+    )
+    VALUES (
+        new.id, 
+        new.id, 
+        v_full_name, 
+        'madrasah_admin', 
+        true
+    )
+    ON CONFLICT (id) DO UPDATE 
+    SET madrasah_id = EXCLUDED.madrasah_id;
 
-  RETURN NEW;
+    RETURN NEW;
+EXCEPTION WHEN OTHERS THEN
+    -- Log error details to Supabase logs (Postgres RAISE)
+    RAISE LOG 'Error in handle_new_auth_user: %', SQLERRM;
+    RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
--- 2. Create the Trigger
--- This fires AFTER a user is created in the auth.users table
+-- Re-create Trigger
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_auth_user();
 
 -- ==========================================
--- RE-ENABLE RLS FOR PROFILES (Fixing recursion)
+-- 3. OTHER SYSTEM TABLES
 -- ==========================================
--- Ensure the profiles table can be read during the login flow
--- without causing circular logic errors.
 
-DROP POLICY IF EXISTS "Enable read access for all users" ON public.profiles;
-CREATE POLICY "profiles_read_own" ON public.profiles
-FOR SELECT USING (auth.uid() = id);
-
--- ==========================================
--- ADD MISSING SYSTEM SETTINGS TABLE
--- ==========================================
 CREATE TABLE IF NOT EXISTS public.system_settings (
   id UUID PRIMARY KEY DEFAULT '00000000-0000-0000-0000-000000000001',
   reve_api_key TEXT,

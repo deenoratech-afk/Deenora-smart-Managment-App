@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Home, User, BookOpen, Wallet, ShieldCheck, BarChart3, CreditCard, RefreshCw, Smartphone, Bell, X, Info, AlertTriangle, CheckCircle2, Clock, Calculator, ClipboardList, GraduationCap, Banknote } from 'lucide-react';
+import { Home, User, BookOpen, Wallet, ShieldCheck, BarChart3, CreditCard, RefreshCw, Smartphone, Bell, X, Info, AlertTriangle, CheckCircle2, Clock, Calculator, ClipboardList, GraduationCap, Banknote, MessageSquare } from 'lucide-react';
 import { View, Language, Madrasah, Transaction, Profile } from '../types';
 import { t } from '../translations';
 import { supabase } from '../supabase';
@@ -47,6 +47,7 @@ const Layout: React.FC<LayoutProps> = ({ children, currentView, setView, lang, m
     if (tab === 'accounting' && currentView === 'accounting') return true;
     if (tab === 'attendance' && currentView === 'attendance') return true;
     if (tab === 'exams' && currentView === 'exams') return true;
+    if (tab === 'wallet' && currentView === 'wallet-sms') return true;
     if (tab === 'classes' && (currentView === 'classes' || currentView === 'students' || currentView === 'student-details' || currentView === 'student-form')) return true;
     return false;
   };
@@ -106,9 +107,9 @@ const Layout: React.FC<LayoutProps> = ({ children, currentView, setView, lang, m
                 <ClipboardList size={20} />
                 <span className="text-[9px] font-black font-noto opacity-80">হাজিরা</span>
               </button>
-              <button onClick={() => setView('exams')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('exams') ? 'text-[#8D30F4]' : 'text-[#A179FF]'}`}>
-                <GraduationCap size={20} />
-                <span className="text-[9px] font-black font-noto opacity-80">পরীক্ষা</span>
+              <button onClick={() => setView('wallet-sms')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('wallet') ? 'text-[#8D30F4]' : 'text-[#A179FF]'}`}>
+                <MessageSquare size={20} />
+                <span className="text-[9px] font-black font-noto opacity-80">এসএমএস</span>
               </button>
               {(role === 'madrasah_admin' || role === 'accountant') && (
                 <button onClick={() => setView('accounting')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('accounting') ? 'text-[#8D30F4]' : 'text-[#A179FF]'}`}>
