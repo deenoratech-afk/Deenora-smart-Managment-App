@@ -1,11 +1,16 @@
 
--- ১. টেবিল কলাম নিশ্চিত করা (যদি কলামের নাম ভুল থাকে তবে ঠিক করা)
+-- ১. টেবিল কলাম নিশ্চিত করা (amount_paid এবং class_id চেক করা)
 DO $$ 
 BEGIN 
-    -- যদি 'amount' নামে কলাম থাকে কিন্তু 'amount_paid' না থাকে, তবে রিনেম করো
+    -- 'amount_paid' কলাম নিশ্চিত করা
     IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='fees' AND column_name='amount') 
     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='fees' AND column_name='amount_paid') THEN
         ALTER TABLE public.fees RENAME COLUMN amount TO amount_paid;
+    END IF;
+
+    -- 'class_id' কলাম নিশ্চিত করা (যদি না থাকে তবে যোগ করা)
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='fees' AND column_name='class_id') THEN
+        ALTER TABLE public.fees ADD COLUMN class_id UUID REFERENCES public.classes(id) ON DELETE CASCADE;
     END IF;
 END $$;
 

@@ -74,13 +74,12 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
         if (error) {
           console.error("RPC Error:", error);
           setFetchError(error.message);
-          setFeesReport([]); // Clear results on error
-          return; // Stop processing
+          setFeesReport([]);
+          return;
         }
 
         setFeesReport(data || []);
 
-        // Verify if students exist in DB even if report is empty
         if (!data || data.length === 0) {
           let checkQuery = supabase.from('students').select('id', { count: 'exact', head: true }).eq('madrasah_id', madrasah.id);
           if (classId) checkQuery = checkQuery.eq('class_id', classId);
@@ -106,7 +105,8 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
     setIsSaving(true);
     try {
       const amt = parseFloat(collectAmount);
-      // Ensure the insert matches our schema column
+      
+      // ডাটাবেসে পেমেন্ট এন্ট্রি করা
       const { error: feeErr } = await supabase.from('fees').insert({
         madrasah_id: madrasah.id,
         student_id: selectedStudent.student_id,
@@ -115,8 +115,15 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
         month: selectedMonth,
         status: (Number(selectedStudent.total_paid) + amt) >= selectedStudent.total_payable ? 'paid' : 'partial'
       });
-      if (feeErr) throw feeErr;
+      
+      if (feeErr) {
+        if (feeErr.message.includes('column') && feeErr.message.includes('not found')) {
+          throw new Error('ডাটাবেস কলাম মিসিং। অনুগ্রহ করে SQL এডিটর থেকে নতুন কোডটি রান করুন।');
+        }
+        throw feeErr;
+      }
 
+      // লেনদেনের খেরাতে (Ledger) আয় যোগ করা
       await supabase.from('ledger').insert({
         madrasah_id: madrasah.id,
         type: 'income',
@@ -130,10 +137,13 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
       setCollectAmount('');
       setSelectedStudent(null);
       fetchData();
-    } catch (err: any) { alert(err.message); } finally { setIsSaving(false); }
+    } catch (err: any) { 
+      alert(err.message); 
+    } finally { 
+      setIsSaving(false); 
+    }
   };
 
-  // Fixed missing handleAddLedger function
   const handleAddLedger = async () => {
     if (!madrasah || !amount || !category) return;
     setIsSaving(true);
@@ -147,20 +157,10 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
         transaction_date: new Date().toISOString().split('T')[0]
       });
       if (error) throw error;
-      
-      // Reset form and close modal
       setShowAddLedger(false);
-      setAmount('');
-      setCategory('');
-      setDesc('');
-      
-      // Refresh data
+      setAmount(''); setCategory(''); setDesc('');
       fetchData();
-    } catch (err: any) {
-      alert(err.message);
-    } finally {
-      setIsSaving(false);
-    }
+    } catch (err: any) { alert(err.message); } finally { setIsSaving(false); }
   };
 
   const totals = ledger.reduce((acc, curr) => {
@@ -226,8 +226,9 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
                     <AlertCircle size={20} />
                  </div>
                  <div className="flex-1">
-                    <p className="font-black">টেকনিক্যাল এরর!</p>
-                    <p className="opacity-70">ডাটাবেসের সাথে সংযোগে সমস্যা হচ্ছে। (Error: {fetchError})</p>
+                    <p className="font-black">স্কিমা এরর!</p>
+                    <p className="opacity-70">{fetchError}</p>
+                    <p className="mt-1 font-normal opacity-60">সমাধান: SQL এডিটর থেকে নতুন প্রোভাইড করা কোডটি রান করুন।</p>
                  </div>
                  <button onClick={() => fetchData()} className="bg-white px-3 py-1.5 rounded-lg border border-red-200 text-red-600 active:scale-95"><RefreshCw size={14}/></button>
               </div>
@@ -272,17 +273,13 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
                         ? 'আপনার ডাটাবেসে ছাত্র আছে, কিন্তু তারা সম্ভবত সঠিক শ্রেণিতে নিবন্ধিত নয় অথবা ডাটাবেস ফাংশনে সমস্যা হচ্ছে।'
                         : 'এই মাদরাসার অধীনে কোনো ছাত্র নিবন্ধিত নেই। অনুগ্রহ করে ছাত্র যোগ করুন।'}
                    </p>
-                   {anyStudentsInMadrasah && (
-                     <button onClick={() => fetchData()} className="mt-6 px-6 py-3 bg-white text-[#8D30F4] rounded-xl text-[11px] font-black uppercase flex items-center gap-2 active:scale-95 transition-all">
-                        <RefreshCw size={16} /> পুনরায় চেষ্টা করুন
-                     </button>
-                   )}
                 </div>
               )}
            </div>
         </div>
       )}
-      {/* Existing Tabs */}
+      
+      {/* বাকি ট্যাবগুলো একই থাকবে */}
       {activeTab === 'summary' && (
         <div className="space-y-4 animate-in slide-in-from-bottom-5">
           <div className="bg-white/95 p-6 rounded-[2.5rem] border border-white shadow-xl flex items-center justify-between">
