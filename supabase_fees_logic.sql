@@ -1,4 +1,7 @@
 
+-- প্রথমে পুরনো ফাংশনটি মুছে ফেলা হচ্ছে যাতে রিটার্ন টাইপ পরিবর্তনের এরর না আসে
+DROP FUNCTION IF EXISTS get_monthly_dues_report(UUID, UUID, TEXT);
+
 -- ফাংশন: মাসিক ফি রিপোর্ট এবং বকেয়া হিসাব
 CREATE OR REPLACE FUNCTION get_monthly_dues_report(
     p_madrasah_id UUID,
@@ -14,11 +17,15 @@ RETURNS TABLE (
     total_paid NUMERIC,
     balance_due NUMERIC,
     status TEXT
-) AS $$
+) 
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
     RETURN QUERY
     WITH class_fees AS (
-        -- ঐ ক্লাসের জন্য নির্ধারিত মোট ফি
+        -- ঐ মাদরাসার জন্য নির্ধারিত ফি স্ট্রাকচার (শ্রেণি ভিত্তিক মোট ফি)
         SELECT 
             fs.class_id, 
             SUM(fs.amount) as total_fixed_fee
@@ -27,14 +34,13 @@ BEGIN
         GROUP BY fs.class_id
     ),
     student_payments AS (
-        -- ছাত্রের প্রদানকৃত মোট টাকা ঐ নির্দিষ্ট মাসের জন্য
+        -- ঐ নির্দিষ্ট মাসের জন্য জমা হওয়া টাকা (ছাত্র ভিত্তিক)
         SELECT 
             f.student_id, 
-            f.month,
             SUM(f.amount_paid) as total_collected
         FROM public.fees f
         WHERE f.madrasah_id = p_madrasah_id AND f.month = p_month
-        GROUP BY f.student_id, f.month
+        GROUP BY f.student_id
     )
     SELECT 
         s.id as student_id,
@@ -45,7 +51,8 @@ BEGIN
         COALESCE(sp.total_collected, 0)::NUMERIC as total_paid,
         (COALESCE(cf.total_fixed_fee, 0) - COALESCE(sp.total_collected, 0))::NUMERIC as balance_due,
         CASE 
-            WHEN COALESCE(sp.total_collected, 0) >= COALESCE(cf.total_fixed_fee, 0) AND COALESCE(cf.total_fixed_fee, 0) > 0 THEN 'paid'
+            WHEN COALESCE(cf.total_fixed_fee, 0) <= 0 THEN 'no_fee'
+            WHEN COALESCE(sp.total_collected, 0) >= COALESCE(cf.total_fixed_fee, 0) THEN 'paid'
             WHEN COALESCE(sp.total_collected, 0) > 0 THEN 'partial'
             ELSE 'unpaid'
         END as status
@@ -54,6 +61,6 @@ BEGIN
     LEFT JOIN student_payments sp ON s.id = sp.student_id
     WHERE s.madrasah_id = p_madrasah_id
     AND (p_class_id IS NULL OR s.class_id = p_class_id)
-    ORDER BY s.roll ASC;
+    ORDER BY s.roll ASC NULLS LAST;
 END;
-$$ LANGUAGE plpgsql STABLE;
+$$;
