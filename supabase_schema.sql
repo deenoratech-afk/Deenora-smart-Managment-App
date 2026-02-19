@@ -1,72 +1,69 @@
 
--- Exam tables
-CREATE TABLE IF NOT EXISTS public.exams (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  madrasah_id UUID REFERENCES public.madrasahs(id) ON DELETE CASCADE NOT NULL,
-  class_id UUID REFERENCES public.classes(id) ON DELETE CASCADE NOT NULL,
-  exam_name TEXT NOT NULL,
-  exam_date DATE NOT NULL,
-  is_published BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
+-- ==========================================
+-- AUTH SYNC AUTOMATION
+-- This script ensures that when you create a user in Supabase Auth,
+-- they automatically get a Madrasah and a Profile record.
+-- ==========================================
 
-CREATE TABLE IF NOT EXISTS public.exam_subjects (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  exam_id UUID REFERENCES public.exams(id) ON DELETE CASCADE NOT NULL,
-  subject_name TEXT NOT NULL,
-  full_marks INTEGER DEFAULT 100,
-  pass_marks INTEGER DEFAULT 33,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS public.exam_marks (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  exam_id UUID REFERENCES public.exams(id) ON DELETE CASCADE NOT NULL,
-  student_id UUID REFERENCES public.students(id) ON DELETE CASCADE NOT NULL,
-  subject_id UUID REFERENCES public.exam_subjects(id) ON DELETE CASCADE NOT NULL,
-  marks_obtained DECIMAL(5,2) NOT NULL,
-  UNIQUE(student_id, subject_id)
-);
-
--- Indices
-CREATE INDEX IF NOT EXISTS idx_exams_class ON public.exams(class_id);
-CREATE INDEX IF NOT EXISTS idx_exam_marks_student ON public.exam_marks(student_id);
-
--- Function to get exam ranking and detailed results
-CREATE OR REPLACE FUNCTION get_exam_ranking(p_exam_id UUID)
-RETURNS TABLE (
-    student_id UUID,
-    student_name TEXT,
-    roll INTEGER,
-    total_marks DECIMAL(12,2),
-    pass_status BOOLEAN,
-    rank BIGINT
-) AS $$
+-- 1. Create the function that handles the new user
+CREATE OR REPLACE FUNCTION public.handle_new_auth_user()
+RETURNS TRIGGER AS $$
+DECLARE
+  new_madrasah_id UUID;
+  user_full_name TEXT;
 BEGIN
-    RETURN QUERY
-    WITH student_totals AS (
-        SELECT 
-            s.id as s_id,
-            s.student_name as s_name,
-            s.roll as s_roll,
-            SUM(em.marks_obtained) as t_marks,
-            -- Check if any subject marks are below pass marks
-            BOOL_AND(em.marks_obtained >= es.pass_marks) as p_status
-        FROM public.students s
-        JOIN public.exams e ON s.class_id = e.class_id
-        LEFT JOIN public.exam_subjects es ON e.id = es.exam_id
-        LEFT JOIN public.exam_marks em ON s.id = em.student_id AND es.id = em.subject_id
-        WHERE e.id = p_exam_id
-        GROUP BY s.id, s.student_name, s.roll
-    )
-    SELECT 
-        s_id,
-        s_name,
-        s_roll,
-        COALESCE(t_marks, 0),
-        COALESCE(p_status, FALSE),
-        DENSE_RANK() OVER (ORDER BY COALESCE(t_marks, 0) DESC) as rank
-    FROM student_totals
-    ORDER BY rank ASC, s_roll ASC;
+  -- Extract name from metadata if it exists, otherwise use email prefix
+  user_full_name := COALESCE(
+    (new.raw_user_meta_data->>'name'), 
+    split_part(new.email, '@', 1)
+  );
+
+  -- 1. Create a new Madrasah for this admin
+  -- We use the same ID as the auth user for the madrasah to keep it simple,
+  -- or you can let it generate a new UUID.
+  INSERT INTO public.madrasahs (id, name, is_active, balance, sms_balance)
+  VALUES (new.id, user_full_name || ' Madrasah', true, 0, 0)
+  RETURNING id INTO new_madrasah_id;
+
+  -- 2. Create the User Profile linked to the Madrasah
+  INSERT INTO public.profiles (id, madrasah_id, full_name, role, is_active)
+  VALUES (new.id, new_madrasah_id, user_full_name, 'madrasah_admin', true);
+
+  RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 2. Create the Trigger
+-- This fires AFTER a user is created in the auth.users table
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_auth_user();
+
+-- ==========================================
+-- RE-ENABLE RLS FOR PROFILES (Fixing recursion)
+-- ==========================================
+-- Ensure the profiles table can be read during the login flow
+-- without causing circular logic errors.
+
+DROP POLICY IF EXISTS "Enable read access for all users" ON public.profiles;
+CREATE POLICY "profiles_read_own" ON public.profiles
+FOR SELECT USING (auth.uid() = id);
+
+-- ==========================================
+-- ADD MISSING SYSTEM SETTINGS TABLE
+-- ==========================================
+CREATE TABLE IF NOT EXISTS public.system_settings (
+  id UUID PRIMARY KEY DEFAULT '00000000-0000-0000-0000-000000000001',
+  reve_api_key TEXT,
+  reve_secret_key TEXT,
+  reve_caller_id TEXT,
+  reve_client_id TEXT,
+  bkash_number TEXT,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Insert default settings row if not exists
+INSERT INTO public.system_settings (id, bkash_number)
+VALUES ('00000000-0000-0000-0000-000000000001', '01700000000')
+ON CONFLICT (id) DO NOTHING;

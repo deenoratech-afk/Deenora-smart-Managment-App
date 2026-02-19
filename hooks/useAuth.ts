@@ -13,26 +13,33 @@ export const useAuth = () => {
 
   const fetchUserProfile = async (userId: string) => {
     try {
-      const { data: profileData, error } = await supabase
+      // First, get the profile
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('*, madrasahs(*)')
+        .select('*')
         .eq('id', userId)
         .maybeSingle();
       
-      if (error) throw error;
+      if (profileError) throw profileError;
 
       if (profileData) {
         setProfile(profileData);
-        // Handle cases where madrasahs might be returned as an array or object
-        const mData = Array.isArray(profileData.madrasahs) 
-          ? profileData.madrasahs[0] 
-          : profileData.madrasahs;
-          
-        setMadrasah(mData);
-        if (mData) offlineService.setCache('profile', mData);
+        
+        // Then get the madrasah
+        const { data: madrasahData, error: mError } = await supabase
+          .from('madrasahs')
+          .select('*')
+          .eq('id', profileData.madrasah_id)
+          .maybeSingle();
+
+        if (mError) throw mError;
+        
+        setMadrasah(madrasahData);
+        if (madrasahData) offlineService.setCache('profile', madrasahData);
       } else {
-        setAuthError("Unauthorized Access: Profile not found.");
-        await handleLogout();
+        // If profile doesn't exist yet, it might be the trigger lagging or 
+        // a manual auth user without SQL data.
+        setAuthError("Profile not found in database. Please check if SQL triggers are running.");
       }
     } catch (err: any) {
       console.error("fetchUserProfile error:", err);
@@ -58,6 +65,7 @@ export const useAuth = () => {
         const teacherSession = localStorage.getItem('teacher_session');
         if (teacherSession) {
           const teacherData = JSON.parse(teacherSession);
+          // Teachers usually have their madrasah data embedded or cached
           const mData = Array.isArray(teacherData.madrasahs) 
             ? teacherData.madrasahs[0] 
             : teacherData.madrasahs;
