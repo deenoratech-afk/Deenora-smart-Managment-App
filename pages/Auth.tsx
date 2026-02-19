@@ -53,13 +53,11 @@ const Auth: React.FC<AuthProps> = ({ lang }) => {
     setError('');
 
     try {
-      // Clean phone number (remove spaces, dashes, etc.)
       const cleanPhone = phone.replace(/\D/g, '');
-      // If the number is 11 digits (BD local), it's standard.
       
       const { data, error: fetchError } = await supabase
         .from('teachers')
-        .select('*, madrasahs(name, logo_url)')
+        .select('*, madrasahs(*)')
         .eq('phone', cleanPhone)
         .eq('login_code', code.trim())
         .eq('is_active', true)

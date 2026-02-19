@@ -23,8 +23,13 @@ export const useAuth = () => {
 
       if (profileData) {
         setProfile(profileData);
-        setMadrasah(profileData.madrasahs);
-        offlineService.setCache('profile', profileData.madrasahs);
+        // Handle cases where madrasahs might be returned as an array or object
+        const mData = Array.isArray(profileData.madrasahs) 
+          ? profileData.madrasahs[0] 
+          : profileData.madrasahs;
+          
+        setMadrasah(mData);
+        if (mData) offlineService.setCache('profile', mData);
       } else {
         setAuthError("Unauthorized Access: Profile not found.");
         await handleLogout();
@@ -53,7 +58,11 @@ export const useAuth = () => {
         const teacherSession = localStorage.getItem('teacher_session');
         if (teacherSession) {
           const teacherData = JSON.parse(teacherSession);
-          setMadrasah(teacherData.madrasahs);
+          const mData = Array.isArray(teacherData.madrasahs) 
+            ? teacherData.madrasahs[0] 
+            : teacherData.madrasahs;
+
+          setMadrasah(mData);
           setProfile({
             id: teacherData.id,
             madrasah_id: teacherData.madrasah_id,

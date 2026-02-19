@@ -37,7 +37,11 @@ const Classes: React.FC<ClassesProps> = ({ onClassClick, lang, madrasah, dataVer
   const [editingClass, setEditingClass] = useState<Class | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<Class | null>(null);
 
-  useEffect(() => { fetchClasses(); }, [dataVersion]);
+  useEffect(() => { 
+    if (madrasah?.id) {
+      fetchClasses(); 
+    }
+  }, [dataVersion, madrasah?.id]);
 
   const fetchClasses = async () => {
     setLoading(true);
