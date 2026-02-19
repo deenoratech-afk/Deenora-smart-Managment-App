@@ -107,14 +107,14 @@ const Layout: React.FC<LayoutProps> = ({ children, currentView, setView, lang, m
                 <ClipboardList size={20} />
                 <span className="text-[9px] font-black font-noto opacity-80">হাজিরা</span>
               </button>
-              <button onClick={() => setView('wallet-sms')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('wallet') ? 'text-[#8D30F4]' : 'text-[#A179FF]'}`}>
-                <MessageSquare size={20} />
-                <span className="text-[9px] font-black font-noto opacity-80">এসএমএস</span>
+              <button onClick={() => setView('exams')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('exams') ? 'text-[#8D30F4]' : 'text-[#A179FF]'}`}>
+                <GraduationCap size={20} />
+                <span className="text-[9px] font-black font-noto opacity-80">পরীক্ষা</span>
               </button>
               {(role === 'madrasah_admin' || role === 'accountant') && (
                 <button onClick={() => setView('accounting')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('accounting') ? 'text-[#8D30F4]' : 'text-[#A179FF]'}`}>
                   <Banknote size={20} />
-                  <span className="text-[9px] font-black font-noto opacity-80">ফি ও হিসাব</span>
+                  <span className="text-[9px] font-black font-noto opacity-80">হিসাব</span>
                 </button>
               )}
               <button onClick={() => setView('classes')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('classes') ? 'text-[#8D30F4]' : 'text-[#A179FF]'}`}>

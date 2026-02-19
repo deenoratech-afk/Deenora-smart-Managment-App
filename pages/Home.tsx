@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Search, Clock, User as UserIcon, RefreshCw, PhoneCall, X, MessageCircle, Phone, AlertCircle, Trash2, AlertTriangle, Loader2, Users, BookOpen, GraduationCap, Wallet, TrendingUp, DollarSign, CheckCircle2, Banknote, ClipboardList, ChevronRight } from 'lucide-react';
+import { Search, Clock, User as UserIcon, RefreshCw, PhoneCall, X, MessageCircle, Phone, AlertCircle, Trash2, AlertTriangle, Loader2, Users, BookOpen, GraduationCap, Wallet, TrendingUp, DollarSign, CheckCircle2, Banknote, ClipboardList, ChevronRight, Trophy } from 'lucide-react';
 import { supabase, offlineApi } from '../supabase';
 import { Student, RecentCall, Language } from '../types';
 import { t } from '../translations';
@@ -13,12 +13,12 @@ interface HomeProps {
   triggerRefresh: () => void;
   madrasahId?: string;
   onNavigateToWallet?: () => void;
-  // Added to allow navigation from quick actions
   onNavigateToAccounting?: () => void;
   onNavigateToAttendance?: () => void;
+  onNavigateToExams?: () => void;
 }
 
-const Home: React.FC<HomeProps> = ({ onStudentClick, lang, dataVersion, triggerRefresh, madrasahId, onNavigateToWallet, onNavigateToAccounting, onNavigateToAttendance }) => {
+const Home: React.FC<HomeProps> = ({ onStudentClick, lang, dataVersion, triggerRefresh, madrasahId, onNavigateToWallet, onNavigateToAccounting, onNavigateToAttendance, onNavigateToExams }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Student[]>([]);
   const [recentCalls, setRecentCalls] = useState<RecentCall[]>([]);
@@ -143,36 +143,6 @@ const Home: React.FC<HomeProps> = ({ onStudentClick, lang, dataVersion, triggerR
     fetchDashboardStats();
   }, [dataVersion, madrasahId]);
 
-  const recordCall = async (studentId: string) => {
-    if (!madrasahId || !studentId) return;
-    try {
-      const { error } = await supabase.from('recent_calls').insert({
-        madrasah_id: madrasahId,
-        student_id: studentId,
-        called_at: new Date().toISOString()
-      });
-      
-      if (!error) triggerRefresh();
-    } catch (e) {
-      console.error("recordCall Exception:", e);
-    }
-  };
-
-  const clearAllHistory = async () => {
-    if (!madrasahId) return;
-    setIsClearing(true);
-    try {
-      const { error } = await supabase.from('recent_calls').delete().eq('madrasah_id', madrasahId);
-      if (error) throw error;
-      setRecentCalls([]);
-      offlineApi.removeCache('recent_calls');
-      triggerRefresh();
-    } catch (err) { console.error(err); } finally {
-      setIsClearing(false);
-      setShowClearConfirm(false);
-    }
-  };
-
   const handleSearch = useCallback(async (query: string) => {
     if (!query.trim() || !madrasahId) { setSearchResults([]); return; }
     setLoadingSearch(true);
@@ -194,7 +164,6 @@ const Home: React.FC<HomeProps> = ({ onStudentClick, lang, dataVersion, triggerR
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-20">
-      {/* Quick Stats Grid */}
       <div className="grid grid-cols-2 gap-3 px-1">
         <div className="bg-white/95 backdrop-blur-md p-5 rounded-[2rem] border border-white shadow-xl flex flex-col items-center text-center animate-in zoom-in duration-300">
            <div className="w-10 h-10 bg-indigo-50 text-indigo-500 rounded-2xl flex items-center justify-center mb-2 shadow-inner"><Users size={20} /></div>
@@ -208,23 +177,38 @@ const Home: React.FC<HomeProps> = ({ onStudentClick, lang, dataVersion, triggerR
         </div>
       </div>
 
-      {/* Quick Actions - Dedicated for Fees and SMS */}
       <div className="px-1 space-y-3">
          <h2 className="text-[10px] font-black text-white uppercase tracking-[0.3em] px-3 drop-shadow-md opacity-80">Quick Actions</h2>
          <div className="grid grid-cols-1 gap-3">
             <button 
               onClick={onNavigateToAccounting}
-              className="bg-[#1A0B2E] p-6 rounded-[2.2rem] text-white flex items-center justify-between shadow-2xl active:scale-[0.98] transition-all group overflow-hidden"
+              className="bg-[#1A0B2E] p-5 rounded-[2.2rem] text-white flex items-center justify-between shadow-2xl active:scale-[0.98] transition-all group overflow-hidden"
             >
                <div className="flex items-center gap-5 relative z-10">
-                  <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center border border-white/10"><Banknote size={28} /></div>
+                  <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center border border-white/10"><Banknote size={24} /></div>
                   <div className="text-left">
                      <h3 className="text-lg font-black font-noto">ছাত্র ফি সংগ্রহ</h3>
-                     <p className="text-[9px] font-black uppercase tracking-widest opacity-60">Collect Student Monthly Fees</p>
+                     <p className="text-[8px] font-black uppercase tracking-widest opacity-60">Monthly Fee Collection</p>
                   </div>
                </div>
-               <ChevronRight className="relative z-10 opacity-40 group-hover:translate-x-1 transition-transform" />
-               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><Banknote size={100} /></div>
+               <ChevronRight size={18} className="relative z-10 opacity-40 group-hover:translate-x-1 transition-transform" />
+            </button>
+
+            <button 
+              onClick={() => { if(window.location.hash) window.location.hash = ''; // Simple trigger
+                const examsTab = document.querySelector('button[onClick*="setView(\'exams\')"]');
+                if(examsTab) (examsTab as HTMLElement).click();
+              }}
+              className="bg-white/95 p-5 rounded-[2.2rem] text-[#2E0B5E] flex items-center justify-between shadow-xl active:scale-[0.98] transition-all group overflow-hidden border border-white"
+            >
+               <div className="flex items-center gap-5 relative z-10">
+                  <div className="w-12 h-12 bg-[#8D30F4]/10 rounded-2xl flex items-center justify-center border border-[#8D30F4]/10"><Trophy size={24} className="text-[#8D30F4]" /></div>
+                  <div className="text-left">
+                     <h3 className="text-lg font-black font-noto">পরীক্ষা ও ফলাফল</h3>
+                     <p className="text-[8px] font-black uppercase tracking-widest text-[#A179FF]">Exam Results & Ranking</p>
+                  </div>
+               </div>
+               <ChevronRight size={18} className="relative z-10 opacity-20 group-hover:translate-x-1 transition-transform" />
             </button>
          </div>
       </div>
