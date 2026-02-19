@@ -1,12 +1,22 @@
 
--- প্রথমে পুরনো ফাংশনটি মুছে ফেলা হচ্ছে যাতে রিটার্ন টাইপ পরিবর্তনের এরর না আসে
+-- ১. টেবিল কলাম নিশ্চিত করা (যদি কলামের নাম ভুল থাকে তবে ঠিক করা)
+DO $$ 
+BEGIN 
+    -- যদি 'amount' নামে কলাম থাকে কিন্তু 'amount_paid' না থাকে, তবে রিনেম করো
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='fees' AND column_name='amount') 
+    AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='fees' AND column_name='amount_paid') THEN
+        ALTER TABLE public.fees RENAME COLUMN amount TO amount_paid;
+    END IF;
+END $$;
+
+-- ২. পুরনো ফাংশনটি মুছে ফেলা
 DROP FUNCTION IF EXISTS get_monthly_dues_report(UUID, UUID, TEXT);
 
--- ফাংশন: মাসিক ফি রিপোর্ট এবং বকেয়া হিসাব
+-- ৩. নতুন এবং উন্নত ফাংশন তৈরি
 CREATE OR REPLACE FUNCTION get_monthly_dues_report(
     p_madrasah_id UUID,
     p_class_id UUID DEFAULT NULL,
-    p_month TEXT DEFAULT NULL -- Format: YYYY-MM
+    p_month TEXT DEFAULT NULL
 )
 RETURNS TABLE (
     student_id UUID,
@@ -25,19 +35,19 @@ AS $$
 BEGIN
     RETURN QUERY
     WITH class_fees AS (
-        -- ঐ মাদরাসার জন্য নির্ধারিত ফি স্ট্রাকচার (শ্রেণি ভিত্তিক মোট ফি)
+        -- ঐ মাদরাসার জন্য নির্ধারিত ফি স্ট্রাকচার
         SELECT 
             fs.class_id, 
-            SUM(fs.amount) as total_fixed_fee
+            COALESCE(SUM(fs.amount), 0) as total_fixed_fee
         FROM public.fee_structures fs
         WHERE fs.madrasah_id = p_madrasah_id
         GROUP BY fs.class_id
     ),
     student_payments AS (
-        -- ঐ নির্দিষ্ট মাসের জন্য জমা হওয়া টাকা (ছাত্র ভিত্তিক)
+        -- ঐ নির্দিষ্ট মাসের জন্য জমা হওয়া টাকা
         SELECT 
             f.student_id, 
-            SUM(f.amount_paid) as total_collected
+            COALESCE(SUM(f.amount_paid), 0) as total_collected
         FROM public.fees f
         WHERE f.madrasah_id = p_madrasah_id AND f.month = p_month
         GROUP BY f.student_id
