@@ -67,14 +67,14 @@ const Home: React.FC<HomeProps> = ({ onStudentClick, lang, dataVersion, triggerR
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-20">
       <div className="grid grid-cols-2 gap-3 px-1">
-        <div className="bg-white/95 backdrop-blur-md p-5 rounded-[2rem] border border-white shadow-xl flex flex-col items-center text-center animate-in zoom-in duration-300">
-           <div className="w-10 h-10 bg-indigo-50 text-indigo-500 rounded-2xl flex items-center justify-center mb-2 shadow-inner"><Users size={20} /></div>
-           <h4 className="text-xl font-black text-[#2E0B5E]">{loadingStats ? '...' : stats.totalStudents}</h4>
+        <div className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-bubble flex flex-col items-center text-center animate-in zoom-in duration-300">
+           <div className="w-10 h-10 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center mb-2 shadow-inner"><Users size={20} /></div>
+           <h4 className="text-xl font-black text-[#1E3A8A]">{loadingStats ? '...' : stats.totalStudents}</h4>
            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">{t('students', lang)}</p>
         </div>
-        <div className="bg-white/95 backdrop-blur-md p-5 rounded-[2rem] border border-white shadow-xl flex flex-col items-center text-center animate-in zoom-in duration-300 delay-75">
+        <div className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-bubble flex flex-col items-center text-center animate-in zoom-in duration-300 delay-75">
            <div className="w-10 h-10 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center mb-2 shadow-inner"><CheckCircle2 size={20} /></div>
-           <h4 className="text-xl font-black text-[#2E0B5E]">{loadingStats ? '...' : stats.attendanceToday}</h4>
+           <h4 className="text-xl font-black text-[#1E3A8A]">{loadingStats ? '...' : stats.attendanceToday}</h4>
            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">আজকের হাজিরা</p>
         </div>
       </div>
@@ -88,7 +88,7 @@ const Home: React.FC<HomeProps> = ({ onStudentClick, lang, dataVersion, triggerR
           />
           
           <div className="px-1 space-y-3">
-             <h2 className="text-[10px] font-black text-white uppercase tracking-[0.3em] px-3 drop-shadow-md opacity-80">
+             <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] px-3 opacity-80">
                {t('smart_fee_mgmt', lang)}
              </h2>
              <SmartFeeAnalytics 
@@ -99,7 +99,7 @@ const Home: React.FC<HomeProps> = ({ onStudentClick, lang, dataVersion, triggerR
           </div>
 
           <div className="px-1 space-y-3">
-             <h2 className="text-[10px] font-black text-white uppercase tracking-[0.3em] px-3 drop-shadow-md opacity-80">
+             <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] px-3 opacity-80">
                Result Insights
              </h2>
              <SmartResultAnalytics 

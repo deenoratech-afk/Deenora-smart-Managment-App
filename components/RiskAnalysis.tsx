@@ -55,9 +55,9 @@ const RiskAnalysis: React.FC<RiskAnalysisProps> = ({ madrasahId, lang, onStudent
   const displayedRisks = expanded ? [...highRisks, ...warningRisks] : highRisks.slice(0, 3);
 
   if (loading) return (
-    <div className="bg-white/10 backdrop-blur-md p-6 rounded-[2.2rem] border border-white/20 flex items-center justify-center gap-3">
-      <Loader2 className="animate-spin text-white" size={20} />
-      <span className="text-[10px] font-black text-white uppercase tracking-widest">Analyzing Risks...</span>
+    <div className="bg-white p-6 rounded-[2.2rem] border border-slate-100 shadow-bubble flex items-center justify-center gap-3">
+      <Loader2 className="animate-spin text-[#2563EB]" size={20} />
+      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Analyzing Risks...</span>
     </div>
   );
 
@@ -66,13 +66,13 @@ const RiskAnalysis: React.FC<RiskAnalysisProps> = ({ madrasahId, lang, onStudent
   return (
     <div className="space-y-3 px-1">
       <div className="flex items-center justify-between px-3">
-        <h2 className="text-[10px] font-black text-white uppercase tracking-[0.3em] drop-shadow-md opacity-80">
+        <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] opacity-80">
           {t('prediction_system', lang)}
         </h2>
         { (highRisks.length > 3 || warningRisks.length > 0) && (
           <button 
             onClick={() => setExpanded(!expanded)} 
-            className="text-[9px] font-black text-white/60 uppercase tracking-widest bg-white/10 px-3 py-1 rounded-full"
+            className="text-[9px] font-black text-[#2563EB] uppercase tracking-widest bg-blue-50 px-3 py-1 rounded-full"
           >
             {expanded ? 'Show Less' : 'Show All'}
           </button>
@@ -84,7 +84,7 @@ const RiskAnalysis: React.FC<RiskAnalysisProps> = ({ madrasahId, lang, onStudent
           <div 
             key={risk.student_id} 
             onClick={() => onStudentClick({ id: risk.student_id, student_name: risk.student_name, roll: risk.roll })}
-            className="bg-white/95 backdrop-blur-xl p-4 rounded-[1.8rem] border border-white shadow-xl flex items-center justify-between active:scale-[0.98] transition-all group"
+            className="bg-white p-4 rounded-[1.8rem] border border-slate-100 shadow-bubble flex items-center justify-between active:scale-[0.98] transition-all group"
           >
             <div className="flex items-center gap-4 min-w-0 flex-1">
               <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-inner ${
@@ -95,7 +95,7 @@ const RiskAnalysis: React.FC<RiskAnalysisProps> = ({ madrasahId, lang, onStudent
                 <AlertTriangle size={22} />
               </div>
               <div className="min-w-0">
-                <h3 className="font-black text-[#2E0B5E] text-[15px] font-noto truncate leading-tight">{risk.student_name}</h3>
+                <h3 className="font-black text-[#1E3A8A] text-[15px] font-noto truncate leading-tight">{risk.student_name}</h3>
                 <div className="flex flex-wrap gap-1.5 mt-1">
                   {risk.dropout_risk !== 'safe' && (
                     <span className={`px-2 py-0.5 rounded-full text-[7px] font-black uppercase tracking-tighter flex items-center gap-1 ${
@@ -124,9 +124,9 @@ const RiskAnalysis: React.FC<RiskAnalysisProps> = ({ madrasahId, lang, onStudent
             <ChevronRight size={16} className="text-slate-300 group-hover:translate-x-1 transition-transform" />
           </div>
         )) : (
-          <div className="bg-white/10 backdrop-blur-md p-8 rounded-[2.2rem] border border-white/20 text-center">
+          <div className="bg-white p-8 rounded-[2.2rem] border border-slate-100 shadow-bubble text-center">
             <ShieldCheck size={32} className="mx-auto text-emerald-400 mb-2" />
-            <p className="text-[10px] font-black text-white uppercase tracking-widest">{t('no_risk_found', lang)}</p>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('no_risk_found', lang)}</p>
           </div>
         )}
       </div>

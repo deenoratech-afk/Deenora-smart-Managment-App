@@ -1,12 +1,15 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-blue: #4844F8;
-  --color-brand-purple: #8D30F4;
-  --color-brand-soft: #F2EBFF;
-  --color-brand-lavender: #A179FF;
-  --color-brand-deep: #2E0B5E;
-  --color-brand-dark: #1A0B2E;
+  --color-brand-blue: #2563EB;
+  --color-brand-light: #EFF6FF;
+  --color-brand-soft: #F0F7FF;
+  --color-brand-lavender: #60A5FA;
+  --color-brand-deep: #1E3A8A;
+  --color-brand-dark: #1E293B;
+
+  --shadow-bubble: 0 20px 40px -15px rgba(37, 99, 235, 0.2);
+  --shadow-premium: 0 12px 28px -5px rgba(37, 99, 235, 0.3);
 
   --animate-mesh: mesh 15s ease infinite;
   --animate-float: float 3s ease-in-out infinite;
@@ -63,7 +66,7 @@ html, body {
   margin: 0;
   padding: 0;
   overflow: hidden; 
-  background-color: #9D50FF;
+  background-color: #FFFFFF;
   position: fixed; 
   left: 0;
   top: 0;
@@ -96,13 +99,13 @@ body {
 }
 
 .premium-btn {
-  background: linear-gradient(135deg, #8D30F4 0%, #A179FF 100%);
-  box-shadow: 0 12px 28px -5px rgba(141, 48, 244, 0.4);
+  background: linear-gradient(135deg, #2563EB 0%, #60A5FA 100%);
+  box-shadow: var(--shadow-premium);
   color: white;
 }
 
 .mesh-bg-vibrant {
-  background: linear-gradient(-45deg, #9D50FF, #8D30F4, #6C38FF, #A179FF);
+  background: linear-gradient(-45deg, #3B82F6, #2563EB, #1D4ED8, #60A5FA);
   background-size: 400% 400%;
   animation: mesh 15s ease infinite;
 }

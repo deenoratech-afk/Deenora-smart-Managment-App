@@ -43,7 +43,7 @@ const SmartResultAnalytics: React.FC<SmartResultAnalyticsProps> = ({ madrasahId,
     }
   };
 
-  if (loading) return <div className="flex justify-center py-10"><Loader2 className="animate-spin text-[#8D30F4]" /></div>;
+  if (loading) return <div className="flex justify-center py-10"><Loader2 className="animate-spin text-[#2563EB]" /></div>;
 
   const improving = insights.filter(i => i.status === 'improving');
   const declining = insights.filter(i => i.status === 'declining');
@@ -51,20 +51,20 @@ const SmartResultAnalytics: React.FC<SmartResultAnalyticsProps> = ({ madrasahId,
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-emerald-50 p-5 rounded-[2rem] border border-emerald-100 shadow-sm">
+        <div className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-bubble">
           <div className="flex items-center gap-3 mb-2">
             <TrendingUp className="text-emerald-500" size={20} />
             <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Improving</span>
           </div>
-          <h4 className="text-2xl font-black text-emerald-700">{improving.length}</h4>
+          <h4 className="text-2xl font-black text-[#1E3A8A]">{improving.length}</h4>
           <p className="text-[8px] font-bold text-emerald-600/60 uppercase">Students showing progress</p>
         </div>
-        <div className="bg-red-50 p-5 rounded-[2rem] border border-red-100 shadow-sm">
+        <div className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-bubble">
           <div className="flex items-center gap-3 mb-2">
             <TrendingDown className="text-red-500" size={20} />
             <span className="text-[10px] font-black text-red-600 uppercase tracking-widest">Declining</span>
           </div>
-          <h4 className="text-2xl font-black text-red-700">{declining.length}</h4>
+          <h4 className="text-2xl font-black text-[#1E3A8A]">{declining.length}</h4>
           <p className="text-[8px] font-bold text-red-600/60 uppercase">Needs attention</p>
         </div>
       </div>
@@ -72,7 +72,7 @@ const SmartResultAnalytics: React.FC<SmartResultAnalyticsProps> = ({ madrasahId,
       <div className="space-y-3">
         <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">Performance Insights</h3>
         {insights.map((item, idx) => (
-          <div key={idx} className="bg-white p-4 rounded-[1.8rem] border border-slate-100 shadow-md flex items-center justify-between">
+          <div key={idx} className="bg-white p-4 rounded-[1.8rem] border border-slate-100 shadow-bubble flex items-center justify-between">
             <div className="flex items-center gap-4 min-w-0">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
                 item.status === 'improving' ? 'bg-emerald-50 text-emerald-500' : item.status === 'declining' ? 'bg-red-50 text-red-500' : 'bg-slate-50 text-slate-400'
@@ -80,7 +80,7 @@ const SmartResultAnalytics: React.FC<SmartResultAnalyticsProps> = ({ madrasahId,
                 {item.status === 'improving' ? <TrendingUp size={20} /> : item.status === 'declining' ? <TrendingDown size={20} /> : <Award size={20} />}
               </div>
               <div className="min-w-0">
-                <h4 className="font-black text-[#2E0B5E] text-sm font-noto truncate">{item.student_name}</h4>
+                <h4 className="font-black text-[#1E3A8A] text-sm font-noto truncate">{item.student_name}</h4>
                 <p className="text-[9px] font-bold text-slate-400 uppercase">{item.class_name} • Roll: {item.roll}</p>
               </div>
             </div>

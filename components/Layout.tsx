@@ -52,79 +52,82 @@ const Layout: React.FC<LayoutProps> = ({ children, currentView, setView, lang, m
     return false;
   };
 
+  const activeColor = '#2563EB';
+  const inactiveColor = '#94A3B8';
+
   return (
-    <div className="flex flex-col w-full h-full relative bg-transparent overflow-hidden">
-      <header className="flex-none px-6 pt-[calc(env(safe-area-inset-top)+8px)] pb-3 flex items-center justify-between relative z-10">
+    <div className="flex flex-col w-full h-full relative bg-white overflow-hidden">
+      <header className="flex-none px-6 pt-[calc(env(safe-area-inset-top)+8px)] pb-3 flex items-center justify-between relative z-10 bg-white/80 backdrop-blur-md border-b border-slate-100">
         <div className="flex items-center gap-4 flex-1 min-w-0">
-          <div className="w-11 h-11 rounded-full flex items-center justify-center bg-white shadow-sm border border-white/20 shrink-0 overflow-hidden">
-            {isSuperAdmin ? <ShieldCheck size={24} className="text-[#8D30F4]" /> : (madrasah?.logo_url ? <img src={madrasah.logo_url} className="w-full h-full object-cover" alt="Logo" /> : <BookOpen size={22} className="text-[#8D30F4]" />)}
+          <div className="w-11 h-11 rounded-full flex items-center justify-center bg-blue-50 shadow-sm border border-blue-100 shrink-0 overflow-hidden">
+            {isSuperAdmin ? <ShieldCheck size={24} className="text-[#2563EB]" /> : (madrasah?.logo_url ? <img src={madrasah.logo_url} className="w-full h-full object-cover" alt="Logo" /> : <BookOpen size={22} className="text-[#2563EB]" />)}
           </div>
           <div className="min-w-0 flex-1">
-            <h1 className="text-[16px] font-black text-white leading-[1.2] tracking-tight font-noto drop-shadow-md line-clamp-2">
+            <h1 className="text-[16px] font-black text-[#1E293B] leading-[1.2] tracking-tight font-noto line-clamp-2">
               {isSuperAdmin ? (lang === 'bn' ? 'সুপার অ্যাডমিন' : 'Super Admin') : (madrasah?.name || 'Madrasah Portal')}
             </h1>
-            <p className="text-[9px] font-black text-white/60 uppercase tracking-[0.2em] mt-1 drop-shadow-sm font-noto">
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1 font-noto">
               {role === 'teacher' ? 'Teacher Portal' : role === 'accountant' ? 'Accounts Portal' : 'Admin Portal'}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => setShowNotifications(true)} className="relative p-2.5 bg-white/20 backdrop-blur-md rounded-[1rem] text-white active:scale-95 border border-white/20 shadow-xl">
+          <button onClick={() => setShowNotifications(true)} className="relative p-2.5 bg-blue-50 rounded-[1rem] text-[#2563EB] active:scale-95 border border-blue-100 shadow-sm">
             <Bell size={18} />
-            {notifications.length > 0 && <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#9D50FF] animate-pulse"></span>}
+            {notifications.length > 0 && <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>}
           </button>
-          <button onClick={() => window.location.reload()} className="p-2.5 bg-white/20 backdrop-blur-md rounded-[1rem] text-white active:scale-95 transition-all border border-white/20 shadow-xl">
+          <button onClick={() => window.location.reload()} className="p-2.5 bg-slate-50 rounded-[1rem] text-slate-400 active:scale-95 transition-all border border-slate-100 shadow-sm">
             <RefreshCw size={18} />
           </button>
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto px-5 pt-2 pb-44 w-full max-w-md mx-auto scroll-smooth custom-scrollbar">
+      <main className="flex-1 overflow-y-auto px-5 pt-4 pb-44 w-full max-w-md mx-auto scroll-smooth custom-scrollbar">
         {children}
       </main>
 
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[96%] max-w-md z-[200]">
-        <nav className="bg-white/95 backdrop-blur-[25px] border border-white/50 flex justify-around items-center py-4 px-1 rounded-[3rem] shadow-[0_25px_60px_-15px_rgba(46,11,94,0.4)]">
-          <button onClick={() => setView('home')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('home') ? 'text-[#8D30F4]' : 'text-[#A179FF]'}`}>
+      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[92%] max-w-md z-[200]">
+        <nav className="bg-white/95 backdrop-blur-[25px] border border-slate-200 flex justify-around items-center py-4 px-1 rounded-[2.5rem] shadow-bubble">
+          <button onClick={() => setView('home')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('home') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
             <Home size={20} strokeWidth={isTabActive('home') ? 3 : 2} />
             <span className="text-[9px] font-black font-noto opacity-80">{t('home', lang)}</span>
           </button>
           
           {isSuperAdmin ? (
             <>
-              <button onClick={() => setView('admin-approvals')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('approvals') ? 'text-[#8D30F4]' : 'text-[#A179FF]'}`}>
+              <button onClick={() => setView('admin-approvals')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('approvals') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
                 <CreditCard size={20} />
                 <span className="text-[9px] font-black font-noto opacity-80">{t('approvals', lang)}</span>
               </button>
-              <button onClick={() => setView('admin-dashboard')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('dashboard') ? 'text-[#8D30F4]' : 'text-[#A179FF]'}`}>
+              <button onClick={() => setView('admin-dashboard')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('dashboard') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
                 <BarChart3 size={20} />
                 <span className="text-[9px] font-black font-noto opacity-80">{t('dashboard', lang)}</span>
               </button>
             </>
           ) : (
             <>
-              <button onClick={() => setView('attendance')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('attendance') ? 'text-[#8D30F4]' : 'text-[#A179FF]'}`}>
+              <button onClick={() => setView('attendance')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('attendance') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
                 <ClipboardList size={20} />
                 <span className="text-[9px] font-black font-noto opacity-80">হাজিরা</span>
               </button>
-              <button onClick={() => setView('exams')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('exams') ? 'text-[#8D30F4]' : 'text-[#A179FF]'}`}>
+              <button onClick={() => setView('exams')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('exams') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
                 <GraduationCap size={20} />
                 <span className="text-[9px] font-black font-noto opacity-80">পরীক্ষা</span>
               </button>
               {(role === 'madrasah_admin' || role === 'accountant') && (
-                <button onClick={() => setView('accounting')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('accounting') ? 'text-[#8D30F4]' : 'text-[#A179FF]'}`}>
+                <button onClick={() => setView('accounting')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('accounting') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
                   <Banknote size={20} />
                   <span className="text-[9px] font-black font-noto opacity-80">হিসাব</span>
                 </button>
               )}
-              <button onClick={() => setView('classes')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('classes') ? 'text-[#8D30F4]' : 'text-[#A179FF]'}`}>
+              <button onClick={() => setView('classes')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('classes') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
                 <BookOpen size={20} />
                 <span className="text-[9px] font-black font-noto opacity-80">ছাত্র</span>
               </button>
             </>
           )}
           
-          <button onClick={() => setView('account')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('account') ? 'text-[#8D30F4]' : 'text-[#A179FF]'}`}>
+          <button onClick={() => setView('account')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('account') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
             <User size={20} />
             <span className="text-[9px] font-black font-noto opacity-80">{t('account', lang)}</span>
           </button>
