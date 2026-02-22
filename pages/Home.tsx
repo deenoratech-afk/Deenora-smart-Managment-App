@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Search, Clock, User as UserIcon, RefreshCw, PhoneCall, X, MessageCircle, Phone, AlertCircle, Trash2, AlertTriangle, Loader2, Users, BookOpen, GraduationCap, Wallet, TrendingUp, DollarSign, CheckCircle2, Banknote, ClipboardList, ChevronRight, Trophy } from 'lucide-react';
 import { supabase, offlineApi } from '../supabase';
-import { Student, RecentCall, Language } from '../types';
+import { Student, Language } from '../types';
 import { t } from '../translations';
 import RiskAnalysis from '../components/RiskAnalysis';
 
@@ -22,9 +22,7 @@ interface HomeProps {
 const Home: React.FC<HomeProps> = ({ onStudentClick, lang, dataVersion, triggerRefresh, madrasahId, onNavigateToWallet, onNavigateToAccounting, onNavigateToAttendance, onNavigateToExams }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Student[]>([]);
-  const [recentCalls, setRecentCalls] = useState<RecentCall[]>([]);
   const [loadingSearch, setLoadingSearch] = useState(false);
-  const [loadingRecent, setLoadingRecent] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   
   const [stats, setStats] = useState({
@@ -63,84 +61,7 @@ const Home: React.FC<HomeProps> = ({ onStudentClick, lang, dataVersion, triggerR
     }
   };
 
-  const fetchRecentCalls = async (isManual = false) => {
-    if (!madrasahId) {
-      setLoadingRecent(false);
-      return;
-    }
-    
-    if (isManual) {
-      setLoadingRecent(true);
-      setFetchError(null);
-      offlineApi.removeCache('recent_calls');
-    }
-    
-    const cached = offlineApi.getCache('recent_calls');
-    if (cached && !isManual) {
-      setRecentCalls(cached.slice(0, 20));
-      setLoadingRecent(false);
-    }
-
-    if (navigator.onLine) {
-      try {
-        const { data, error } = await supabase
-          .from('recent_calls')
-          .select(`
-            id,
-            madrasah_id,
-            student_id,
-            called_at,
-            students (
-              id,
-              student_name,
-              guardian_phone,
-              roll,
-              photo_url,
-              classes (
-                id,
-                class_name
-              )
-            )
-          `)
-          .eq('madrasah_id', madrasahId)
-          .order('called_at', { ascending: false })
-          .limit(20);
-        
-        if (error) throw error;
-        
-        if (data) {
-          const formattedCalls: RecentCall[] = (data as any[]).map(call => {
-            const rawStudent = Array.isArray(call.students) ? call.students[0] : call.students;
-            if (rawStudent) {
-              const rawClass = Array.isArray(rawStudent.classes) ? rawStudent.classes[0] : rawStudent.classes;
-              return {
-                ...call,
-                students: {
-                  ...rawStudent,
-                  classes: rawClass
-                }
-              };
-            }
-            return { ...call, students: undefined };
-          });
-
-          const validCalls = formattedCalls.filter(call => call.students).slice(0, 20);
-          setRecentCalls(validCalls);
-          offlineApi.setCache('recent_calls', validCalls);
-        }
-      } catch (err: any) { 
-        console.error("Recent Calls Fetch Error:", err.message);
-        setFetchError(err.message);
-      } finally { 
-        setLoadingRecent(false); 
-      }
-    } else { 
-      setLoadingRecent(false); 
-    }
-  };
-
   useEffect(() => { 
-    fetchRecentCalls();
     fetchDashboardStats();
   }, [dataVersion, madrasahId]);
 
@@ -234,7 +155,7 @@ const Home: React.FC<HomeProps> = ({ onStudentClick, lang, dataVersion, triggerR
       </div>
 
       {searchQuery.length > 0 && (
-        <div className="space-y-2.5 px-1">
+        <div className="space-y-2.5 px-1 pb-10">
           <h2 className="text-[10px] font-black text-white uppercase tracking-[0.2em] px-3 drop-shadow-md opacity-80">সার্চ ফলাফল</h2>
           {searchResults.map(student => (
             <div key={student.id} onClick={() => onStudentClick(student)} className="bg-white/95 p-4 rounded-[1.8rem] border border-white shadow-xl flex items-center justify-between active:scale-[0.98] transition-all">
@@ -249,28 +170,6 @@ const Home: React.FC<HomeProps> = ({ onStudentClick, lang, dataVersion, triggerR
           ))}
         </div>
       )}
-
-      <div className="space-y-3.5 px-1 pb-10">
-        <div className="flex items-center justify-between px-3">
-          <h2 className="text-[10px] font-black text-white uppercase tracking-[0.3em] drop-shadow-md opacity-80">{t('recent_calls', lang)}</h2>
-          <button onClick={() => fetchRecentCalls(true)} className="p-2 bg-white/20 rounded-xl text-white backdrop-blur-md active:scale-95 transition-all flex items-center gap-2 px-3">
-            <span className="text-[9px] font-black uppercase tracking-widest">{loadingRecent ? '...' : 'Refresh'}</span><RefreshCw size={14} strokeWidth={3} className={loadingRecent ? 'animate-spin' : ''} />
-          </button>
-        </div>
-        {recentCalls.length > 0 ? (
-          <div className="space-y-2.5">{recentCalls.map(call => (
-            <div key={call.id} onClick={() => call.students && onStudentClick(call.students)} className="bg-white/95 p-4 rounded-[1.8rem] border border-white shadow-xl flex items-center justify-between active:scale-[0.98] transition-all">
-              <div className="flex items-center gap-4 min-w-0 flex-1">
-                <div className="w-11 h-11 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-300 shrink-0"><UserIcon size={20} /></div>
-                <div className="min-w-0">
-                  <h3 className="font-black text-[#4B168A] text-[16px] font-noto truncate">{call.students?.student_name || 'অজানা'}</h3>
-                  <div className="flex items-center gap-1.5 mt-0.5"><Clock size={11} className="text-[#A179FF]" /><span className="text-[9px] font-black text-[#A179FF] uppercase">{new Date(call.called_at).toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' })}</span></div>
-                </div>
-              </div>
-            </div>
-          ))}</div>
-        ) : <div className="text-center py-20 bg-white/10 rounded-[3rem] border-2 border-dashed border-white/30 backdrop-blur-sm mx-2"><p className="text-white/60 text-[10px] font-black uppercase tracking-widest">No History Found</p></div>}
-      </div>
     </div>
   );
 };

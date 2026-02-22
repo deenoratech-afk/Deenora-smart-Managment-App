@@ -168,14 +168,6 @@ export interface AppState {
   isEditing?: boolean;
 }
 
-export interface RecentCall {
-  id: string;
-  madrasah_id: string;
-  student_id: string;
-  called_at: string;
-  students?: Student;
-}
-
 export interface Transaction {
   id: string;
   madrasah_id: string;
