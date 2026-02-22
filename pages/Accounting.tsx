@@ -290,40 +290,6 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
               month={selectedMonth} 
             />
           )}
-
-          <div className="bg-white/95 p-6 rounded-[2.5rem] border border-white shadow-xl flex items-center justify-between">
-            <div className="text-left">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">মোট কালেকশন</p>
-              <h2 className="text-3xl font-black text-[#2E0B5E]">৳ {totals.income.toLocaleString('bn-BD')}</h2>
-            </div>
-            <div className="w-12 h-12 bg-green-50 text-green-500 rounded-2xl flex items-center justify-center shadow-inner">
-               <TrendingUp size={24} />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white/95 p-5 rounded-[2rem] border border-white shadow-lg">
-              <p className="text-[9px] font-black uppercase text-slate-400 mb-1">মোট ব্যয়</p>
-              <h4 className="text-xl font-black text-red-500">৳ {totals.expense.toLocaleString('bn-BD')}</h4>
-            </div>
-            <div className="bg-white/95 p-5 rounded-[2rem] border border-white shadow-lg">
-              <p className="text-[9px] font-black uppercase text-slate-400 mb-1">নগদ স্থিতি</p>
-              <h4 className="text-xl font-black text-emerald-500">৳ {(totals.income - totals.expense).toLocaleString('bn-BD')}</h4>
-            </div>
-          </div>
-
-          <div className="bg-[#1A0B2E] p-8 rounded-[3rem] text-white shadow-2xl relative overflow-hidden group">
-            <div className="relative z-10 flex items-center justify-between">
-               <div>
-                  <p className="text-[10px] font-black uppercase opacity-60 mb-1">মোট বকেয়া (Dues)</p>
-                  <h3 className="text-3xl font-black">৳ {totalDues.toLocaleString('bn-BD')}</h3>
-               </div>
-               <div className="w-14 h-14 bg-white/10 rounded-[1.5rem] flex items-center justify-center border border-white/10"><Wallet size={28} /></div>
-            </div>
-            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform">
-               <BarChart3 size={100} />
-            </div>
-          </div>
         </div>
       )}
 
