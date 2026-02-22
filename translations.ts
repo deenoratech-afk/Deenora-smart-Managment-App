@@ -3,7 +3,7 @@ import { Language } from './types';
 
 export const translations = {
   bn: {
-    home: 'হোম',
+    home: 'ড্যাশবোর্ড',
     classes: 'ক্লাস ও ছাত্র',
     account: 'অ্যাকাউন্ট',
     wallet: 'এসএমএস',
@@ -157,7 +157,7 @@ export const translations = {
     enter_marks: 'নম্বর এন্ট্রি'
   },
   en: {
-    home: 'Home',
+    home: 'Dashboard',
     classes: 'Classes',
     account: 'Account',
     wallet: 'SMS',

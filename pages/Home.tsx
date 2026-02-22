@@ -6,6 +6,8 @@ import { supabase, offlineApi } from '../supabase';
 import { Student, Language } from '../types';
 import { t } from '../translations';
 import RiskAnalysis from '../components/RiskAnalysis';
+import SmartFeeAnalytics from '../components/SmartFeeAnalytics';
+import SmartResultAnalytics from '../components/SmartResultAnalytics';
 
 interface HomeProps {
   onStudentClick: (student: Student) => void;
@@ -133,11 +135,34 @@ const Home: React.FC<HomeProps> = ({ onStudentClick, lang, dataVersion, triggerR
       </div>
 
       {madrasahId && (
-        <RiskAnalysis 
-          madrasahId={madrasahId} 
-          lang={lang} 
-          onStudentClick={onStudentClick} 
-        />
+        <div className="space-y-6">
+          <RiskAnalysis 
+            madrasahId={madrasahId} 
+            lang={lang} 
+            onStudentClick={onStudentClick} 
+          />
+          
+          <div className="px-1 space-y-3">
+             <h2 className="text-[10px] font-black text-white uppercase tracking-[0.3em] px-3 drop-shadow-md opacity-80">
+               {t('smart_fee_mgmt', lang)}
+             </h2>
+             <SmartFeeAnalytics 
+               madrasahId={madrasahId} 
+               lang={lang} 
+               month={new Date().toISOString().slice(0, 7)} 
+             />
+          </div>
+
+          <div className="px-1 space-y-3">
+             <h2 className="text-[10px] font-black text-white uppercase tracking-[0.3em] px-3 drop-shadow-md opacity-80">
+               Result Insights
+             </h2>
+             <SmartResultAnalytics 
+               madrasahId={madrasahId} 
+               lang={lang} 
+             />
+          </div>
+        </div>
       )}
 
       <div className="relative z-20 group px-1">
