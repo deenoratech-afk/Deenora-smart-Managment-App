@@ -98,6 +98,15 @@ export const translations = {
     confirm_clear_history: 'আপনি কি নিশ্চিতভাবে সকল কল হিস্ট্রি মুছে ফেলতে চান?',
     attendance_daily: 'দৈনিক হাজিরা',
     attendance_report: 'হাজিরা রিপোর্ট',
+    prediction_system: 'ঝুঁকি বিশ্লেষণ',
+    dropout_risk: 'ঝরে পড়ার ঝুঁকি',
+    late_regularity: 'নিয়মিত দেরি',
+    result_decline: 'ফলাফল অবনতি',
+    risk_safe: 'নিরাপদ',
+    risk_warning: 'সতর্কতা',
+    risk_high: 'উচ্চ ঝুঁকি',
+    student_insights: 'ছাত্র ইনসাইটস',
+    no_risk_found: 'কোনো ঝুঁকি পাওয়া যায়নি',
     mark_present: 'উপস্থিত',
     mark_absent: 'অনুপস্থিত',
     mark_late: 'বিলম্ব',
@@ -278,7 +287,16 @@ export const translations = {
     total_marks: 'Total Marks',
     result_card: 'Result Card',
     publish_result: 'Publish Result',
-    enter_marks: 'Enter Marks'
+    enter_marks: 'Enter Marks',
+    prediction_system: 'Risk Analysis',
+    dropout_risk: 'Dropout Risk',
+    late_regularity: 'Late Regularity',
+    result_decline: 'Result Decline',
+    risk_safe: 'Safe',
+    risk_warning: 'Warning',
+    risk_high: 'High Risk',
+    student_insights: 'Student Insights',
+    no_risk_found: 'No risks detected'
   }
 };
 

@@ -61,7 +61,7 @@ const Students: React.FC<StudentsProps> = ({ selectedClass, onStudentClick, onAd
       // Fix: Add madrasah_id to the select query to satisfy the Student type requirements.
       let query = supabase
         .from('students')
-        .select('id, madrasah_id, student_name, guardian_phone, roll, guardian_name, class_id')
+        .select('id, madrasah_id, student_name, guardian_phone, roll, guardian_name, class_id, classes(class_name)')
         .eq('madrasah_id', madrasahId)
         .eq('class_id', selectedClass.id)
         .order('roll', { ascending: true })
@@ -75,7 +75,12 @@ const Students: React.FC<StudentsProps> = ({ selectedClass, onStudentClick, onAd
       if (error) throw error;
 
       if (data) {
-        setStudents(prev => reset ? data : [...prev, ...data]);
+        const formattedData = (data as any[]).map(s => ({
+          ...s,
+          classes: Array.isArray(s.classes) ? s.classes[0] : s.classes
+        })) as Student[];
+        
+        setStudents(prev => reset ? formattedData : [...prev, ...formattedData]);
         setHasMore(data.length === PAGE_SIZE);
         if (!reset) setPage(currentPage + 1);
       }

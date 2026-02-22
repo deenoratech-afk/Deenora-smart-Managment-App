@@ -5,6 +5,7 @@ import { Search, Clock, User as UserIcon, RefreshCw, PhoneCall, X, MessageCircle
 import { supabase, offlineApi } from '../supabase';
 import { Student, RecentCall, Language } from '../types';
 import { t } from '../translations';
+import RiskAnalysis from '../components/RiskAnalysis';
 
 interface HomeProps {
   onStudentClick: (student: Student) => void;
@@ -209,6 +210,14 @@ const Home: React.FC<HomeProps> = ({ onStudentClick, lang, dataVersion, triggerR
             </button>
          </div>
       </div>
+
+      {madrasahId && (
+        <RiskAnalysis 
+          madrasahId={madrasahId} 
+          lang={lang} 
+          onStudentClick={onStudentClick} 
+        />
+      )}
 
       <div className="relative z-20 group px-1">
         <div className="absolute -inset-1 bg-gradient-to-r from-[#8D30F4] to-[#A179FF] rounded-[2.2rem] blur opacity-10 group-focus-within:opacity-30 transition duration-500"></div>
