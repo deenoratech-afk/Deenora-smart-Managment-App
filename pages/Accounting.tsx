@@ -5,6 +5,7 @@ import { Madrasah, LedgerEntry, Fee, Language, UserRole, Class, Student } from '
 import { Calculator, Plus, ArrowUpCircle, ArrowDownCircle, Wallet, History, Users, Loader2, Save, X, Calendar, DollarSign, Tag, FileText, CheckCircle2, TrendingUp, AlertCircle, Send, Search, ChevronDown, BarChart3, Settings2, RefreshCw, Info } from 'lucide-react';
 import { t } from '../translations';
 import { sortMadrasahClasses } from './Classes';
+import SmartFeeAnalytics from '../components/SmartFeeAnalytics';
 
 interface AccountingProps {
   lang: Language;
@@ -281,7 +282,15 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
       
       {/* বাকি ট্যাবগুলো একই থাকবে */}
       {activeTab === 'summary' && (
-        <div className="space-y-4 animate-in slide-in-from-bottom-5">
+        <div className="space-y-6 animate-in slide-in-from-bottom-5">
+          {madrasah && (
+            <SmartFeeAnalytics 
+              madrasahId={madrasah.id} 
+              lang={lang} 
+              month={selectedMonth} 
+            />
+          )}
+
           <div className="bg-white/95 p-6 rounded-[2.5rem] border border-white shadow-xl flex items-center justify-between">
             <div className="text-left">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">মোট কালেকশন</p>

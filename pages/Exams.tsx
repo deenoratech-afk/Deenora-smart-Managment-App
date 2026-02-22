@@ -2,9 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { Madrasah, Class, Student, Exam, ExamSubject, Language, UserRole } from '../types';
-import { GraduationCap, Plus, ChevronRight, BookOpen, Trophy, Save, X, Edit3, Trash2, Loader2, ArrowLeft, Calendar, LayoutGrid, CheckCircle2, FileText, Send, User, Hash, Star, AlertCircle } from 'lucide-react';
+import { GraduationCap, Plus, ChevronRight, BookOpen, Trophy, Save, X, Edit3, Trash2, Loader2, ArrowLeft, Calendar, LayoutGrid, CheckCircle2, FileText, Send, User, Hash, Star, AlertCircle, TrendingUp } from 'lucide-react';
 import { t } from '../translations';
 import { sortMadrasahClasses } from './Classes';
+import SmartResultAnalytics from '../components/SmartResultAnalytics';
 
 interface ExamsProps {
   lang: Language;
@@ -14,7 +15,7 @@ interface ExamsProps {
 }
 
 const Exams: React.FC<ExamsProps> = ({ lang, madrasah, onBack, role }) => {
-  const [view, setView] = useState<'list' | 'subjects' | 'marks' | 'report'>('list');
+  const [view, setView] = useState<'list' | 'subjects' | 'marks' | 'report' | 'insights'>('list');
   const [exams, setExams] = useState<Exam[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
   const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
@@ -150,13 +151,22 @@ const Exams: React.FC<ExamsProps> = ({ lang, madrasah, onBack, role }) => {
             <ArrowLeft size={20}/>
           </button>
           <h1 className="text-xl font-black text-white font-noto">
-            {view === 'list' ? t('exams', lang) : selectedExam?.exam_name}
+            {view === 'list' ? t('exams', lang) : view === 'insights' ? t('prediction_system', lang) : selectedExam?.exam_name}
           </h1>
         </div>
-        {view === 'list' && role === 'madrasah_admin' && (
-            <button onClick={() => setShowAddExam(true)} className="w-10 h-10 bg-white text-[#8D30F4] rounded-xl shadow-xl flex items-center justify-center active:scale-95 transition-all"><Plus size={20}/></button>
+        {(view === 'list' || view === 'insights') && role === 'madrasah_admin' && (
+            <div className="flex gap-2">
+                <button onClick={() => setView(view === 'insights' ? 'list' : 'insights')} className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all ${view === 'insights' ? 'bg-[#8D30F4] text-white border-[#8D30F4]' : 'bg-white/10 text-white border-white/20'}`}>
+                    <TrendingUp size={20}/>
+                </button>
+                <button onClick={() => setShowAddExam(true)} className="w-10 h-10 bg-white text-[#8D30F4] rounded-xl shadow-xl flex items-center justify-center active:scale-95 transition-all"><Plus size={20}/></button>
+            </div>
         )}
       </div>
+
+      {view === 'insights' && madrasah && (
+          <SmartResultAnalytics madrasahId={madrasah.id} lang={lang} />
+      )}
 
       {view === 'list' && (
         <div className="space-y-4">
