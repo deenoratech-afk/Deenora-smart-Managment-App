@@ -149,21 +149,21 @@ const Attendance: React.FC<AttendanceProps> = ({ lang, madrasah, onBack, userId 
     <div className="space-y-6 animate-in fade-in duration-500 pb-20">
       <div className="flex items-center justify-between px-2">
         <div className="flex items-center gap-3">
-          <button onClick={onBack} className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-white border border-white/20 shadow-xl active:scale-95"><ArrowLeft size={20}/></button>
-          <h1 className="text-xl font-black text-white font-noto drop-shadow-md">{t('attendance_daily', lang)}</h1>
+          <button onClick={onBack} className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-[#2563EB] border border-blue-100 shadow-sm active:scale-95"><ArrowLeft size={20}/></button>
+          <h1 className="text-xl font-black text-[#1E293B] font-noto">{t('attendance_daily', lang)}</h1>
         </div>
-        <button onClick={() => selectedClass && (activeTab === 'daily' ? fetchStudents(selectedClass.id) : fetchReport(selectedClass.id))} className="w-10 h-10 bg-white/10 text-white rounded-xl flex items-center justify-center active:scale-95"><RefreshCw size={18} /></button>
+        <button onClick={() => selectedClass && (activeTab === 'daily' ? fetchStudents(selectedClass.id) : fetchReport(selectedClass.id))} className="w-10 h-10 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center active:scale-95"><RefreshCw size={18} /></button>
       </div>
 
-      <div className="flex p-1 bg-white/10 rounded-[1.5rem] border border-white/20 shadow-lg">
+      <div className="flex p-1 bg-slate-50 rounded-[1.5rem] border border-slate-100 shadow-sm">
         {(['daily', 'report'] as const).map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${activeTab === tab ? 'bg-white text-[#8D30F4] shadow-md' : 'text-white/60'}`}>
+          <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${activeTab === tab ? 'bg-[#2563EB] text-white shadow-premium' : 'text-slate-400'}`}>
             {tab === 'daily' ? t('attendance_daily', lang) : t('attendance_report', lang)}
           </button>
         ))}
       </div>
 
-      <div className="bg-white/95 backdrop-blur-xl p-6 rounded-[2.5rem] border border-white shadow-xl space-y-4">
+      <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-bubble space-y-4">
         <div className="relative">
           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2 mb-1.5 block">{t('class_select', lang)}</label>
           <button onClick={() => setShowClassDropdown(!showClassDropdown)} className="w-full h-14 px-6 rounded-2xl border-2 bg-slate-50 border-slate-100 flex items-center justify-between group active:scale-[0.99] transition-all">
