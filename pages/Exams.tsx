@@ -20,7 +20,8 @@ const Exams: React.FC<ExamsProps> = ({ lang, madrasah, onBack, role }) => {
   const [classes, setClasses] = useState<Class[]>([]);
   const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
   const [subjects, setSubjects] = useState<ExamSubject[]>([]);
-  const [marksData, setMarksData] = useState<any[]>([]);
+  const [marksData, setMarksData] = useState<any>({});
+  const [rankingData, setRankingData] = useState<any[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   
   const [loading, setLoading] = useState(true);
@@ -82,8 +83,13 @@ const Exams: React.FC<ExamsProps> = ({ lang, madrasah, onBack, role }) => {
 
   const fetchRanking = async (examId: string) => {
     setLoading(true);
-    const { data } = await supabase.rpc('get_exam_ranking', { p_exam_id: examId });
-    if (data) setMarksData(data); // Using marksData state for ranking list
+    try {
+      const { data } = await supabase.rpc('get_exam_ranking', { p_exam_id: examId });
+      setRankingData(data || []);
+    } catch (e) {
+      console.error(e);
+      setRankingData([]);
+    }
     setLoading(false);
   };
 
@@ -313,13 +319,13 @@ const Exams: React.FC<ExamsProps> = ({ lang, madrasah, onBack, role }) => {
                   <div className="bg-gradient-to-br from-[#1E3A8A] to-[#2563EB] p-6 rounded-[2.5rem] text-white flex items-center justify-between shadow-premium">
                       <div>
                           <p className="text-[10px] font-black uppercase opacity-60">সেরা ফলাফল</p>
-                          <h3 className="text-2xl font-black font-noto">{marksData[0]?.student_name || 'N/A'}</h3>
+                          <h3 className="text-2xl font-black font-noto">{rankingData[0]?.student_name || 'N/A'}</h3>
                       </div>
                       <Trophy size={40} className="text-amber-300" />
                   </div>
 
                   <div className="space-y-3">
-                      {marksData.map((item: any) => (
+                      {rankingData.map((item: any) => (
                           <div key={item.student_id} className="bg-white p-5 rounded-[2.2rem] border border-slate-100 shadow-bubble flex items-center justify-between">
                               <div className="flex items-center gap-4 min-w-0">
                                   <div className="w-10 h-10 bg-blue-50 text-[#2563EB] rounded-xl flex items-center justify-center font-black shrink-0">{item.rank}</div>
