@@ -152,6 +152,8 @@ export const translations = {
     full_marks: 'পূর্ণমান',
     pass_marks: 'পাস নম্বর',
     total_marks: 'মোট নম্বর',
+    average: 'গড়',
+    gpa: 'জিপিএ',
     result_card: 'ফলাফল পত্র',
     publish_result: 'ফলাফল প্রকাশ',
     enter_marks: 'নম্বর এন্ট্রি'
@@ -286,6 +288,8 @@ export const translations = {
     full_marks: 'Full Marks',
     pass_marks: 'Pass Marks',
     total_marks: 'Total Marks',
+    average: 'Average',
+    gpa: 'GPA',
     result_card: 'Result Card',
     publish_result: 'Publish Result',
     enter_marks: 'Enter Marks',

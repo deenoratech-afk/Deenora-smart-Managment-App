@@ -87,6 +87,23 @@ const Exams: React.FC<ExamsProps> = ({ lang, madrasah, onBack, role }) => {
     setLoading(false);
   };
 
+  const getGradeInfo = (totalMarks: number, passStatus: boolean) => {
+    if (!passStatus) return { gpa: '0.00', grade: 'F' };
+    
+    const totalPossible = subjects.reduce((sum, s) => sum + s.full_marks, 0);
+    if (totalPossible === 0) return { gpa: '0.00', grade: 'N/A' };
+    
+    const percentage = (totalMarks / totalPossible) * 100;
+    
+    if (percentage >= 80) return { gpa: '5.00', grade: 'A+' };
+    if (percentage >= 70) return { gpa: '4.00', grade: 'A' };
+    if (percentage >= 60) return { gpa: '3.50', grade: 'A-' };
+    if (percentage >= 50) return { gpa: '3.00', grade: 'B' };
+    if (percentage >= 40) return { gpa: '2.00', grade: 'C' };
+    if (percentage >= 33) return { gpa: '1.00', grade: 'D' };
+    return { gpa: '0.00', grade: 'F' };
+  };
+
   const handleAddExam = async () => {
     if (!madrasah || !examName || !classId) return;
     setIsSaving(true);
@@ -188,7 +205,7 @@ const Exams: React.FC<ExamsProps> = ({ lang, madrasah, onBack, role }) => {
                 <div className="grid grid-cols-3 gap-2">
                     <button onClick={() => { setSelectedExam(exam); setView('subjects'); fetchSubjects(exam.id); }} className="py-2.5 bg-slate-50 text-slate-500 rounded-xl text-[9px] font-black uppercase tracking-widest border border-slate-100 active:scale-95 transition-all">{t('subject', lang)}</button>
                     <button onClick={() => { setSelectedExam(exam); setView('marks'); fetchSubjects(exam.id); fetchMarkEntryData(exam.id); }} className="py-2.5 bg-blue-50 text-[#2563EB] rounded-xl text-[9px] font-black uppercase tracking-widest border border-blue-100 active:scale-95 transition-all">{t('enter_marks', lang)}</button>
-                    <button onClick={() => { setSelectedExam(exam); setView('report'); fetchRanking(exam.id); }} className="py-2.5 bg-[#2563EB] text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-premium active:scale-95 transition-all">{t('rank', lang)}</button>
+                    <button onClick={() => { setSelectedExam(exam); setView('report'); fetchSubjects(exam.id); fetchRanking(exam.id); }} className="py-2.5 bg-[#2563EB] text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-premium active:scale-95 transition-all">{t('rank', lang)}</button>
                 </div>
             </div>
           ))}
@@ -227,6 +244,8 @@ const Exams: React.FC<ExamsProps> = ({ lang, madrasah, onBack, role }) => {
                             {subjects.map(s => (
                                 <th key={s.id} className="py-4 text-[10px] font-black text-slate-400 uppercase text-center min-w-[80px]">{s.subject_name}</th>
                             ))}
+                            <th className="py-4 text-[10px] font-black text-blue-400 uppercase text-center min-w-[60px]">{t('total_marks', lang)}</th>
+                            <th className="py-4 text-[10px] font-black text-purple-400 uppercase text-center min-w-[60px]">{t('average', lang)}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -257,6 +276,12 @@ const Exams: React.FC<ExamsProps> = ({ lang, madrasah, onBack, role }) => {
                                         />
                                     </td>
                                 ))}
+                                <td className="py-4 px-2 text-center font-black text-[#1E3A8A] text-xs">
+                                    {(Object.values(marksData[std.id] || {}) as any[]).reduce((sum: number, m: any) => sum + (parseFloat(m) || 0), 0)}
+                                </td>
+                                <td className="py-4 px-2 text-center font-black text-[#2563EB] text-xs">
+                                    {subjects.length > 0 ? ((Object.values(marksData[std.id] || {}) as any[]).reduce((sum: number, m: any) => sum + (parseFloat(m) || 0), 0) / subjects.length).toFixed(1) : '0'}
+                                </td>
                             </tr>
                         ))}
                     </tbody>
@@ -285,11 +310,21 @@ const Exams: React.FC<ExamsProps> = ({ lang, madrasah, onBack, role }) => {
                               <div className="w-10 h-10 bg-blue-50 text-[#2563EB] rounded-xl flex items-center justify-center font-black shrink-0">{item.rank}</div>
                               <div className="min-w-0">
                                   <h5 className="font-black text-[#1E3A8A] font-noto truncate leading-none mb-1">{item.student_name}</h5>
-                                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Roll: {item.roll} | Total: {item.total_marks}</p>
+                                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                                    Roll: {item.roll} | {t('total_marks', lang)}: {item.total_marks} | {t('average', lang)}: {subjects.length > 0 ? (item.total_marks / subjects.length).toFixed(2) : '0'}
+                                  </p>
                               </div>
                           </div>
-                          <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase border ${item.pass_status ? 'bg-emerald-50 text-emerald-500 border-emerald-100' : 'bg-red-50 text-red-500 border-red-100'}`}>
-                             {item.pass_status ? 'Passed' : 'Failed'}
+                          <div className="flex flex-col items-end gap-1.5">
+                              <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase border ${item.pass_status ? 'bg-emerald-50 text-emerald-500 border-emerald-100' : 'bg-red-50 text-red-500 border-red-100'}`}>
+                                 {item.pass_status ? (lang === 'bn' ? 'পাস' : 'Passed') : (lang === 'bn' ? 'ফেল' : 'Failed')}
+                              </div>
+                              {item.pass_status && (
+                                <div className="flex gap-1.5">
+                                   <span className="px-2 py-0.5 bg-blue-50 text-[#2563EB] rounded-lg text-[8px] font-black border border-blue-100">{t('gpa', lang)}: {getGradeInfo(item.total_marks, item.pass_status).gpa}</span>
+                                   <span className="px-2 py-0.5 bg-purple-50 text-purple-600 rounded-lg text-[8px] font-black border border-purple-100">{t('grade', lang)}: {getGradeInfo(item.total_marks, item.pass_status).grade}</span>
+                                </div>
+                              )}
                           </div>
                       </div>
                   ))}
