@@ -39,7 +39,24 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
 
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [collectAmount, setCollectAmount] = useState('');
+  const [feeNote, setFeeNote] = useState('');
+  const [classStructures, setClassStructures] = useState<any[]>([]);
   const [showClassDropdown, setShowClassDropdown] = useState(false);
+
+  useEffect(() => {
+    if (selectedStudent && madrasah) {
+      const fetchClassStructures = async () => {
+        const { data } = await supabase
+          .from('fee_structures')
+          .select('*')
+          .eq('class_id', selectedStudent.class_id);
+        if (data) setClassStructures(data);
+      };
+      fetchClassStructures();
+    } else {
+      setClassStructures([]);
+    }
+  }, [selectedStudent, madrasah]);
 
   useEffect(() => {
     if (madrasah) {
@@ -114,6 +131,7 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
         class_id: selectedStudent.class_id,
         amount_paid: amt,
         month: selectedMonth,
+        description: feeNote.trim() || null,
         status: (Number(selectedStudent.total_paid) + amt) >= selectedStudent.total_payable ? 'paid' : 'partial'
       });
       
@@ -130,12 +148,13 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
         type: 'income',
         amount: amt,
         category: 'Student Fee',
-        description: `Fee for ${selectedStudent.student_name} (${selectedMonth})`,
+        description: feeNote.trim() || `Fee for ${selectedStudent.student_name} (${selectedMonth})`,
         transaction_date: new Date().toISOString().split('T')[0]
       });
 
       setShowFeeCollection(false);
       setCollectAmount('');
+      setFeeNote('');
       setSelectedStudent(null);
       fetchData();
     } catch (err: any) { 
@@ -372,6 +391,20 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
                             <p className="font-black text-red-600 text-sm">৳{selectedStudent.balance_due}</p>
                           </div>
                       </div>
+
+                      {classStructures.length > 0 && (
+                        <div className="mt-4 pt-4 border-t border-slate-200 text-left">
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">ফি-র ধরণ (Breakdown)</p>
+                            <div className="space-y-1.5">
+                                {classStructures.map(fs => (
+                                    <div key={fs.id} className="flex justify-between items-center bg-white/50 px-3 py-1.5 rounded-lg border border-slate-100">
+                                        <span className="text-[11px] font-bold text-slate-600 font-noto">{fs.fee_name}</span>
+                                        <span className="text-[11px] font-black text-[#1E3A8A]">৳{fs.amount}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                      )}
                   </div>
                   <div className="space-y-4">
                       <div className="space-y-1.5">
@@ -379,6 +412,13 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
                           <div className="relative">
                             <input type="number" className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-lg outline-none border-2 border-transparent focus:border-[#2563EB]/20" placeholder="0.00" value={collectAmount} onChange={(e) => setCollectAmount(e.target.value)} />
                             <DollarSign className="absolute left-4 top-4 text-[#2563EB]" size={20}/>
+                          </div>
+                      </div>
+                      <div className="space-y-1.5">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">মন্তব্য (ঐচ্ছিক)</label>
+                          <div className="relative">
+                            <input type="text" className="w-full h-12 bg-slate-50 rounded-xl px-12 font-bold text-sm outline-none border border-slate-100 focus:border-[#2563EB]/20" placeholder="যেমন: মাসিক বেতন ও পরীক্ষার ফি" value={feeNote} onChange={(e) => setFeeNote(e.target.value)} />
+                            <FileText className="absolute left-4 top-3.5 text-slate-300" size={18}/>
                           </div>
                       </div>
                       <button onClick={handleCollectFee} disabled={isSaving || !collectAmount} className="w-full py-5 bg-[#2563EB] text-white font-black rounded-full shadow-premium flex items-center justify-center gap-3 active:scale-95 transition-all text-base">
