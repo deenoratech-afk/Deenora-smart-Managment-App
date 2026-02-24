@@ -440,6 +440,18 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2 mb-1.5 block">ফি-র নাম</label>
                     <input type="text" className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20" placeholder="যেমন: মাসিক বেতন" value={category} onChange={(e) => setCategory(e.target.value)} />
                     <Tag className="absolute left-4 top-[44px] text-slate-300" size={20}/>
+                    <div className="flex flex-wrap gap-2 mt-2 px-1">
+                       {['পরীক্ষার ফি', 'কোচিং ফি', 'অন্যান্য ফি'].map(suggestion => (
+                          <button 
+                             key={suggestion}
+                             type="button"
+                             onClick={() => setCategory(suggestion)}
+                             className={`px-3 py-1.5 rounded-lg text-[10px] font-black border transition-all ${category === suggestion ? 'bg-blue-50 text-[#2563EB] border-[#2563EB]/20' : 'bg-white text-slate-400 border-slate-100 hover:border-slate-200'}`}
+                          >
+                             {suggestion}
+                          </button>
+                       ))}
+                    </div>
                  </div>
                  <div className="relative">
                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2 mb-1.5 block">টাকার পরিমাণ</label>
