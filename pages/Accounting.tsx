@@ -237,7 +237,7 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
 
            <div className="space-y-2.5">
               {loading ? (
-                <div className="flex flex-col items-center justify-center py-16 text-white/50">
+                <div className="flex flex-col items-center justify-center py-16 text-slate-400">
                   <Loader2 className="animate-spin mb-4" size={32} />
                   <p className="text-[10px] font-black uppercase tracking-widest">ডাটা লোড হচ্ছে...</p>
                 </div>
@@ -262,14 +262,14 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
                     </div>
                   ))
               ) : !fetchError && (
-                <div className="text-center py-16 bg-white/10 rounded-[3rem] border-2 border-dashed border-white/30 backdrop-blur-sm mx-2 px-6 flex flex-col items-center">
-                   <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center text-white/40 mb-5">
+                <div className="text-center py-16 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200 mx-2 px-6 flex flex-col items-center">
+                   <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center text-blue-200 mb-5">
                       {anyStudentsInMadrasah ? <Info size={32} /> : <Users size={32} />}
                    </div>
-                   <h3 className="text-white text-lg font-black font-noto leading-tight">
+                   <h3 className="text-[#1E293B] text-lg font-black font-noto leading-tight">
                      {anyStudentsInMadrasah ? 'রিপোর্ট পাওয়া যায়নি' : 'কোনো ছাত্র পাওয়া যায়নি'}
                    </h3>
-                   <p className="text-white/60 text-[10px] font-bold mt-2 uppercase tracking-wide leading-relaxed">
+                   <p className="text-slate-400 text-[10px] font-bold mt-2 uppercase tracking-wide leading-relaxed">
                      {anyStudentsInMadrasah 
                         ? 'আপনার ডাটাবেসে ছাত্র আছে, কিন্তু তারা সম্ভবত সঠিক শ্রেণিতে নিবন্ধিত নয় অথবা ডাটাবেস ফাংশনে সমস্যা হচ্ছে।'
                         : 'এই মাদরাসার অধীনে কোনো ছাত্র নিবন্ধিত নেই। অনুগ্রহ করে ছাত্র যোগ করুন।'}
@@ -295,7 +295,7 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
 
       {activeTab === 'ledger' && (
         <div className="space-y-3 animate-in slide-in-from-bottom-5">
-          {loading ? <div className="flex justify-center py-10"><Loader2 className="animate-spin text-white" /></div> : ledger.length > 0 ? (
+          {loading ? <div className="flex justify-center py-10"><Loader2 className="animate-spin text-[#2563EB]" /></div> : ledger.length > 0 ? (
             ledger.map(entry => (
               <div key={entry.id} className="bg-white p-4 rounded-[1.8rem] border border-slate-100 shadow-bubble flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -312,7 +312,7 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
                 </div>
               </div>
             ))
-          ) : <div className="text-center py-20 text-white/40 uppercase text-xs font-black">No transactions</div>}
+          ) : <div className="text-center py-20 text-slate-400 uppercase text-xs font-black">No transactions</div>}
         </div>
       )}
 

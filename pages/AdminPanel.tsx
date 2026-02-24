@@ -337,7 +337,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, currentView = 'list', dat
   return (
     <div className="space-y-6 pb-20 animate-in fade-in relative">
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-24 text-white">
+        <div className="flex flex-col items-center justify-center py-24 text-slate-400">
           <Loader2 className="animate-spin mb-4" size={40} />
           <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Loading System Data...</p>
         </div>
@@ -346,55 +346,55 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, currentView = 'list', dat
           {view === 'dashboard' && (
             <div className="space-y-6 animate-in slide-in-from-bottom-5">
               <div className="flex items-center justify-between px-2">
-                <h1 className="text-xl font-black text-white font-noto drop-shadow-md">সিস্টেম ড্যাশবোর্ড</h1>
-                <button onClick={() => initData()} className="p-2 bg-white/20 rounded-xl text-white backdrop-blur-md active:scale-95 transition-all">
+                <h1 className="text-xl font-black text-[#1E293B] font-noto">সিস্টেম ড্যাশবোর্ড</h1>
+                <button onClick={() => initData()} className="p-2 bg-blue-50 rounded-xl text-[#2563EB] active:scale-95 transition-all border border-blue-100 shadow-sm">
                    <RefreshCw size={18} />
                 </button>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-white/95 p-5 rounded-[2.2rem] border border-white shadow-xl flex flex-col items-center text-center">
+                <div className="bg-white p-5 rounded-[2.2rem] border border-slate-100 shadow-bubble flex flex-col items-center text-center">
                   <div className="w-10 h-10 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center mb-2 shadow-inner">
                     <Users2 size={20} />
                   </div>
-                  <h4 className="text-2xl font-black text-[#2E0B5E]">{madrasahs.length}</h4>
+                  <h4 className="text-2xl font-black text-[#1E3A8A]">{madrasahs.length}</h4>
                   <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">Madrasahs</p>
                 </div>
-                <div className="bg-white/95 p-5 rounded-[2.2rem] border border-white shadow-xl flex flex-col items-center text-center">
+                <div className="bg-white p-5 rounded-[2.2rem] border border-slate-100 shadow-bubble flex flex-col items-center text-center">
                   <div className="w-10 h-10 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center mb-2 shadow-inner">
                     <Activity size={20} />
                   </div>
-                  <h4 className="text-2xl font-black text-[#2E0B5E]">{madrasahs.filter(m => m.is_active).length}</h4>
+                  <h4 className="text-2xl font-black text-[#1E3A8A]">{madrasahs.filter(m => m.is_active).length}</h4>
                   <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">Active Portals</p>
                 </div>
                 
-                <div className="bg-white/95 p-6 rounded-[2.5rem] border border-white shadow-xl flex flex-col items-center text-center col-span-2 relative overflow-hidden group">
+                <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-bubble flex flex-col items-center text-center col-span-2 relative overflow-hidden group">
                   <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform">
                     <PieChart size={60} />
                   </div>
                   <div className="grid grid-cols-2 w-full divide-x divide-slate-100">
                     <div>
-                      <h4 className="text-2xl font-black text-[#2E0B5E]">{globalStats.totalDistributedSMS.toLocaleString('bn-BD')}</h4>
+                      <h4 className="text-2xl font-black text-[#1E3A8A]">{globalStats.totalDistributedSMS.toLocaleString('bn-BD')}</h4>
                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">মোট বিতরণকৃত SMS</p>
                     </div>
                     <div>
-                      <h4 className="text-2xl font-black text-[#8D30F4]">{globalStats.totalSentSMS.toLocaleString('bn-BD')}</h4>
+                      <h4 className="text-2xl font-black text-[#2563EB]">{globalStats.totalSentSMS.toLocaleString('bn-BD')}</h4>
                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">মোট প্রেরিত SMS (ইউসেজ)</p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white/95 p-8 rounded-[3rem] border border-white shadow-2xl space-y-8">
+              <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-bubble space-y-8">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-black text-[#2E0B5E] font-noto">SMS Inventory</h3>
-                  <Zap size={24} className="text-[#8D30F4]" fill="currentColor" />
+                  <h3 className="text-lg font-black text-[#1E3A8A] font-noto">SMS Inventory</h3>
+                  <Zap size={24} className="text-[#2563EB]" fill="currentColor" />
                 </div>
                 <div className="space-y-6">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="bg-slate-50 p-5 rounded-3xl border border-slate-100">
                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">সিস্টেম স্টক</p>
-                      <h5 className="text-xl font-black text-[#2E0B5E]">{adminStock?.remaining_sms || 0}</h5>
+                      <h5 className="text-xl font-black text-[#1E3A8A]">{adminStock?.remaining_sms || 0}</h5>
                     </div>
                     <div className="bg-slate-50 p-5 rounded-3xl border border-slate-100">
                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">ইউজার ওয়ালেট (মোট)</p>
@@ -409,24 +409,24 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, currentView = 'list', dat
           {view === 'list' && (
             <div className="space-y-6">
               <div className="flex items-center justify-between px-2">
-                <h1 className="text-xl font-black text-white font-noto drop-shadow-md">মাদরাসা লিস্ট</h1>
+                <h1 className="text-xl font-black text-[#1E293B] font-noto">মাদরাসা লিস্ট</h1>
               </div>
 
               <div className="relative group px-1">
                 <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-                <input type="text" placeholder="Search Madrasah..." className="w-full h-14 pl-14 pr-14 bg-white border border-[#8D30F4]/5 rounded-[2rem] outline-none text-slate-800 font-bold shadow-xl" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                <input type="text" placeholder="Search Madrasah..." className="w-full h-14 pl-14 pr-14 bg-white border border-slate-100 rounded-[2rem] outline-none text-slate-800 font-bold shadow-bubble" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
               </div>
 
               <div className="space-y-3">
                 {filtered.length > 0 ? filtered.map(m => (
-                  <div key={m.id} onClick={() => handleUserClick(m)} className="bg-white/95 p-5 rounded-[2.2rem] border border-white/50 shadow-lg active:scale-[0.98] transition-all cursor-pointer hover:border-[#8D30F4]/30">
+                  <div key={m.id} onClick={() => handleUserClick(m)} className="bg-white p-5 rounded-[2.2rem] border border-slate-100 shadow-bubble active:scale-[0.98] transition-all cursor-pointer hover:border-[#2563EB]/30">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-4 min-w-0">
                         <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-300 border border-slate-100 shadow-inner shrink-0 overflow-hidden">
                           {m.logo_url ? <img src={m.logo_url} className="w-full h-full object-cover" /> : <UserIcon size={24} />}
                         </div>
                         <div className="min-w-0">
-                          <h3 className="font-black text-slate-800 truncate font-noto text-lg">{m.name}</h3>
+                          <h3 className="font-black text-[#1E3A8A] truncate font-noto text-lg">{m.name}</h3>
                           <div className="flex items-center gap-2 mt-1">
                             <p className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${m.is_active ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
                               {m.is_active ? 'Active' : 'Blocked'}
@@ -436,15 +436,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, currentView = 'list', dat
                           </div>
                         </div>
                       </div>
-                      <div className="text-right bg-[#F2F5FF] px-4 py-2 rounded-2xl border border-blue-50 flex flex-col items-center">
-                        <p className="text-lg font-black text-[#8D30F4]">{m.sms_balance || 0}</p>
+                      <div className="text-right bg-blue-50 px-4 py-2 rounded-2xl border border-blue-100 flex flex-col items-center">
+                        <p className="text-lg font-black text-[#2563EB]">{m.sms_balance || 0}</p>
                         <p className="text-[7px] font-black text-slate-400 uppercase tracking-tighter">SMS</p>
                       </div>
                     </div>
                   </div>
                 )) : (
-                  <div className="text-center py-20 bg-white/10 rounded-[2.5rem] border-2 border-dashed border-white/30">
-                    <p className="text-white/40 text-[10px] font-black uppercase tracking-widest">No Madrasahs Found</p>
+                  <div className="text-center py-20 bg-slate-50 rounded-[2.5rem] border-2 border-dashed border-slate-200">
+                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">No Madrasahs Found</p>
                   </div>
                 )}
               </div>
@@ -454,44 +454,44 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, currentView = 'list', dat
           {view === 'approvals' && (
             <div className="space-y-8 px-1">
               <div className="flex items-center justify-between px-2">
-                <h1 className="text-xl font-black text-white font-noto drop-shadow-md">পেমেন্ট ম্যানেজমেন্ট</h1>
-                <button onClick={() => initData()} className="p-2 bg-white/20 rounded-xl text-white backdrop-blur-md active:scale-95 transition-all">
+                <h1 className="text-xl font-black text-[#1E293B] font-noto">পেমেন্ট ম্যানেজমেন্ট</h1>
+                <button onClick={() => initData()} className="p-2 bg-blue-50 rounded-xl text-[#2563EB] active:scale-95 transition-all border border-blue-100 shadow-sm">
                    <RefreshCw size={18} />
                 </button>
               </div>
               
               <div className="space-y-6">
-                <h2 className="text-[11px] font-black text-white uppercase tracking-[0.2em] px-2 flex items-center gap-2">
-                  <AlertCircle size={14} className="text-amber-400" /> Pending Requests
+                <h2 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] px-2 flex items-center gap-2">
+                   <AlertCircle size={14} className="text-amber-400" /> Pending Requests
                 </h2>
                 <div className="space-y-4">
                   {pendingTrans.length > 0 ? pendingTrans.map(tr => (
-                    <div key={tr.id} className="bg-white p-6 rounded-[2.5rem] border border-white shadow-xl space-y-4 animate-in slide-in-from-left-4">
+                    <div key={tr.id} className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-bubble space-y-4 animate-in slide-in-from-left-4">
                       <div className="flex items-center justify-between">
-                        <div className="bg-green-50 text-green-600 px-4 py-1.5 rounded-full text-[16px] font-black border border-green-100">{tr.amount} ৳</div>
+                        <div className="bg-emerald-50 text-emerald-600 px-4 py-1.5 rounded-full text-[16px] font-black border border-emerald-100">{tr.amount} ৳</div>
                         <div className="text-[10px] font-black text-slate-400 uppercase flex items-center gap-1.5">
                            <Clock size={12} /> {new Date(tr.created_at).toLocaleDateString('bn-BD')}
                         </div>
                       </div>
                       <div className="px-1 space-y-1">
-                        <p className="text-[15px] font-black text-slate-800 font-noto">{tr.madrasahs?.name}</p>
+                        <p className="text-[15px] font-black text-[#1E3A8A] font-noto">{tr.madrasahs?.name}</p>
                         <div className="flex flex-col gap-0.5">
-                           <p className="text-[10px] font-bold text-slate-400">TrxID: <span className="text-[#8D30F4]">{tr.transaction_id}</span></p>
-                           <p className="text-[11px] font-black text-[#2E0B5E] flex items-center gap-1.5">
-                              <Smartphone size={12} className="text-[#8D30F4]" /> 
-                              বিকাশ নম্বর: <span className="text-slate-800">{tr.sender_phone || 'N/A'}</span>
+                           <p className="text-[10px] font-bold text-slate-400">TrxID: <span className="text-[#2563EB]">{tr.transaction_id}</span></p>
+                           <p className="text-[11px] font-black text-[#1E3A8A] flex items-center gap-1.5">
+                               <Smartphone size={12} className="text-[#2563EB]" /> 
+                               বিকাশ নম্বর: <span className="text-slate-800">{tr.sender_phone || 'N/A'}</span>
                            </p>
                         </div>
                       </div>
                       
                       <div className="flex items-center justify-between bg-slate-50 p-3 rounded-2xl border border-slate-100">
                         <div className="flex items-center gap-2">
-                           <MessageSquare size={16} className={smsEnabledMap[tr.id] ? "text-[#8D30F4]" : "text-slate-300"} />
+                           <MessageSquare size={16} className={smsEnabledMap[tr.id] ? "text-[#2563EB]" : "text-slate-300"} />
                            <span className="text-[10px] font-black text-slate-500 uppercase">অ্যাপ্রুভ হলে SMS পাঠান</span>
                         </div>
                         <button onClick={() => toggleSmsForRequest(tr.id)} className="transition-all active:scale-90">
                            {smsEnabledMap[tr.id] ? (
-                             <ToggleRight className="text-[#8D30F4]" size={28} />
+                             <ToggleRight className="text-[#2563EB]" size={28} />
                            ) : (
                              <ToggleLeft className="text-slate-300" size={28} />
                            )}
@@ -503,7 +503,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, currentView = 'list', dat
                           <input 
                             type="number" 
                             disabled={approvingIds.has(tr.id)}
-                            className="w-full h-14 px-6 bg-slate-50 border border-slate-100 rounded-[1.5rem] font-black text-base text-center outline-none focus:border-[#8D30F4]/20 disabled:opacity-50" 
+                            className="w-full h-14 px-6 bg-slate-50 border border-slate-100 rounded-[1.5rem] font-black text-base text-center outline-none focus:border-[#2563EB]/20 disabled:opacity-50" 
                             value={smsToCredit[tr.id] || ''} 
                             onChange={(e) => setSmsToCredit({...smsToCredit, [tr.id]: e.target.value})} 
                             placeholder="SMS Quantity" 
@@ -511,7 +511,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, currentView = 'list', dat
                           <button 
                             onClick={() => approveTransaction(tr)} 
                             disabled={approvingIds.has(tr.id) || !smsToCredit[tr.id]}
-                            className="w-full h-14 bg-green-500 text-white font-black rounded-[1.5rem] text-sm active:scale-95 transition-all shadow-lg shadow-green-100 disabled:bg-slate-300 disabled:shadow-none flex items-center justify-center"
+                            className="w-full h-14 bg-[#2563EB] text-white font-black rounded-[1.5rem] text-sm active:scale-95 transition-all shadow-premium disabled:bg-slate-300 disabled:shadow-none flex items-center justify-center"
                           >
                             {approvingIds.has(tr.id) ? <Loader2 className="animate-spin" size={20} /> : 'অনুমোদন দিন'}
                           </button>
@@ -526,31 +526,31 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, currentView = 'list', dat
                       </div>
                     </div>
                   )) : (
-                    <div className="text-center py-10 bg-white/10 rounded-[2.5rem] border-2 border-dashed border-white/30">
-                      <p className="text-white/40 text-[10px] font-black uppercase tracking-widest">No Pending Requests</p>
+                    <div className="text-center py-10 bg-slate-50 rounded-[2.5rem] border-2 border-dashed border-slate-200">
+                      <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">No Pending Requests</p>
                     </div>
                   )}
                 </div>
               </div>
 
-              <div className="space-y-6 pt-4 border-t border-white/10">
-                <h2 className="text-[11px] font-black text-white uppercase tracking-[0.2em] px-2 flex items-center gap-2">
+              <div className="space-y-6 pt-4 border-t border-slate-100">
+                <h2 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] px-2 flex items-center gap-2">
                    <HistoryIcon size={14} className="text-blue-400" /> Recent Transactions
                 </h2>
                 <div className="space-y-3">
                   {transactionHistory.length > 0 ? transactionHistory.map(tr => (
-                    <div key={tr.id} className="bg-white/95 p-5 rounded-[2rem] border border-white shadow-lg flex items-center justify-between">
+                    <div key={tr.id} className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-bubble flex items-center justify-between">
                        <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                             <p className="text-[15px] font-black text-slate-800 leading-none">{tr.amount} ৳</p>
-                             <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${tr.status === 'approved' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                             <p className="text-[15px] font-black text-[#1E3A8A] leading-none">{tr.amount} ৳</p>
+                             <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${tr.status === 'approved' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
                                 {tr.status}
                              </span>
                           </div>
-                          <p className="text-[12px] font-black text-[#2E0B5E] font-noto truncate">{tr.madrasahs?.name}</p>
+                          <p className="text-[12px] font-black text-[#1E3A8A] font-noto truncate">{tr.madrasahs?.name}</p>
                           <p className="text-[10px] font-bold text-slate-400 mt-1 flex items-center gap-2">
                              <Smartphone size={10} /> বিকাশ: {tr.sender_phone || 'N/A'}
-                             {tr.sms_count && <span className="text-[#8D30F4] font-black">({tr.sms_count} SMS)</span>}
+                             {tr.sms_count && <span className="text-[#2563EB] font-black">({tr.sms_count} SMS)</span>}
                           </p>
                           <div className="flex items-center gap-2 mt-1.5 text-slate-400">
                              <Clock size={10} />
@@ -559,12 +559,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, currentView = 'list', dat
                        </div>
                        <div className="text-right ml-4">
                           <p className="text-[9px] font-black text-slate-300 uppercase tracking-tighter">TrxID</p>
-                          <p className="text-[10px] font-black text-[#8D30F4] uppercase leading-tight">{tr.transaction_id}</p>
+                          <p className="text-[10px] font-black text-[#2563EB] uppercase leading-tight">{tr.transaction_id}</p>
                        </div>
                     </div>
                   )) : (
-                    <div className="text-center py-10 bg-white/10 rounded-[2.5rem] border-2 border-dashed border-white/30">
-                       <p className="text-white/40 text-[10px] font-black uppercase tracking-widest">No History Found</p>
+                    <div className="text-center py-10 bg-slate-50 rounded-[2.5rem] border-2 border-dashed border-slate-200">
+                       <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">No History Found</p>
                     </div>
                   )}
                 </div>
@@ -575,41 +575,41 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, currentView = 'list', dat
           {view === 'details' && selectedUser && (
              <div className="animate-in slide-in-from-right-10 duration-500 pb-20 space-y-8 pt-2">
                 <div className="flex items-center gap-5 px-1">
-                   <button onClick={() => setView('list')} className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-white active:scale-90 transition-all border border-white/20 shadow-xl">
+                   <button onClick={() => setView('list')} className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-[#2563EB] active:scale-90 transition-all border border-blue-100 shadow-sm">
                       <ArrowLeft size={24} strokeWidth={3} />
                    </button>
                    <div className="min-w-0">
-                      <h1 className="text-xl font-black text-white font-noto truncate leading-tight drop-shadow-md">Madrasah Details</h1>
-                      <p className="text-[9px] font-black text-white/60 uppercase tracking-widest mt-1">UUID: {selectedUser.id}</p>
+                      <h1 className="text-xl font-black text-[#1E293B] font-noto truncate leading-tight">Madrasah Details</h1>
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">UUID: {selectedUser.id}</p>
                    </div>
                 </div>
 
-                <div className="bg-white rounded-[3.5rem] p-8 shadow-2xl border border-white/50 space-y-8">
+                <div className="bg-white rounded-[3.5rem] p-8 shadow-bubble border border-slate-100 space-y-8">
                    <div className="flex flex-col items-center text-center">
-                      <div className="w-24 h-24 bg-slate-50 rounded-[2rem] flex items-center justify-center border-4 border-white shadow-xl overflow-hidden mb-4">
+                      <div className="w-24 h-24 bg-slate-50 rounded-[2rem] flex items-center justify-center border-4 border-white shadow-bubble overflow-hidden mb-4">
                          {selectedUser.logo_url ? <img src={selectedUser.logo_url} className="w-full h-full object-cover" /> : <UserIcon size={40} className="text-slate-300" />}
                       </div>
-                      <h2 className="text-2xl font-black text-[#2E0B5E] font-noto">{selectedUser.name}</h2>
-                      <div className={`mt-3 px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 border ${editActive ? 'bg-green-50 text-green-600 border-green-100' : 'bg-red-50 text-red-600 border-red-100'}`}>
+                      <h2 className="text-2xl font-black text-[#1E3A8A] font-noto">{selectedUser.name}</h2>
+                      <div className={`mt-3 px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 border ${editActive ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-red-50 text-red-600 border-red-100'}`}>
                          <Activity size={12} /> {editActive ? 'Active Portal' : 'Access Restricted'}
                       </div>
                    </div>
 
                    <div className="grid grid-cols-2 gap-3">
                       <div className="bg-slate-50 p-4 rounded-3xl text-center border border-slate-100">
-                         <h5 className="text-xl font-black text-[#2E0B5E]">{userStats.students}</h5>
+                         <h5 className="text-xl font-black text-[#1E3A8A]">{userStats.students}</h5>
                          <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest">Students</p>
                       </div>
                       <div className="bg-slate-50 p-4 rounded-3xl text-center border border-slate-100">
-                         <h5 className="text-xl font-black text-[#2E0B5E]">{userStats.classes}</h5>
+                         <h5 className="text-xl font-black text-[#1E3A8A]">{userStats.classes}</h5>
                          <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest">Classes</p>
                       </div>
                       <div className="bg-slate-50 p-4 rounded-3xl text-center border border-slate-100">
-                         <h5 className="text-xl font-black text-[#2E0B5E]">{userStats.teachers}</h5>
+                         <h5 className="text-xl font-black text-[#1E3A8A]">{userStats.teachers}</h5>
                          <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest">Teachers</p>
                       </div>
-                      <div className="bg-[#F2EBFF] p-4 rounded-3xl text-center border border-[#8D30F4]/10">
-                         <h5 className="text-xl font-black text-[#8D30F4]">{selectedUser.sms_balance || 0}</h5>
+                      <div className="bg-blue-50 p-4 rounded-3xl text-center border border-blue-100">
+                         <h5 className="text-xl font-black text-[#2563EB]">{selectedUser.sms_balance || 0}</h5>
                          <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest">SMS Bal</p>
                       </div>
                    </div>
@@ -618,16 +618,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, currentView = 'list', dat
                       <div className="grid grid-cols-1 gap-5">
                          <div className="space-y-2">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Madrasah Name</label>
-                            <input type="text" className="w-full h-14 bg-slate-50 border border-slate-100 rounded-2xl px-6 font-black text-[#2E0B5E] outline-none focus:border-[#8D30F4]/20" value={editName} onChange={(e) => setEditName(e.target.value)} />
+                            <input type="text" className="w-full h-14 bg-slate-50 border border-slate-100 rounded-2xl px-6 font-black text-[#1E3A8A] outline-none focus:border-[#2563EB]/20" value={editName} onChange={(e) => setEditName(e.target.value)} />
                          </div>
                          <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Phone</label>
-                               <input type="tel" className="w-full h-14 bg-slate-50 border border-slate-100 rounded-2xl px-6 font-black text-[#2E0B5E] outline-none" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} />
+                               <input type="tel" className="w-full h-14 bg-slate-50 border border-slate-100 rounded-2xl px-6 font-black text-[#1E3A8A] outline-none" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} />
                             </div>
                             <div className="space-y-2">
                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Login Pin</label>
-                               <input type="text" className="w-full h-14 bg-slate-50 border border-slate-100 rounded-2xl px-6 font-black text-[#8D30F4] outline-none" value={editLoginCode} onChange={(e) => setEditLoginCode(e.target.value)} />
+                               <input type="text" className="w-full h-14 bg-slate-50 border border-slate-100 rounded-2xl px-6 font-black text-[#2563EB] outline-none" value={editLoginCode} onChange={(e) => setEditLoginCode(e.target.value)} />
                             </div>
                          </div>
                       </div>
@@ -635,9 +635,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, currentView = 'list', dat
                       <div className="bg-slate-50 p-6 rounded-[2.5rem] space-y-6">
                          <div className="flex items-center justify-between px-1">
                             <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                               <Sliders size={14} className="text-[#8D30F4]" /> Advanced Config
+                               <Sliders size={14} className="text-[#2563EB]" /> Advanced Config
                             </h4>
-                            <button onClick={() => setEditActive(!editActive)} className={`flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all ${editActive ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
+                            <button onClick={() => setEditActive(!editActive)} className={`flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all ${editActive ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'}`}>
                                {editActive ? <ToggleRight size={20} /> : <ToggleLeft size={20} />}
                                <span className="text-[10px] font-black uppercase">{editActive ? 'Enabled' : 'Disabled'}</span>
                             </button>
@@ -658,7 +658,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, currentView = 'list', dat
                          </div>
                       </div>
 
-                      <button onClick={handleUserUpdate} disabled={isUpdatingUser} className="w-full h-16 premium-btn text-white font-black rounded-full shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3 text-lg">
+                      <button onClick={handleUserUpdate} disabled={isUpdatingUser} className="w-full h-16 bg-[#2563EB] text-white font-black rounded-full shadow-premium active:scale-95 transition-all flex items-center justify-center gap-3 text-lg">
                          {isUpdatingUser ? <Loader2 className="animate-spin" size={24} /> : <><Save size={24} /> Save Profile Changes</>}
                       </button>
                    </div>
@@ -670,17 +670,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, currentView = 'list', dat
 
       {/* Reject Confirmation Modal - PORTALED */}
       {rejectConfirm && createPortal(
-        <div className="modal-overlay bg-[#080A12]/60 backdrop-blur-3xl animate-in fade-in duration-300">
-           <div className="bg-white w-full max-w-sm rounded-[3rem] p-8 shadow-[0_40px_100px_rgba(0,0,0,0.15)] text-center animate-in zoom-in-95 duration-500 border border-red-50">
+        <div className="modal-overlay bg-slate-900/40 backdrop-blur-xl animate-in fade-in duration-300">
+           <div className="bg-white w-full max-w-sm rounded-[3rem] p-8 shadow-2xl text-center animate-in zoom-in-95 duration-500 border border-red-50">
               <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-5 shadow-inner border border-red-100">
                  <AlertTriangle size={32} />
               </div>
-              <h3 className="text-xl font-black text-slate-800 font-noto tracking-tight">আপনি কি নিশ্চিত?</h3>
+              <h3 className="text-xl font-black text-[#1E3A8A] font-noto tracking-tight">আপনি কি নিশ্চিত?</h3>
               <p className="text-[12px] font-bold text-slate-400 mt-2 font-noto leading-relaxed">
                  <span className="text-red-500">{rejectConfirm.madrasahs?.name}</span> এর <span className="text-slate-800">{rejectConfirm.amount} ৳</span> রিচার্জ রিকোয়েস্ট বাতিল করতে চাচ্ছেন।
               </p>
               <div className="flex flex-col gap-2 mt-8">
-                 <button onClick={rejectTransaction} disabled={isRejecting} className="w-full py-4 bg-red-500 text-white font-black rounded-full shadow-xl shadow-red-100 active:scale-95 transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-widest">
+                 <button onClick={rejectTransaction} disabled={isRejecting} className="w-full py-4 bg-red-500 text-white font-black rounded-full shadow-lg shadow-red-100 active:scale-95 transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-widest">
                     {isRejecting ? <Loader2 className="animate-spin" size={18} /> : 'হ্যাঁ, বাতিল করুন'}
                  </button>
                  <button onClick={() => setRejectConfirm(null)} disabled={isRejecting} className="w-full py-3 bg-slate-50 text-slate-400 font-black rounded-full active:scale-95 transition-all text-[10px] uppercase tracking-widest">পিছনে যান</button>
@@ -692,14 +692,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, currentView = 'list', dat
 
       {/* Status Modal - PORTALED */}
       {statusModal.show && createPortal(
-        <div className="modal-overlay bg-[#080A12]/50 backdrop-blur-3xl animate-in fade-in duration-300">
-          <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 text-center shadow-[0_50px_120px_rgba(0,0,0,0.1)] border border-slate-50 animate-in zoom-in-95 duration-500 relative overflow-hidden">
-             <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 transition-transform duration-700 ${statusModal.type === 'success' ? 'bg-green-50 text-green-500 border-green-100' : 'bg-red-50 text-red-500 border-red-100'} border-4 shadow-inner`}>
+        <div className="modal-overlay bg-slate-900/40 backdrop-blur-xl animate-in fade-in duration-300">
+          <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 text-center shadow-2xl border border-slate-50 animate-in zoom-in-95 duration-500 relative overflow-hidden">
+             <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 transition-transform duration-700 ${statusModal.type === 'success' ? 'bg-emerald-50 text-emerald-500 border-emerald-100' : 'bg-red-50 text-red-500 border-red-100'} border-4 shadow-inner`}>
                 {statusModal.type === 'success' ? <CheckCircle2 size={40} strokeWidth={2.5} /> : <AlertCircle size={40} strokeWidth={2.5} />}
              </div>
-             <h3 className="text-[22px] font-black text-[#2E0B5E] font-noto leading-tight tracking-tight">{statusModal.title}</h3>
+             <h3 className="text-[22px] font-black text-[#1E3A8A] font-noto leading-tight tracking-tight">{statusModal.title}</h3>
              <p className="text-[13px] font-bold text-slate-400 mt-3 font-noto px-4 leading-relaxed">{statusModal.message}</p>
-             <button onClick={() => setStatusModal({ ...statusModal, show: false })} className={`w-full mt-8 py-4 font-black rounded-full text-xs uppercase tracking-[0.2em] transition-all shadow-2xl active:scale-95 ${statusModal.type === 'success' ? 'bg-[#2E0B5E] text-white shadow-slate-200' : 'bg-red-50 text-white shadow-red-100'}`}>
+             <button onClick={() => setStatusModal({ ...statusModal, show: false })} className={`w-full mt-8 py-4 font-black rounded-full text-xs uppercase tracking-[0.2em] transition-all shadow-premium active:scale-95 ${statusModal.type === 'success' ? 'bg-[#2563EB] text-white' : 'bg-red-500 text-white'}`}>
                 {lang === 'bn' ? 'ঠিক আছে' : 'Continue'}
              </button>
           </div>

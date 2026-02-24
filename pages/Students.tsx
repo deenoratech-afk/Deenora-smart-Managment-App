@@ -132,32 +132,32 @@ const Students: React.FC<StudentsProps> = ({ selectedClass, onStudentClick, onAd
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-3 min-w-0">
-            <button onClick={onBack} className="w-10 h-10 bg-white/20 rounded-2xl text-white border border-white/20 shadow-xl flex items-center justify-center"><ArrowLeft size={22} strokeWidth={3} /></button>
+            <button onClick={onBack} className="w-10 h-10 bg-blue-50 rounded-2xl text-[#2563EB] border border-blue-100 shadow-sm flex items-center justify-center active:scale-95"><ArrowLeft size={22} strokeWidth={3} /></button>
             <div className="min-w-0">
-              <h1 className="text-[17px] font-black text-white truncate font-noto leading-tight">{selectedClass.class_name}</h1>
-              <p className="text-[9px] font-black text-white/80 uppercase tracking-widest">{students.length} Loaded</p>
+              <h1 className="text-[17px] font-black text-[#1E293B] truncate font-noto leading-tight">{selectedClass.class_name}</h1>
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{students.length} Loaded</p>
             </div>
           </div>
           
           <div className="flex items-center gap-2">
             {isSelectionMode && (
-              <button onClick={toggleSelectAll} className="h-10 px-3.5 rounded-2xl bg-white/20 text-white border border-white/20 font-black text-[10px] uppercase">
+              <button onClick={toggleSelectAll} className="h-10 px-3.5 rounded-2xl bg-blue-50 text-[#2563EB] border border-blue-100 font-black text-[10px] uppercase shadow-sm active:scale-95">
                 {selectedIds.size === students.length ? t('clear', lang) : t('all', lang)}
               </button>
             )}
-            <button onClick={() => { setIsSelectionMode(!isSelectionMode); setSelectedIds(new Set()); }} className={`w-10 h-10 rounded-2xl border flex items-center justify-center ${isSelectionMode ? 'bg-white text-[#8D30F4]' : 'bg-white/20 text-white'}`}>
+            <button onClick={() => { setIsSelectionMode(!isSelectionMode); setSelectedIds(new Set()); }} className={`w-10 h-10 rounded-2xl border flex items-center justify-center transition-all active:scale-95 ${isSelectionMode ? 'bg-[#2563EB] text-white border-blue-200 shadow-premium' : 'bg-blue-50 text-[#2563EB] border-blue-100 shadow-sm'}`}>
               {isSelectionMode ? <X size={18} /> : <CheckCircle2 size={18} />}
             </button>
             {!isSelectionMode && canAdd && (
-              <button onClick={onAddClick} className="premium-btn text-white px-4 py-2.5 rounded-2xl text-[11px] font-black shadow-xl"><Plus size={14} /> {t('add_student', lang)}</button>
+              <button onClick={onAddClick} className="bg-[#2563EB] text-white px-4 py-2.5 rounded-2xl text-[11px] font-black shadow-premium active:scale-95 transition-all flex items-center gap-2"><Plus size={14} /> {t('add_student', lang)}</button>
             )}
           </div>
         </div>
 
         <div className="relative">
-          <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#4B168A]" size={18} />
+          <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#2563EB]" size={18} />
           <input type="text" placeholder={t('search_placeholder', lang)}
-            className="w-full pl-12 pr-6 py-3.5 bg-white/95 rounded-[1.2rem] outline-none text-[#2D3142] font-black text-sm shadow-xl"
+            className="w-full pl-12 pr-6 py-3.5 bg-white rounded-[1.2rem] outline-none text-[#1E293B] font-black text-sm shadow-bubble border border-slate-100"
             value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
         </div>
       </div>
@@ -165,34 +165,34 @@ const Students: React.FC<StudentsProps> = ({ selectedClass, onStudentClick, onAd
       <div className="grid grid-cols-1 gap-2">
         {students.map(student => (
           <div key={student.id} onClick={() => isSelectionMode ? (setSelectedIds(prev => { const n = new Set(prev); if(n.has(student.id)) n.delete(student.id); else n.add(student.id); return n; })) : onStudentClick(student)}
-            className={`p-3 rounded-[1.2rem] border transition-all flex items-center justify-between shadow-md ${isSelectionMode && selectedIds.has(student.id) ? 'bg-white border-[#8D30F4] scale-[1.01]' : 'bg-white/95 border-white'}`}>
+            className={`p-3 rounded-[1.2rem] border transition-all flex items-center justify-between shadow-bubble ${isSelectionMode && selectedIds.has(student.id) ? 'bg-white border-[#2563EB] scale-[1.01]' : 'bg-white border-slate-100'}`}>
             <div className="flex items-center gap-3.5 flex-1 min-w-0">
               {isSelectionMode ? (
-                <div className={`w-11 h-11 rounded-2xl flex items-center justify-center border-2 shrink-0 ${selectedIds.has(student.id) ? 'bg-[#8D30F4] text-white border-[#8D30F4]' : 'bg-slate-50 border-slate-100 text-slate-200'}`}><CheckCircle2 size={22} fill={selectedIds.has(student.id) ? "white" : "none"} /></div>
+                <div className={`w-11 h-11 rounded-2xl flex items-center justify-center border-2 shrink-0 ${selectedIds.has(student.id) ? 'bg-[#2563EB] text-white border-[#2563EB]' : 'bg-slate-50 border-slate-100 text-slate-200'}`}><CheckCircle2 size={22} fill={selectedIds.has(student.id) ? "white" : "none"} /></div>
               ) : (
-                <div className="w-11 h-11 rounded-2xl flex flex-col items-center justify-center bg-[#F2EBFF] text-[#8D30F4] shrink-0 border border-[#8D30F4]/10 shadow-inner">
+                <div className="w-11 h-11 rounded-2xl flex flex-col items-center justify-center bg-blue-50 text-[#2563EB] shrink-0 border border-blue-100 shadow-inner">
                   <span className="text-[7px] font-black opacity-40 leading-none">ROLL</span>
                   <span className="text-base font-black leading-none mt-1">{student.roll || '-'}</span>
                 </div>
               )}
               <div className="min-w-0 flex-1">
-                <h3 className="font-black text-[#2E0B5E] text-[16px] font-noto truncate leading-tight">{student.student_name}</h3>
-                <p className="text-[9px] font-black text-[#A179FF] uppercase mt-0.5">{student.guardian_name || '-'}</p>
+                <h3 className="font-black text-[#1E3A8A] text-[16px] font-noto truncate leading-tight">{student.student_name}</h3>
+                <p className="text-[9px] font-black text-[#2563EB]/60 uppercase mt-0.5">{student.guardian_name || '-'}</p>
               </div>
             </div>
             {!isSelectionMode && (
               <div className="flex items-center gap-4 shrink-0 ml-2">
-                <button onClick={(e) => { e.stopPropagation(); window.location.href = `tel:${student.guardian_phone}`; }} className="w-10 h-10 bg-[#8D30F4]/10 text-[#8D30F4] rounded-xl flex items-center justify-center border border-[#8D30F4]/10 shadow-sm"><Phone size={18} fill="currentColor" /></button>
-                <button onClick={(e) => { e.stopPropagation(); window.location.href = `https://wa.me/88${student.guardian_phone.replace(/\D/g, '')}`; }} className="w-10 h-10 bg-[#25d366] text-white rounded-xl flex items-center justify-center shadow-lg"><PhoneCall size={18} fill="currentColor" /></button>
+                <button onClick={(e) => { e.stopPropagation(); window.location.href = `tel:${student.guardian_phone}`; }} className="w-10 h-10 bg-blue-50 text-[#2563EB] rounded-xl flex items-center justify-center border border-blue-100 shadow-sm active:scale-90 transition-all"><Phone size={18} fill="currentColor" /></button>
+                <button onClick={(e) => { e.stopPropagation(); window.location.href = `https://wa.me/88${student.guardian_phone.replace(/\D/g, '')}`; }} className="w-10 h-10 bg-emerald-500 text-white rounded-xl flex items-center justify-center shadow-lg active:scale-90 transition-all"><PhoneCall size={18} fill="currentColor" /></button>
               </div>
             )}
           </div>
         ))}
         
-        {loading && <div className="flex justify-center py-10"><Loader2 className="animate-spin text-white" /></div>}
+        {loading && <div className="flex justify-center py-10"><Loader2 className="animate-spin text-[#2563EB]" /></div>}
         
         {!loading && hasMore && (
-           <button onClick={() => fetchStudents()} disabled={loadingMore} className="w-full py-4 mt-2 bg-white/10 rounded-2xl text-white font-black text-[10px] uppercase tracking-widest border border-white/10 shadow-lg active:scale-95 transition-all">
+           <button onClick={() => fetchStudents()} disabled={loadingMore} className="w-full py-4 mt-2 bg-blue-50 rounded-2xl text-[#2563EB] font-black text-[10px] uppercase tracking-widest border border-blue-100 shadow-sm active:scale-95 transition-all">
               {loadingMore ? <Loader2 className="animate-spin mx-auto" size={16} /> : 'আরও লোড করুন (Load More)'}
            </button>
         )}

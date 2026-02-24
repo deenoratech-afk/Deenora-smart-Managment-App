@@ -186,9 +186,9 @@ const Exams: React.FC<ExamsProps> = ({ lang, madrasah, onBack, role }) => {
                     <div className="text-[10px] font-black text-slate-300 uppercase">{new Date(exam.exam_date).toLocaleDateString('bn-BD')}</div>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
-                    <button onClick={() => { setSelectedExam(exam); setView('subjects'); fetchSubjects(exam.id); }} className="py-2.5 bg-slate-50 text-slate-500 rounded-xl text-[9px] font-black uppercase tracking-widest border border-slate-100">{t('subject', lang)}</button>
-                    <button onClick={() => { setSelectedExam(exam); setView('marks'); fetchSubjects(exam.id); fetchMarkEntryData(exam.id); }} className="py-2.5 bg-[#F2EBFF] text-[#8D30F4] rounded-xl text-[9px] font-black uppercase tracking-widest border border-[#8D30F4]/10">{t('enter_marks', lang)}</button>
-                    <button onClick={() => { setSelectedExam(exam); setView('report'); fetchRanking(exam.id); }} className="py-2.5 bg-[#2E0B5E] text-white rounded-xl text-[9px] font-black uppercase tracking-widest">{t('rank', lang)}</button>
+                    <button onClick={() => { setSelectedExam(exam); setView('subjects'); fetchSubjects(exam.id); }} className="py-2.5 bg-slate-50 text-slate-500 rounded-xl text-[9px] font-black uppercase tracking-widest border border-slate-100 active:scale-95 transition-all">{t('subject', lang)}</button>
+                    <button onClick={() => { setSelectedExam(exam); setView('marks'); fetchSubjects(exam.id); fetchMarkEntryData(exam.id); }} className="py-2.5 bg-blue-50 text-[#2563EB] rounded-xl text-[9px] font-black uppercase tracking-widest border border-blue-100 active:scale-95 transition-all">{t('enter_marks', lang)}</button>
+                    <button onClick={() => { setSelectedExam(exam); setView('report'); fetchRanking(exam.id); }} className="py-2.5 bg-[#2563EB] text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-premium active:scale-95 transition-all">{t('rank', lang)}</button>
                 </div>
             </div>
           ))}
@@ -197,15 +197,15 @@ const Exams: React.FC<ExamsProps> = ({ lang, madrasah, onBack, role }) => {
 
       {view === 'subjects' && (
         <div className="space-y-4">
-           <button onClick={() => setShowAddSubject(true)} className="w-full py-5 bg-white rounded-[2.2rem] text-[#8D30F4] font-black flex items-center justify-center gap-3 shadow-xl active:scale-95 transition-all">
+           <button onClick={() => setShowAddSubject(true)} className="w-full py-5 bg-white rounded-[2.2rem] text-[#2563EB] font-black flex items-center justify-center gap-3 shadow-bubble border border-slate-100 active:scale-95 transition-all">
               <Plus size={24} strokeWidth={3} /> বিষয় যোগ করুন
            </button>
            <div className="space-y-3">
               {subjects.map(s => (
-                <div key={s.id} className="bg-white/95 p-5 rounded-[2rem] border border-white shadow-md flex items-center justify-between">
+                <div key={s.id} className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-bubble flex items-center justify-between">
                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center"><BookOpen size={20}/></div>
-                      <h5 className="font-black text-[#2E0B5E] font-noto text-lg">{s.subject_name}</h5>
+                      <div className="w-10 h-10 bg-blue-50 text-[#2563EB] rounded-xl flex items-center justify-center"><BookOpen size={20}/></div>
+                      <h5 className="font-black text-[#1E3A8A] font-noto text-lg">{s.subject_name}</h5>
                    </div>
                    <div className="text-right">
                       <p className="text-[9px] font-black text-slate-400 uppercase">পূর্ণমান: {s.full_marks}</p>
@@ -219,7 +219,7 @@ const Exams: React.FC<ExamsProps> = ({ lang, madrasah, onBack, role }) => {
 
       {view === 'marks' && (
         <div className="space-y-4">
-            <div className="bg-white/95 p-5 rounded-[2.5rem] shadow-xl border border-white overflow-x-auto no-scrollbar">
+            <div className="bg-white p-5 rounded-[2.5rem] shadow-bubble border border-slate-100 overflow-x-auto no-scrollbar">
                 <table className="w-full text-left">
                     <thead>
                         <tr className="border-b border-slate-50">
@@ -234,15 +234,15 @@ const Exams: React.FC<ExamsProps> = ({ lang, madrasah, onBack, role }) => {
                             <tr key={std.id} className="border-b border-slate-50 last:border-0">
                                 <td className="py-4 pr-4">
                                     <div className="flex flex-col">
-                                        <span className="text-[10px] font-black text-[#8D30F4] leading-none mb-1">#{std.roll}</span>
-                                        <span className="font-black text-[#2E0B5E] text-xs font-noto truncate max-w-[100px]">{std.student_name}</span>
+                                        <span className="text-[10px] font-black text-[#2563EB] leading-none mb-1">#{std.roll}</span>
+                                        <span className="font-black text-[#1E3A8A] text-xs font-noto truncate max-w-[100px]">{std.student_name}</span>
                                     </div>
                                 </td>
                                 {subjects.map(sub => (
                                     <td key={sub.id} className="py-4 px-2">
                                         <input 
                                             type="number" 
-                                            className="w-full h-10 bg-slate-50 border border-slate-100 rounded-lg text-center font-black text-xs outline-none focus:border-[#8D30F4]"
+                                            className="w-full h-10 bg-slate-50 border border-slate-100 rounded-lg text-center font-black text-xs outline-none focus:border-[#2563EB] transition-all"
                                             value={marksData[std.id]?.[sub.id] || ''}
                                             onChange={(e) => {
                                                 const val = e.target.value;
@@ -262,7 +262,7 @@ const Exams: React.FC<ExamsProps> = ({ lang, madrasah, onBack, role }) => {
                     </tbody>
                 </table>
             </div>
-            <button onClick={handleSaveMarks} disabled={isSaving} className="w-full h-16 premium-btn text-white font-black rounded-full shadow-2xl flex items-center justify-center gap-3 text-lg">
+            <button onClick={handleSaveMarks} disabled={isSaving} className="w-full h-16 bg-[#2563EB] text-white font-black rounded-full shadow-premium flex items-center justify-center gap-3 text-lg active:scale-95 transition-all">
                 {isSaving ? <Loader2 className="animate-spin" /> : <><Save size={24}/> নম্বর সংরক্ষণ করুন</>}
             </button>
         </div>
@@ -270,25 +270,25 @@ const Exams: React.FC<ExamsProps> = ({ lang, madrasah, onBack, role }) => {
 
       {view === 'report' && (
           <div className="space-y-4">
-              <div className="bg-[#1A0B2E] p-6 rounded-[2.5rem] text-white flex items-center justify-between shadow-2xl">
+              <div className="bg-gradient-to-br from-[#1E3A8A] to-[#2563EB] p-6 rounded-[2.5rem] text-white flex items-center justify-between shadow-premium">
                   <div>
                       <p className="text-[10px] font-black uppercase opacity-60">সেরা ফলাফল</p>
                       <h3 className="text-2xl font-black font-noto">{marksData[0]?.student_name || 'N/A'}</h3>
                   </div>
-                  <Trophy size={40} className="text-amber-400" />
+                  <Trophy size={40} className="text-amber-300" />
               </div>
 
               <div className="space-y-3">
                   {marksData.map((item: any) => (
-                      <div key={item.student_id} className="bg-white/95 p-5 rounded-[2.2rem] border border-white shadow-md flex items-center justify-between">
+                      <div key={item.student_id} className="bg-white p-5 rounded-[2.2rem] border border-slate-100 shadow-bubble flex items-center justify-between">
                           <div className="flex items-center gap-4 min-w-0">
-                              <div className="w-10 h-10 bg-[#F2EBFF] text-[#8D30F4] rounded-xl flex items-center justify-center font-black shrink-0">{item.rank}</div>
+                              <div className="w-10 h-10 bg-blue-50 text-[#2563EB] rounded-xl flex items-center justify-center font-black shrink-0">{item.rank}</div>
                               <div className="min-w-0">
-                                  <h5 className="font-black text-[#2E0B5E] font-noto truncate leading-none mb-1">{item.student_name}</h5>
+                                  <h5 className="font-black text-[#1E3A8A] font-noto truncate leading-none mb-1">{item.student_name}</h5>
                                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Roll: {item.roll} | Total: {item.total_marks}</p>
                               </div>
                           </div>
-                          <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase border ${item.pass_status ? 'bg-green-50 text-green-500 border-green-100' : 'bg-red-50 text-red-500 border-red-100'}`}>
+                          <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase border ${item.pass_status ? 'bg-emerald-50 text-emerald-500 border-emerald-100' : 'bg-red-50 text-red-500 border-red-100'}`}>
                              {item.pass_status ? 'Passed' : 'Failed'}
                           </div>
                       </div>
@@ -299,23 +299,23 @@ const Exams: React.FC<ExamsProps> = ({ lang, madrasah, onBack, role }) => {
 
       {/* MODALS */}
       {showAddExam && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-[999] flex items-center justify-center p-6">
+        <div className="fixed inset-0 bg-[#080A12]/60 backdrop-blur-xl z-[999] flex items-center justify-center p-6">
           <div className="bg-white w-full max-w-sm rounded-[3rem] p-8 space-y-6 animate-in zoom-in-95">
              <div className="flex items-center justify-between">
-               <h3 className="text-xl font-black text-[#2E0B5E]">নতুন পরীক্ষা যোগ করুন</h3>
-               <button onClick={() => setShowAddExam(false)}><X size={24} className="text-slate-300" /></button>
+               <h3 className="text-xl font-black text-[#1E3A8A]">নতুন পরীক্ষা যোগ করুন</h3>
+               <button onClick={() => setShowAddExam(false)} className="w-9 h-9 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center"><X size={18} /></button>
              </div>
              <div className="space-y-4">
-                <div className="relative"><input type="text" className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-sm outline-none border-2 border-transparent focus:border-[#8D30F4]/20" placeholder="পরীক্ষার নাম (যেমন: বার্ষিক পরীক্ষা)" value={examName} onChange={(e) => setExamName(e.target.value)} /><BookOpen className="absolute left-4 top-4 text-slate-300" size={20}/></div>
-                <div className="relative"><input type="date" className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-sm outline-none border-2 border-transparent focus:border-[#8D30F4]/20" value={examDate} onChange={(e) => setExamDate(e.target.value)} /><Calendar className="absolute left-4 top-4 text-slate-300" size={20}/></div>
+                <div className="relative"><input type="text" className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20 transition-all" placeholder="পরীক্ষার নাম (যেমন: বার্ষিক পরীক্ষা)" value={examName} onChange={(e) => setExamName(e.target.value)} /><BookOpen className="absolute left-4 top-4 text-slate-300" size={20}/></div>
+                <div className="relative"><input type="date" className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20 transition-all" value={examDate} onChange={(e) => setExamDate(e.target.value)} /><Calendar className="absolute left-4 top-4 text-slate-300" size={20}/></div>
                 <div className="relative">
-                    <select className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-sm outline-none border-2 border-transparent focus:border-[#8D30F4]/20 appearance-none" value={classId} onChange={(e) => setClassId(e.target.value)}>
+                    <select className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20 appearance-none transition-all" value={classId} onChange={(e) => setClassId(e.target.value)}>
                         <option value="">ক্লাস বেছে নিন</option>
                         {classes.map(c => <option key={c.id} value={c.id}>{c.class_name}</option>)}
                     </select>
                     <LayoutGrid className="absolute left-4 top-4 text-slate-300" size={20}/>
                 </div>
-                <button onClick={handleAddExam} disabled={isSaving} className="w-full py-5 bg-[#8D30F4] text-white font-black rounded-full shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-all">
+                <button onClick={handleAddExam} disabled={isSaving} className="w-full py-5 bg-[#2563EB] text-white font-black rounded-full shadow-premium flex items-center justify-center gap-3 active:scale-95 transition-all">
                   {isSaving ? <Loader2 className="animate-spin" /> : <><Save size={20}/> পরীক্ষা তৈরি করুন</>}
                 </button>
              </div>
@@ -324,19 +324,19 @@ const Exams: React.FC<ExamsProps> = ({ lang, madrasah, onBack, role }) => {
       )}
 
       {showAddSubject && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-[999] flex items-center justify-center p-6">
+        <div className="fixed inset-0 bg-[#080A12]/60 backdrop-blur-xl z-[999] flex items-center justify-center p-6">
           <div className="bg-white w-full max-w-sm rounded-[3rem] p-8 space-y-6 animate-in zoom-in-95">
              <div className="flex items-center justify-between">
-               <h3 className="text-xl font-black text-[#2E0B5E]">বিষয় যোগ করুন</h3>
-               <button onClick={() => setShowAddSubject(false)}><X size={24} className="text-slate-300" /></button>
+               <h3 className="text-xl font-black text-[#1E3A8A]">বিষয় যোগ করুন</h3>
+               <button onClick={() => setShowAddSubject(false)} className="w-9 h-9 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center"><X size={18} /></button>
              </div>
              <div className="space-y-4">
-                <div className="relative"><input type="text" className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-sm outline-none border-2 border-transparent focus:border-[#8D30F4]/20" placeholder="বিষয়ের নাম (যেমন: কুরআন)" value={subName} onChange={(e) => setSubName(e.target.value)} /><BookOpen size={20} className="absolute left-4 top-4 text-slate-300" /></div>
+                <div className="relative"><input type="text" className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20 transition-all" placeholder="বিষয়ের নাম (যেমন: কুরআন)" value={subName} onChange={(e) => setSubName(e.target.value)} /><BookOpen size={20} className="absolute left-4 top-4 text-slate-300" /></div>
                 <div className="grid grid-cols-2 gap-4">
-                    <div className="relative"><input type="number" className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-sm outline-none border-2 border-transparent focus:border-[#8D30F4]/20" placeholder="পূর্ণমান" value={fullMarks} onChange={(e) => setFullMarks(e.target.value)} /><Star className="absolute left-4 top-4 text-slate-300" size={20}/></div>
-                    <div className="relative"><input type="number" className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-sm outline-none border-2 border-transparent focus:border-[#8D30F4]/20" placeholder="পাস" value={passMarks} onChange={(e) => setPassMarks(e.target.value)} /><AlertCircle className="absolute left-4 top-4 text-slate-300" size={20}/></div>
+                    <div className="relative"><input type="number" className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20 transition-all" placeholder="পূর্ণমান" value={fullMarks} onChange={(e) => setFullMarks(e.target.value)} /><Star className="absolute left-4 top-4 text-slate-300" size={20}/></div>
+                    <div className="relative"><input type="number" className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20 transition-all" placeholder="পাস" value={passMarks} onChange={(e) => setPassMarks(e.target.value)} /><AlertCircle className="absolute left-4 top-4 text-slate-300" size={20}/></div>
                 </div>
-                <button onClick={handleAddSubject} disabled={isSaving} className="w-full py-5 bg-[#8D30F4] text-white font-black rounded-full shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-all">
+                <button onClick={handleAddSubject} disabled={isSaving} className="w-full py-5 bg-[#2563EB] text-white font-black rounded-full shadow-premium flex items-center justify-center gap-3 active:scale-95 transition-all">
                   {isSaving ? <Loader2 className="animate-spin" /> : 'বিষয় সেভ করুন'}
                 </button>
              </div>

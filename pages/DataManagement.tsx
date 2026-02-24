@@ -252,33 +252,33 @@ const DataManagement: React.FC<DataManagementProps> = ({ lang, madrasah, onBack,
   return (
     <div className="space-y-8 animate-in slide-in-from-bottom-5 duration-500 pb-24">
       <div className="flex items-center gap-5 px-2">
-        <button onClick={onBack} className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-white active:scale-90 transition-all border border-white/20 shadow-xl">
+        <button onClick={onBack} className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-[#2563EB] active:scale-90 transition-all border border-blue-100 shadow-sm">
           <ArrowLeft size={28} strokeWidth={3} />
         </button>
-        <h1 className="text-2xl font-black text-white font-noto drop-shadow-md">ডাটা ম্যানেজমেন্ট</h1>
+        <h1 className="text-2xl font-black text-[#1E293B] font-noto">ডাটা ম্যানেজমেন্ট</h1>
       </div>
 
       {status.message && (
-        <div className={`p-6 rounded-3xl border-2 flex items-center gap-4 animate-in slide-in-from-top-4 ${status.type === 'success' ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-700'}`}>
+        <div className={`p-6 rounded-3xl border-2 flex items-center gap-4 animate-in slide-in-from-top-4 ${status.type === 'success' ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : 'bg-red-50 border-red-100 text-red-700'}`}>
            {status.type === 'success' ? <CheckCircle2 size={30} /> : <AlertTriangle size={30} />}
            <p className="font-black text-sm">{status.message}</p>
         </div>
       )}
 
       <div className="grid grid-cols-1 gap-8">
-        <div className="bg-white/95 backdrop-blur-xl rounded-[3rem] border border-white p-10 shadow-2xl relative overflow-hidden group">
+        <div className="bg-white rounded-[3rem] border border-slate-100 p-10 shadow-bubble relative overflow-hidden group">
           <div className="flex items-center gap-6 mb-10">
-            <div className="w-16 h-16 bg-[#8D30F4]/10 rounded-[1.5rem] flex items-center justify-center text-[#8D30F4] border border-[#8D30F4]/10 shadow-inner">
+            <div className="w-16 h-16 bg-blue-50 rounded-[1.5rem] flex items-center justify-center text-[#2563EB] border border-blue-100 shadow-inner">
               <Download size={32} />
             </div>
             <div>
-              <h3 className="text-2xl font-black text-[#2E0B5E] font-noto leading-tight">ডাটা এক্সপোর্ট</h3>
-              <p className="text-[11px] font-black text-[#A179FF] uppercase tracking-widest mt-1.5">Direct Download File</p>
+              <h3 className="text-2xl font-black text-[#1E3A8A] font-noto leading-tight">ডাটা এক্সপোর্ট</h3>
+              <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mt-1.5">Direct Download File</p>
             </div>
           </div>
           
           <div className="flex flex-col gap-4">
-            <button onClick={handleExportExcel} disabled={loading} className="w-full h-[64px] premium-btn text-white font-black rounded-full shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-4 text-xl disabled:opacity-50">
+            <button onClick={handleExportExcel} disabled={loading} className="w-full h-[64px] bg-[#2563EB] text-white font-black rounded-full shadow-premium active:scale-95 transition-all flex items-center justify-center gap-4 text-xl disabled:opacity-50">
               {loading ? <Loader2 className="animate-spin" size={28} /> : (
                 <><Download size={28} /> {lang === 'bn' ? 'এক্সেল ডাউনলোড' : 'Excel Download'}</>
               )}
@@ -286,14 +286,14 @@ const DataManagement: React.FC<DataManagementProps> = ({ lang, madrasah, onBack,
           </div>
         </div>
 
-        <div className="bg-white/95 backdrop-blur-xl rounded-[3rem] border border-white p-10 shadow-2xl relative overflow-hidden group">
+        <div className="bg-white rounded-[3rem] border border-slate-100 p-10 shadow-bubble relative overflow-hidden group">
           <div className="flex items-center gap-6 mb-8">
-            <div className="w-16 h-16 bg-[#8D30F4]/10 rounded-[1.5rem] flex items-center justify-center text-[#8D30F4] border border-[#8D30F4]/10 shadow-inner">
+            <div className="w-16 h-16 bg-blue-50 rounded-[1.5rem] flex items-center justify-center text-[#2563EB] border border-blue-100 shadow-inner">
               <Upload size={32} />
             </div>
             <div>
-              <h3 className="text-2xl font-black text-[#2E0B5E] font-noto leading-tight">ডাটা আপলোড</h3>
-              <p className="text-[11px] font-black text-[#A179FF] uppercase tracking-widest mt-1.5">Select Excel File</p>
+              <h3 className="text-2xl font-black text-[#1E3A8A] font-noto leading-tight">ডাটা আপলোড</h3>
+              <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mt-1.5">Select Excel File</p>
             </div>
           </div>
           
@@ -301,7 +301,7 @@ const DataManagement: React.FC<DataManagementProps> = ({ lang, madrasah, onBack,
           
           <div 
             onClick={() => !loading && fileInputRef.current?.click()} 
-            className={`w-full py-12 bg-[#F2EBFF] border-4 border-dashed rounded-[2.5rem] text-[#8D30F4] font-black text-sm flex flex-col items-center justify-center gap-5 transition-all cursor-pointer ${loading ? 'opacity-70 cursor-wait border-[#8D30F4]/40' : 'border-[#8D30F4]/20 active:scale-[0.98] hover:bg-[#8D30F4]/5'}`}
+            className={`w-full py-12 bg-blue-50 border-4 border-dashed rounded-[2.5rem] text-[#2563EB] font-black text-sm flex flex-col items-center justify-center gap-5 transition-all cursor-pointer ${loading ? 'opacity-70 cursor-wait border-[#2563EB]/40' : 'border-[#2563EB]/20 active:scale-[0.98] hover:bg-[#2563EB]/5'}`}
           >
             {loading ? (
               <>
@@ -321,27 +321,27 @@ const DataManagement: React.FC<DataManagementProps> = ({ lang, madrasah, onBack,
         </div>
       </div>
 
-      <div className="bg-white/90 p-8 rounded-[3rem] border border-white shadow-xl space-y-5">
-        <div className="flex items-center justify-between gap-4 text-[#2E0B5E] px-1">
+      <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-bubble space-y-5">
+        <div className="flex items-center justify-between gap-4 text-[#1E3A8A] px-1">
           <div className="flex items-center gap-4">
             <Table size={24} />
             <h3 className="text-lg font-black font-noto">এক্সেল ফরম্যাট গাইড</h3>
           </div>
           <button 
             onClick={handleDownloadSample}
-            className="flex items-center gap-2 px-4 py-2 bg-[#8D30F4]/10 text-[#8D30F4] rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#8D30F4]/20 transition-all border border-[#8D30F4]/10"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-[#2563EB] rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-100 transition-all border border-blue-100"
           >
             <FileSpreadsheet size={16} /> স্যাম্পল ফাইল
           </button>
         </div>
         <p className="text-xs font-bold text-slate-400 leading-relaxed px-1">আপনার এক্সেল ফাইলটি নিচের ৬টি কলামের ফরম্যাটে হতে হবে (অথবা স্যাম্পল ফাইলটি ডাউনলোড করুন):</p>
         <div className="grid grid-cols-2 gap-3">
-           <div className="bg-[#F2EBFF] p-4 rounded-2xl text-center"><p className="text-[10px] font-black text-slate-400 uppercase mb-1">Col A</p><p className="font-black text-[#8D30F4]">Class</p></div>
-           <div className="bg-[#F2EBFF] p-4 rounded-2xl text-center"><p className="text-[10px] font-black text-slate-400 uppercase mb-1">Col B</p><p className="font-black text-[#8D30F4]">Roll</p></div>
-           <div className="bg-[#F2EBFF] p-4 rounded-2xl text-center"><p className="text-[10px] font-black text-slate-400 uppercase mb-1">Col C</p><p className="font-black text-[#8D30F4]">Student Name</p></div>
-           <div className="bg-[#F2EBFF] p-4 rounded-2xl text-center"><p className="text-[10px] font-black text-slate-400 uppercase mb-1">Col D</p><p className="font-black text-[#8D30F4]">Guardian Name</p></div>
-           <div className="bg-[#F2EBFF] p-4 rounded-2xl text-center"><p className="text-[10px] font-black text-slate-400 uppercase mb-1">Col E</p><p className="font-black text-[#8D30F4]">Phone 1</p></div>
-           <div className="bg-[#F2EBFF] p-4 rounded-2xl text-center"><p className="text-[10px] font-black text-slate-400 uppercase mb-1">Col F</p><p className="font-black text-[#8D30F4]">Phone 2</p></div>
+           <div className="bg-slate-50 p-4 rounded-2xl text-center"><p className="text-[10px] font-black text-slate-400 uppercase mb-1">Col A</p><p className="font-black text-[#1E3A8A]">Class</p></div>
+           <div className="bg-slate-50 p-4 rounded-2xl text-center"><p className="text-[10px] font-black text-slate-400 uppercase mb-1">Col B</p><p className="font-black text-[#1E3A8A]">Roll</p></div>
+           <div className="bg-slate-50 p-4 rounded-2xl text-center"><p className="text-[10px] font-black text-slate-400 uppercase mb-1">Col C</p><p className="font-black text-[#1E3A8A]">Student Name</p></div>
+           <div className="bg-slate-50 p-4 rounded-2xl text-center"><p className="text-[10px] font-black text-slate-400 uppercase mb-1">Col D</p><p className="font-black text-[#1E3A8A]">Guardian Name</p></div>
+           <div className="bg-slate-50 p-4 rounded-2xl text-center"><p className="text-[10px] font-black text-slate-400 uppercase mb-1">Col E</p><p className="font-black text-[#1E3A8A]">Phone 1</p></div>
+           <div className="bg-slate-50 p-4 rounded-2xl text-center"><p className="text-[10px] font-black text-slate-400 uppercase mb-1">Col F</p><p className="font-black text-[#1E3A8A]">Phone 2</p></div>
         </div>
       </div>
     </div>

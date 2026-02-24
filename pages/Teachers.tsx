@@ -149,21 +149,21 @@ const Teachers: React.FC<TeachersProps> = ({ lang, madrasah, onBack }) => {
     <button
       type="button"
       onClick={onClick}
-      className={`relative flex items-center justify-between p-3.5 rounded-2xl border-2 transition-all duration-300 active:scale-95 ${
+      className={`relative flex items-center justify-between p-3.5 rounded-2xl border transition-all duration-300 active:scale-95 ${
         active 
-          ? `bg-white border-${color}-400 shadow-[0_8px_20px_-6px_rgba(0,0,0,0.1)]` 
-          : 'bg-slate-50 border-transparent grayscale'
+          ? `bg-white border-blue-100 shadow-bubble` 
+          : 'bg-slate-50 border-transparent opacity-60'
       }`}
     >
       <div className="flex items-center gap-3">
-        <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${active ? `bg-${color}-50 text-${color}-500` : 'bg-slate-200 text-slate-400'}`}>
+        <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${active ? `bg-blue-50 text-[#2563EB]` : 'bg-slate-200 text-slate-400'}`}>
           <Icon size={16} />
         </div>
-        <span className={`text-[11px] font-black uppercase tracking-wider ${active ? 'text-slate-800' : 'text-slate-400'}`}>
+        <span className={`text-[11px] font-black uppercase tracking-wider ${active ? 'text-[#1E3A8A]' : 'text-slate-400'}`}>
           {label}
         </span>
       </div>
-      <div className={`w-5 h-5 rounded-full flex items-center justify-center transition-all ${active ? `bg-${color}-500 text-white` : 'bg-slate-200'}`}>
+      <div className={`w-5 h-5 rounded-full flex items-center justify-center transition-all ${active ? `bg-[#2563EB] text-white` : 'bg-slate-200'}`}>
         {active && <Check size={12} strokeWidth={4} />}
       </div>
     </button>
@@ -173,35 +173,35 @@ const Teachers: React.FC<TeachersProps> = ({ lang, madrasah, onBack }) => {
     <>
       <div className="space-y-6 animate-in slide-in-from-right-4 duration-500 pb-24">
         <div className="flex items-center gap-4 px-2">
-          <button onClick={onBack} className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-white active:scale-90 transition-all border border-white/20 shadow-xl">
+          <button onClick={onBack} className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-[#2563EB] active:scale-90 transition-all border border-blue-100 shadow-sm">
             <ArrowLeft size={24} strokeWidth={3} />
           </button>
-          <h1 className="text-2xl font-black text-white font-noto drop-shadow-md">Manage Teachers</h1>
+          <h1 className="text-2xl font-black text-[#1E293B] font-noto">Manage Teachers</h1>
         </div>
 
-        <button onClick={() => { resetForm(); setIsModalOpen(true); }} className="w-full py-6 bg-white rounded-[2.5rem] text-[#8D30F4] font-black flex items-center justify-center gap-3 shadow-[0_20px_50px_rgba(46,11,94,0.3)] active:scale-95 transition-all">
+        <button onClick={() => { resetForm(); setIsModalOpen(true); }} className="w-full py-6 bg-[#2563EB] text-white rounded-[2.5rem] font-black flex items-center justify-center gap-3 shadow-premium active:scale-95 transition-all">
           <UserPlus size={24} strokeWidth={3} /> Add New Teacher
         </button>
 
         {loading ? (
-          <div className="flex justify-center py-20"><Loader2 className="animate-spin text-white" size={40} /></div>
+          <div className="flex justify-center py-20"><Loader2 className="animate-spin text-[#2563EB]" size={40} /></div>
         ) : (
           <div className="space-y-3.5 px-1">
             {teachers.map(t => (
-              <div key={t.id} className="bg-white/95 backdrop-blur-md p-4 sm:p-6 rounded-[2.5rem] border border-white/50 shadow-xl relative overflow-hidden group">
+              <div key={t.id} className="bg-white p-4 sm:p-6 rounded-[2.5rem] border border-slate-100 shadow-bubble relative overflow-hidden group">
                  <div className="flex items-start sm:items-center justify-between mb-4 gap-2">
                     <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-                       <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#F2EBFF] text-[#8D30F4] rounded-[1.2rem] sm:rounded-[1.5rem] flex items-center justify-center border border-[#8D30F4]/10 shadow-inner shrink-0">
+                       <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-50 text-[#2563EB] rounded-[1.2rem] sm:rounded-[1.5rem] flex items-center justify-center border border-blue-100 shadow-inner shrink-0">
                           <UserIcon size={24} className="sm:size-[30px]" />
                        </div>
                        <div className="min-w-0 flex-1 pr-1">
-                          <h3 className="text-[15px] sm:text-[17px] font-black text-[#2E0B5E] font-noto line-clamp-1 leading-tight">{t.name}</h3>
+                          <h3 className="text-[15px] sm:text-[17px] font-black text-[#1E3A8A] font-noto line-clamp-1 leading-tight">{t.name}</h3>
                           <p className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1 truncate">Ph: {t.phone}</p>
                        </div>
                     </div>
                     <div className="flex gap-1.5 shrink-0">
-                       <button onClick={() => { setEditId(t.id); setName(t.name); setPhone(t.phone); setCode(t.login_code); setPerms(t.permissions); setIsModalOpen(true); }} className="w-9 h-9 sm:w-10 sm:h-10 bg-[#F2EBFF] text-[#8D30F4] rounded-xl flex items-center justify-center shadow-sm active:scale-90 transition-all border border-[#8D30F4]/5"><Edit3 size={16} /></button>
-                       <button onClick={() => setShowDeleteConfirm(t)} className="w-9 h-9 sm:w-10 sm:h-10 bg-red-50 text-red-500 rounded-xl flex items-center justify-center shadow-sm active:scale-90 transition-all border border-red-100/50"><Trash2 size={16} /></button>
+                       <button onClick={() => { setEditId(t.id); setName(t.name); setPhone(t.phone); setCode(t.login_code); setPerms(t.permissions); setIsModalOpen(true); }} className="w-9 h-9 sm:w-10 sm:h-10 bg-blue-50 text-[#2563EB] rounded-xl flex items-center justify-center shadow-sm active:scale-90 transition-all border border-blue-100"><Edit3 size={16} /></button>
+                       <button onClick={() => setShowDeleteConfirm(t)} className="w-9 h-9 sm:w-10 sm:h-10 bg-red-50 text-red-500 rounded-xl flex items-center justify-center shadow-sm active:scale-90 transition-all border border-red-100"><Trash2 size={16} /></button>
                     </div>
                  </div>
 
@@ -237,17 +237,17 @@ const Teachers: React.FC<TeachersProps> = ({ lang, madrasah, onBack }) => {
               
               <div className="flex items-center justify-between p-8 pb-4 shrink-0">
                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-[#8D30F4]/10 rounded-2xl flex items-center justify-center text-[#8D30F4] border border-[#8D30F4]/10">
+                    <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-[#2563EB] border border-blue-100">
                        <Shield size={24} />
                     </div>
                     <div>
-                       <h2 className="text-xl font-black text-[#2E0B5E] font-noto tracking-tight">
+                       <h2 className="text-xl font-black text-[#1E3A8A] font-noto tracking-tight">
                          {editId ? 'Edit Teacher' : 'Add Teacher'}
                        </h2>
                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Access Credentials</p>
                     </div>
                  </div>
-                 <button onClick={() => setIsModalOpen(false)} className="text-slate-300 hover:text-[#8D30F4] transition-all p-1">
+                 <button onClick={() => setIsModalOpen(false)} className="text-slate-300 hover:text-[#2563EB] transition-all p-1">
                     <X size={24} strokeWidth={3}/>
                  </button>
               </div>
@@ -257,7 +257,7 @@ const Teachers: React.FC<TeachersProps> = ({ lang, madrasah, onBack }) => {
                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Name</label>
                     <input 
                       type="text" 
-                      className="w-full h-12 bg-slate-50 rounded-xl px-4 font-black text-[#2E0B5E] outline-none border-2 border-transparent focus:border-[#8D30F4]/20 transition-all text-sm" 
+                      className="w-full h-12 bg-slate-50 rounded-xl px-4 font-black text-[#1E3A8A] outline-none border border-slate-100 focus:border-[#2563EB]/20 transition-all text-sm" 
                       value={name} 
                       onChange={(e) => setName(e.target.value)} 
                       placeholder="e.g. Abdur Rahman" 
@@ -269,7 +269,7 @@ const Teachers: React.FC<TeachersProps> = ({ lang, madrasah, onBack }) => {
                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Phone</label>
                        <input 
                          type="tel" 
-                         className="w-full h-12 bg-slate-50 rounded-xl px-4 font-black text-[#2E0B5E] outline-none border-2 border-transparent focus:border-[#8D30F4]/20 transition-all text-sm" 
+                         className="w-full h-12 bg-slate-50 rounded-xl px-4 font-black text-[#1E3A8A] outline-none border border-slate-100 focus:border-[#2563EB]/20 transition-all text-sm" 
                          value={phone} 
                          onChange={(e) => setPhone(e.target.value)} 
                          placeholder="017..." 
@@ -279,7 +279,7 @@ const Teachers: React.FC<TeachersProps> = ({ lang, madrasah, onBack }) => {
                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">PIN</label>
                        <input 
                          type="text" 
-                         className="w-full h-12 bg-slate-50 rounded-xl px-4 font-black text-[#8D30F4] outline-none border-2 border-transparent focus:border-[#8D30F4]/20 transition-all text-sm" 
+                         className="w-full h-12 bg-slate-50 rounded-xl px-4 font-black text-[#2563EB] outline-none border border-slate-100 focus:border-[#2563EB]/20 transition-all text-sm" 
                          value={code} 
                          onChange={(e) => setCode(e.target.value)} 
                          placeholder="1234" 
@@ -289,7 +289,7 @@ const Teachers: React.FC<TeachersProps> = ({ lang, madrasah, onBack }) => {
 
                  <div className="pt-2 space-y-3">
                     <div className="flex items-center justify-between px-1">
-                       <p className="text-[10px] font-black text-[#8D30F4] uppercase tracking-widest">Permissions</p>
+                       <p className="text-[10px] font-black text-[#2563EB] uppercase tracking-widest">Permissions</p>
                     </div>
                     <div className="grid grid-cols-1 gap-2">
                        <PermissionToggle 
@@ -297,7 +297,7 @@ const Teachers: React.FC<TeachersProps> = ({ lang, madrasah, onBack }) => {
                          onClick={() => setPerms({...perms, can_manage_students: !perms.can_manage_students})} 
                          icon={Smartphone} 
                          label="Students" 
-                         color="green" 
+                         color="emerald" 
                        />
                        <PermissionToggle 
                          active={perms.can_manage_classes} 
@@ -311,7 +311,7 @@ const Teachers: React.FC<TeachersProps> = ({ lang, madrasah, onBack }) => {
                          onClick={() => setPerms({...perms, can_send_sms: !perms.can_send_sms})} 
                          icon={MessageSquare} 
                          label="System SMS" 
-                         color="orange" 
+                         color="amber" 
                        />
                        <PermissionToggle 
                          active={perms.can_send_free_sms} 
@@ -327,7 +327,7 @@ const Teachers: React.FC<TeachersProps> = ({ lang, madrasah, onBack }) => {
                     <button 
                       onClick={handleSave} 
                       disabled={saving || !name || !phone || !code} 
-                      className="w-full h-14 premium-btn text-white font-black rounded-2xl shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-all text-sm font-noto disabled:opacity-30"
+                      className="w-full h-14 bg-[#2563EB] text-white font-black rounded-2xl shadow-premium flex items-center justify-center gap-3 active:scale-95 transition-all text-sm font-noto disabled:opacity-30"
                     >
                        {saving ? <Loader2 className="animate-spin" size={20} /> : (
                           <>
@@ -345,8 +345,8 @@ const Teachers: React.FC<TeachersProps> = ({ lang, madrasah, onBack }) => {
       )}
 
       {warningModal.show && createPortal(
-        <div className="modal-overlay bg-[#080A12]/40 backdrop-blur-2xl animate-in fade-in duration-300">
-           <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 shadow-[0_40px_100px_rgba(239,68,68,0.2)] border border-red-50 text-center space-y-6 animate-in zoom-in-95 duration-500">
+        <div className="modal-overlay bg-slate-900/40 backdrop-blur-xl animate-in fade-in duration-300">
+           <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 shadow-2xl border border-slate-100 text-center space-y-6 animate-in zoom-in-95 duration-500">
               <div className="relative">
                  <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto border border-red-100 relative z-10">
                     <AlertTriangle size={40} />
@@ -354,14 +354,14 @@ const Teachers: React.FC<TeachersProps> = ({ lang, madrasah, onBack }) => {
                  <div className="absolute inset-0 bg-red-500/10 rounded-full animate-ping opacity-30"></div>
               </div>
               <div>
-                 <h3 className="text-xl font-black text-[#2E0B5E] font-noto tracking-tight">সতর্কবাণী</h3>
+                 <h3 className="text-xl font-black text-[#1E3A8A] font-noto tracking-tight">সতর্কবাণী</h3>
                  <p className="text-[13px] font-bold text-slate-500 mt-2 font-noto leading-relaxed">
                    {warningModal.message}
                  </p>
               </div>
               <button 
                 onClick={() => setWarningModal({ show: false, message: '' })} 
-                className="w-full py-4 bg-[#2E0B5E] text-white font-black rounded-full shadow-xl shadow-slate-200 active:scale-95 transition-all text-xs uppercase tracking-widest"
+                className="w-full py-4 bg-[#1E3A8A] text-white font-black rounded-full shadow-premium active:scale-95 transition-all text-xs uppercase tracking-widest"
               >
                 ঠিক আছে
               </button>
@@ -371,13 +371,13 @@ const Teachers: React.FC<TeachersProps> = ({ lang, madrasah, onBack }) => {
       )}
 
       {showDeleteConfirm && createPortal(
-        <div className="modal-overlay bg-[#080A12]/40 backdrop-blur-2xl animate-in fade-in duration-300">
-          <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 shadow-[0_40px_100px_rgba(239,68,68,0.2)] border border-red-50 text-center space-y-6 animate-in zoom-in-95 duration-500">
+        <div className="modal-overlay bg-slate-900/40 backdrop-blur-xl animate-in fade-in duration-300">
+          <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 shadow-2xl border border-slate-100 text-center space-y-6 animate-in zoom-in-95 duration-500">
              <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto shadow-inner border border-red-100">
                 <AlertTriangle size={40} />
              </div>
              <div>
-                <h3 className="text-xl font-black text-slate-800 font-noto">শিক্ষক প্রোফাইল মুছুন</h3>
+                <h3 className="text-xl font-black text-[#1E3A8A] font-noto">শিক্ষক প্রোফাইল মুছুন</h3>
                 <p className="text-[11px] font-bold text-slate-400 mt-2 uppercase tracking-wider px-4 leading-relaxed">
                   আপনি কি নিশ্চিতভাবে <span className="text-red-500">"{showDeleteConfirm.name}"</span> এর প্রোফাইল এবং অ্যাক্সেস মুছে ফেলতে চান? এটি আর ফিরিয়ে আনা যাবে না।
                 </p>
@@ -386,7 +386,7 @@ const Teachers: React.FC<TeachersProps> = ({ lang, madrasah, onBack }) => {
                 <button 
                   onClick={handleDeleteTeacher} 
                   disabled={isDeleting} 
-                  className="w-full py-5 bg-red-500 text-white font-black rounded-full shadow-xl shadow-red-100 active:scale-95 transition-all flex items-center justify-center text-md gap-3"
+                  className="w-full py-5 bg-red-500 text-white font-black rounded-full shadow-premium active:scale-95 transition-all flex items-center justify-center text-md gap-3"
                 >
                   {isDeleting ? <Loader2 className="animate-spin" size={22} /> : (
                     <><Trash2 size={20} /> নিশ্চিত ডিলিট</>
