@@ -20,27 +20,11 @@ const StudentDetails: React.FC<StudentDetailsProps> = ({ student, onEdit, onBack
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const recordCall = async (specificPhone?: string) => {
-    if (!madrasahId || !student.id) return;
-    try {
-      const { error } = await supabase.from('recent_calls').insert({
-        madrasah_id: madrasahId,
-        student_id: student.id,
-        called_at: new Date().toISOString()
-      });
-      if (!error && triggerRefresh) {
-        triggerRefresh();
-      }
-    } catch (e) { console.error("recordCall Error:", e); }
-  };
-
   const initiateWhatsAppCall = async (phone: string) => {
-    await recordCall(phone);
     window.location.href = `https://wa.me/88${phone.replace(/\D/g, '')}`;
   };
 
   const initiateWhatsAppMessage = async (phone: string) => {
-    await recordCall(phone);
     window.location.href = `https://wa.me/88${phone.replace(/\D/g, '')}?text=${encodeURIComponent('আস-সালামু আলাইকুম')}`;
   };
 

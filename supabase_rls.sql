@@ -57,7 +57,7 @@ ALTER TABLE public.ledger ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.fees ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.fee_structures ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.recent_calls ENABLE ROW LEVEL SECURITY;
+-- Recent Calls RLS removed
 ALTER TABLE public.sms_templates ENABLE ROW LEVEL SECURITY;
 
 -- ==========================================
@@ -160,11 +160,7 @@ FOR ALL USING (
   OR public.check_is_super_admin()
 );
 
--- RECENT CALLS
-CREATE POLICY "calls_isolation" ON public.recent_calls
-FOR ALL USING (
-  madrasah_id = public.get_authenticated_madrasah_id()
-);
+-- RECENT CALLS removed
 
 -- SMS TEMPLATES
 CREATE POLICY "templates_isolation" ON public.sms_templates

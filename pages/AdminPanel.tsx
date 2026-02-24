@@ -21,7 +21,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, currentView = 'list', dat
   const [madrasahs, setMadrasahs] = useState<MadrasahWithStats[]>([]);
   const [pendingTrans, setPendingTrans] = useState<Transaction[]>([]);
   const [transactionHistory, setTransactionHistory] = useState<Transaction[]>([]);
-  const [globalRecentCalls, setGlobalRecentCalls] = useState<any[]>([]);
   const [adminStock, setAdminStock] = useState<AdminSMSStock | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -103,15 +102,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, currentView = 'list', dat
     return data || [];
   };
 
-  const fetchGlobalRecentCalls = async () => {
-    const { data } = await supabase
-      .from('recent_calls')
-      .select('*, students(student_name), madrasahs(name)')
-      .order('called_at', { ascending: false })
-      .limit(20);
-    return data || [];
-  };
-
   const fetchPendingTransactions = async () => {
     const { data } = await supabase.from('transactions').select('*, madrasahs(*)').eq('status', 'pending').order('created_at', { ascending: false });
     return data || [];
@@ -131,11 +121,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, currentView = 'list', dat
     let isMounted = true;
     try {
       if (view === 'list' || view === 'dashboard') {
-        const [mList, gStats, aStock, gCalls] = await Promise.all([
+        const [mList, gStats, aStock] = await Promise.all([
           fetchAllMadrasahs(),
           fetchGlobalCounts(),
-          fetchAdminStock(),
-          fetchGlobalRecentCalls()
+          fetchAdminStock()
         ]);
         if (isMounted) {
           setMadrasahs(mList.map(m => {
@@ -148,7 +137,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, currentView = 'list', dat
           }));
           setGlobalStats(gStats);
           setAdminStock(aStock);
-          setGlobalRecentCalls(gCalls.slice(0, 20));
         }
       }
       if (view === 'approvals') {

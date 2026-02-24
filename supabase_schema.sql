@@ -164,13 +164,7 @@ CREATE TABLE IF NOT EXISTS public.transactions (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Recent Calls
-CREATE TABLE IF NOT EXISTS public.recent_calls (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  madrasah_id UUID REFERENCES public.madrasahs(id) ON DELETE CASCADE,
-  student_id UUID REFERENCES public.students(id) ON DELETE CASCADE,
-  called_at TIMESTAMPTZ DEFAULT NOW()
-);
+-- Recent Calls removed
 
 -- ==========================================
 -- 2. AUTH SYNC AUTOMATION
