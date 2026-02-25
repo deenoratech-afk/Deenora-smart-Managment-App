@@ -17,7 +17,7 @@ interface AccountingProps {
 
 const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role }) => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = (searchParams.get('tab') as 'summary' | 'ledger' | 'fees' | 'structures') || 'fees';
+  const activeTab = (searchParams.get('tab') as 'summary' | 'ledger' | 'fees' | 'structures' | 'categories' | 'exams' | 'coaching') || 'fees';
   
   const setActiveTab = (tab: string) => {
     if (tab === 'fees') {
@@ -32,12 +32,19 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
   const [feesReport, setFeesReport] = useState<any[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
   const [structures, setStructures] = useState<any[]>([]);
+  const [feeCategories, setFeeCategories] = useState<any[]>([]);
+  const [examSessions, setExamSessions] = useState<any[]>([]);
+  const [coachingBatches, setCoachingBatches] = useState<any[]>([]);
+  const [studentOverrides, setStudentOverrides] = useState<any[]>([]);
   
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [showAddLedger, setShowAddLedger] = useState(false);
   const [showAddStructure, setShowAddStructure] = useState(false);
+  const [showAddCategory, setShowAddCategory] = useState(false);
+  const [showAddExam, setShowAddExam] = useState(false);
+  const [showAddCoaching, setShowAddCoaching] = useState(false);
   const [showFeeCollection, setShowFeeCollection] = useState(false);
   
   const [anyStudentsInMadrasah, setAnyStudentsInMadrasah] = useState<boolean | null>(null);
@@ -47,6 +54,7 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
   const [type, setType] = useState<'income' | 'expense'>('income');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('');
+  const [categoryType, setCategoryType] = useState<'recurring' | 'one-time' | 'optional'>('recurring');
   const [desc, setDesc] = useState('');
 
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
@@ -123,8 +131,26 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
       }
 
       if (activeTab === 'structures') {
-        const { data } = await supabase.from('fee_structures').select('*, classes(class_name)').eq('madrasah_id', madrasah.id);
-        if (data) setStructures(data);
+        const { data: structuresData } = await supabase.from('fee_structures').select('*, classes(class_name), fee_categories(name)').eq('madrasah_id', madrasah.id);
+        if (structuresData) setStructures(structuresData);
+        
+        const { data: categoriesData } = await supabase.from('fee_categories').select('*').eq('madrasah_id', madrasah.id);
+        if (categoriesData) setFeeCategories(categoriesData);
+      }
+
+      if (activeTab === 'categories') {
+        const { data } = await supabase.from('fee_categories').select('*').eq('madrasah_id', madrasah.id);
+        if (data) setFeeCategories(data);
+      }
+
+      if (activeTab === 'exams') {
+        const { data } = await supabase.from('exam_sessions').select('*').eq('madrasah_id', madrasah.id);
+        if (data) setExamSessions(data);
+      }
+
+      if (activeTab === 'coaching') {
+        const { data } = await supabase.from('coaching_batches').select('*').eq('madrasah_id', madrasah.id);
+        if (data) setCoachingBatches(data);
       }
     } catch (e: any) { 
       console.error("Accounting Fetch Error:", e);
@@ -249,9 +275,9 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
       </div>
 
       <div className="flex p-1.5 bg-slate-50 rounded-[1.5rem] border border-slate-100 overflow-x-auto no-scrollbar">
-        {(['fees', 'summary', 'ledger', 'structures'] as const).map(tab => (
+        {(['fees', 'summary', 'ledger', 'structures', 'categories', 'exams', 'coaching'] as const).map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 min-w-[85px] py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${activeTab === tab ? 'bg-[#2563EB] text-white shadow-premium' : 'text-slate-400'}`}>
-            {tab === 'summary' ? 'ড্যাশবোর্ড' : tab === 'ledger' ? 'লেনদেন' : tab === 'fees' ? 'ছাত্র ফি' : 'ফি সেটিংস'}
+            {tab === 'summary' ? 'ড্যাশবোর্ড' : tab === 'ledger' ? 'লেনদেন' : tab === 'fees' ? 'ছাত্র ফি' : tab === 'structures' ? 'ফি সেটিংস' : tab === 'categories' ? 'ক্যাটাগরি' : tab === 'exams' ? 'পরীক্ষা' : 'কোচিং'}
           </button>
         ))}
       </div>
@@ -389,6 +415,7 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
                       <h5 className="font-black text-[#1E3A8A] font-noto text-[17px] truncate">{s.fee_name}</h5>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-[10px] font-black text-[#2563EB] uppercase tracking-widest">{s.classes?.class_name}</span>
+                        {s.fee_categories?.name && <span className="text-[8px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-md font-black uppercase">{s.fee_categories.name}</span>}
                       </div>
                    </div>
                    <div className="flex items-center gap-3">
@@ -404,6 +431,78 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
               )) : (
                 <div className="text-center py-20 text-slate-400 uppercase text-xs font-black">No Fee Structures Set</div>
               )}
+           </div>
+        </div>
+      )}
+
+      {activeTab === 'categories' && (
+        <div className="space-y-4 animate-in slide-in-from-bottom-5">
+           <button onClick={() => setShowAddCategory(true)} className="w-full py-5 bg-white rounded-[2.2rem] text-[#2563EB] font-black flex items-center justify-center gap-3 shadow-bubble active:scale-95 transition-all border border-slate-100">
+              <Plus size={24} strokeWidth={3} /> নতুন ক্যাটাগরি যোগ করুন
+           </button>
+           <div className="space-y-3">
+              {feeCategories.map(c => (
+                <div key={c.id} className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-bubble flex items-center justify-between">
+                   <div>
+                      <h5 className="font-black text-[#1E3A8A] font-noto text-[17px]">{c.name}</h5>
+                      <p className="text-[10px] font-black text-[#2563EB] uppercase tracking-widest">{c.type}</p>
+                   </div>
+                   <button onClick={async () => {
+                       if(confirm('এটি ডিলিট করতে চান?')) {
+                           await supabase.from('fee_categories').delete().eq('id', c.id);
+                           fetchData();
+                       }
+                   }} className="p-2 text-red-300 hover:text-red-500"><X size={18}/></button>
+                </div>
+              ))}
+           </div>
+        </div>
+      )}
+
+      {activeTab === 'exams' && (
+        <div className="space-y-4 animate-in slide-in-from-bottom-5">
+           <button onClick={() => setShowAddExam(true)} className="w-full py-5 bg-white rounded-[2.2rem] text-[#2563EB] font-black flex items-center justify-center gap-3 shadow-bubble active:scale-95 transition-all border border-slate-100">
+              <Plus size={24} strokeWidth={3} /> নতুন পরীক্ষা সেশন যোগ করুন
+           </button>
+           <div className="space-y-3">
+              {examSessions.map(e => (
+                <div key={e.id} className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-bubble flex items-center justify-between">
+                   <div>
+                      <h5 className="font-black text-[#1E3A8A] font-noto text-[17px]">{e.name}</h5>
+                      <p className="text-[10px] font-black text-slate-400 uppercase">{e.date}</p>
+                   </div>
+                   <button onClick={async () => {
+                       if(confirm('এটি ডিলিট করতে চান?')) {
+                           await supabase.from('exam_sessions').delete().eq('id', e.id);
+                           fetchData();
+                       }
+                   }} className="p-2 text-red-300 hover:text-red-500"><X size={18}/></button>
+                </div>
+              ))}
+           </div>
+        </div>
+      )}
+
+      {activeTab === 'coaching' && (
+        <div className="space-y-4 animate-in slide-in-from-bottom-5">
+           <button onClick={() => setShowAddCoaching(true)} className="w-full py-5 bg-white rounded-[2.2rem] text-[#2563EB] font-black flex items-center justify-center gap-3 shadow-bubble active:scale-95 transition-all border border-slate-100">
+              <Plus size={24} strokeWidth={3} /> নতুন কোচিং ব্যাচ যোগ করুন
+           </button>
+           <div className="space-y-3">
+              {coachingBatches.map(b => (
+                <div key={b.id} className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-bubble flex items-center justify-between">
+                   <div>
+                      <h5 className="font-black text-[#1E3A8A] font-noto text-[17px]">{b.name}</h5>
+                      <p className="text-[10px] font-black text-[#2563EB] uppercase tracking-widest">৳{b.fee_amount}</p>
+                   </div>
+                   <button onClick={async () => {
+                       if(confirm('এটি ডিলিট করতে চান?')) {
+                           await supabase.from('coaching_batches').delete().eq('id', b.id);
+                           fetchData();
+                       }
+                   }} className="p-2 text-red-300 hover:text-red-500"><X size={18}/></button>
+                </div>
+              ))}
            </div>
         </div>
       )}
@@ -605,6 +704,114 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
                  </button>
               </div>
            </div>
+        </div>
+      )}
+      {/* ADD CATEGORY MODAL */}
+      {showAddCategory && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-[999] flex items-center justify-center p-6">
+          <div className="bg-white w-full max-w-sm rounded-[3rem] p-8 space-y-6 animate-in zoom-in-95 shadow-2xl">
+             <div className="flex items-center justify-between">
+               <h3 className="text-xl font-black text-[#1E3A8A]">নতুন ক্যাটাগরি</h3>
+               <button onClick={() => setShowAddCategory(false)} className="w-9 h-9 bg-slate-50 text-slate-300 rounded-xl flex items-center justify-center"><X size={20} /></button>
+             </div>
+             <div className="space-y-4">
+                <div className="relative">
+                   <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2 mb-1.5 block">ক্যাটাগরির নাম</label>
+                   <input type="text" className="w-full h-14 bg-slate-50 rounded-2xl px-6 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20" placeholder="যেমন: মাসিক ফি" value={category} onChange={(e) => setCategory(e.target.value)} />
+                </div>
+                <div className="relative">
+                   <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2 mb-1.5 block">ধরণ</label>
+                   <select className="w-full h-14 bg-slate-50 rounded-2xl px-6 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20" value={categoryType} onChange={(e) => setCategoryType(e.target.value as any)}>
+                      <option value="recurring">Recurring (মাসিক)</option>
+                      <option value="one-time">One-time (এককালীন)</option>
+                      <option value="optional">Optional (ঐচ্ছিক)</option>
+                   </select>
+                </div>
+                <button onClick={async () => {
+                   if (!category) return;
+                   setIsSaving(true);
+                   try {
+                       const { error } = await supabase.from('fee_categories').insert({
+                           madrasah_id: madrasah?.id,
+                           name: category,
+                           type: categoryType
+                       });
+                       if (error) throw error;
+                       setShowAddCategory(false);
+                       setCategory('');
+                       fetchData();
+                   } catch (e: any) { alert(e.message); } finally { setIsSaving(false); }
+                }} className="w-full py-5 bg-[#2563EB] text-white font-black rounded-full shadow-premium active:scale-95 transition-all">
+                   {isSaving ? <Loader2 className="animate-spin" /> : 'সেভ করুন'}
+                </button>
+             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ADD EXAM MODAL */}
+      {showAddExam && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-[999] flex items-center justify-center p-6">
+          <div className="bg-white w-full max-w-sm rounded-[3rem] p-8 space-y-6 animate-in zoom-in-95 shadow-2xl">
+             <div className="flex items-center justify-between">
+               <h3 className="text-xl font-black text-[#1E3A8A]">নতুন পরীক্ষা সেশন</h3>
+               <button onClick={() => setShowAddExam(false)} className="w-9 h-9 bg-slate-50 text-slate-300 rounded-xl flex items-center justify-center"><X size={20} /></button>
+             </div>
+             <div className="space-y-4">
+                <input type="text" className="w-full h-14 bg-slate-50 rounded-2xl px-6 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20" placeholder="পরীক্ষার নাম" value={category} onChange={(e) => setCategory(e.target.value)} />
+                <input type="date" className="w-full h-14 bg-slate-50 rounded-2xl px-6 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20" value={desc} onChange={(e) => setDesc(e.target.value)} />
+                <button onClick={async () => {
+                   if (!category) return;
+                   setIsSaving(true);
+                   try {
+                       const { error } = await supabase.from('exam_sessions').insert({
+                           madrasah_id: madrasah?.id,
+                           name: category,
+                           date: desc
+                       });
+                       if (error) throw error;
+                       setShowAddExam(false);
+                       setCategory(''); setDesc('');
+                       fetchData();
+                   } catch (e: any) { alert(e.message); } finally { setIsSaving(false); }
+                }} className="w-full py-5 bg-[#2563EB] text-white font-black rounded-full shadow-premium active:scale-95 transition-all">
+                   {isSaving ? <Loader2 className="animate-spin" /> : 'সেভ করুন'}
+                </button>
+             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ADD COACHING MODAL */}
+      {showAddCoaching && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-[999] flex items-center justify-center p-6">
+          <div className="bg-white w-full max-w-sm rounded-[3rem] p-8 space-y-6 animate-in zoom-in-95 shadow-2xl">
+             <div className="flex items-center justify-between">
+               <h3 className="text-xl font-black text-[#1E3A8A]">নতুন কোচিং ব্যাচ</h3>
+               <button onClick={() => setShowAddCoaching(false)} className="w-9 h-9 bg-slate-50 text-slate-300 rounded-xl flex items-center justify-center"><X size={20} /></button>
+             </div>
+             <div className="space-y-4">
+                <input type="text" className="w-full h-14 bg-slate-50 rounded-2xl px-6 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20" placeholder="ব্যাচের নাম" value={category} onChange={(e) => setCategory(e.target.value)} />
+                <input type="number" className="w-full h-14 bg-slate-50 rounded-2xl px-6 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20" placeholder="টাকার পরিমাণ" value={amount} onChange={(e) => setAmount(e.target.value)} />
+                <button onClick={async () => {
+                   if (!category || !amount) return;
+                   setIsSaving(true);
+                   try {
+                       const { error } = await supabase.from('coaching_batches').insert({
+                           madrasah_id: madrasah?.id,
+                           name: category,
+                           fee_amount: parseFloat(amount)
+                       });
+                       if (error) throw error;
+                       setShowAddCoaching(false);
+                       setCategory(''); setAmount('');
+                       fetchData();
+                   } catch (e: any) { alert(e.message); } finally { setIsSaving(false); }
+                }} className="w-full py-5 bg-[#2563EB] text-white font-black rounded-full shadow-premium active:scale-95 transition-all">
+                   {isSaving ? <Loader2 className="animate-spin" /> : 'সেভ করুন'}
+                </button>
+             </div>
+          </div>
         </div>
       )}
     </div>

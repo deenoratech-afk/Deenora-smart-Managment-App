@@ -124,11 +124,54 @@ export interface FeeStructure {
   id: string;
   madrasah_id: string;
   class_id: string;
+  category_id?: string;
   fee_name: string;
   amount: number;
   is_monthly: boolean;
   created_at: string;
   classes?: Class;
+  fee_categories?: FeeCategory;
+}
+
+export interface FeeCategory {
+  id: string;
+  madrasah_id: string;
+  name: string;
+  type: 'recurring' | 'one-time' | 'optional';
+  description?: string;
+  created_at: string;
+}
+
+export interface StudentFeeOverride {
+  id: string;
+  student_id: string;
+  fee_structure_id: string;
+  override_amount?: number;
+  discount_percentage?: number;
+  created_at: string;
+}
+
+export interface ExamSession {
+  id: string;
+  madrasah_id: string;
+  name: string;
+  date: string;
+  created_at: string;
+}
+
+export interface CoachingBatch {
+  id: string;
+  madrasah_id: string;
+  name: string;
+  fee_amount: number;
+  created_at: string;
+}
+
+export interface CoachingEnrollment {
+  id: string;
+  batch_id: string;
+  student_id: string;
+  created_at: string;
 }
 
 export interface Fee {
