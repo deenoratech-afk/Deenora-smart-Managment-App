@@ -50,7 +50,7 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
   const [desc, setDesc] = useState('');
 
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
-  const [selectedFeeStructure, setSelectedFeeStructure] = useState<string>('');
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [isMonthlyFee, setIsMonthlyFee] = useState(true);
   const [collectAmount, setCollectAmount] = useState('');
   const [feeNote, setFeeNote] = useState('');
@@ -133,44 +133,71 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
   };
 
   const handleCollectFee = async () => {
-    if (!madrasah || !selectedStudent || !collectAmount) return;
+    if (!madrasah || !selectedStudent) return;
+    
+    const itemsToPay = selectedItems.length > 0 
+      ? selectedStudent.fee_breakdown.filter((item: any) => selectedItems.includes(item.id))
+      : [];
+      
+    if (itemsToPay.length === 0 && !collectAmount) return;
+
     setIsSaving(true);
     try {
-      const amt = parseFloat(collectAmount);
-      
-      // ডাটাবেসে পেমেন্ট এন্ট্রি করা
-      const { error: feeErr } = await supabase.from('fees').insert({
-        madrasah_id: madrasah.id,
-        student_id: selectedStudent.student_id,
-        class_id: selectedStudent.class_id,
-        fee_structure_id: selectedFeeStructure || null,
-        amount_paid: amt,
-        month: selectedMonth,
-        description: feeNote.trim() || null,
-        status: (Number(selectedStudent.total_paid) + amt) >= selectedStudent.total_payable ? 'paid' : 'partial'
-      });
-      
-      if (feeErr) {
-        if (feeErr.message.includes('column') && feeErr.message.includes('not found')) {
-          throw new Error('ডাটাবেস কলাম মিসিং। অনুগ্রহ করে SQL এডিটর থেকে নতুন কোডটি রান করুন।');
-        }
-        throw feeErr;
-      }
+      if (itemsToPay.length > 0) {
+        // একাধিক ফি আইটেম জমা দেওয়া
+        const feeEntries = itemsToPay.map((item: any) => ({
+          madrasah_id: madrasah.id,
+          student_id: selectedStudent.student_id,
+          class_id: selectedStudent.class_id,
+          fee_structure_id: item.id,
+          amount_paid: item.amount,
+          month: selectedMonth,
+          description: item.name,
+          status: 'paid'
+        }));
 
-      // লেনদেনের খেরাতে (Ledger) আয় যোগ করা
-      await supabase.from('ledger').insert({
-        madrasah_id: madrasah.id,
-        type: 'income',
-        amount: amt,
-        category: 'Student Fee',
-        description: feeNote.trim() || `Fee for ${selectedStudent.student_name} (${selectedMonth})`,
-        transaction_date: new Date().toISOString().split('T')[0]
-      });
+        const { error: feeErr } = await supabase.from('fees').insert(feeEntries);
+        if (feeErr) throw feeErr;
+
+        // লেজারে এন্ট্রি
+        const totalAmt = itemsToPay.reduce((sum: number, item: any) => sum + item.amount, 0);
+        await supabase.from('ledger').insert({
+          madrasah_id: madrasah.id,
+          type: 'income',
+          amount: totalAmt,
+          category: 'Student Fee',
+          description: `Fees for ${selectedStudent.student_name}: ${itemsToPay.map((i: any) => i.name).join(', ')}`,
+          transaction_date: new Date().toISOString().split('T')[0]
+        });
+      } else if (collectAmount) {
+        // ম্যানুয়াল ফি জমা দেওয়া
+        const amt = parseFloat(collectAmount);
+        const { error: feeErr } = await supabase.from('fees').insert({
+          madrasah_id: madrasah.id,
+          student_id: selectedStudent.student_id,
+          class_id: selectedStudent.class_id,
+          amount_paid: amt,
+          month: selectedMonth,
+          description: feeNote.trim() || 'Manual Fee',
+          status: 'paid'
+        });
+        if (feeErr) throw feeErr;
+
+        await supabase.from('ledger').insert({
+          madrasah_id: madrasah.id,
+          type: 'income',
+          amount: amt,
+          category: 'Student Fee',
+          description: feeNote.trim() || `Manual Fee for ${selectedStudent.student_name}`,
+          transaction_date: new Date().toISOString().split('T')[0]
+        });
+      }
 
       setShowFeeCollection(false);
       setCollectAmount('');
       setFeeNote('');
       setSelectedStudent(null);
+      setSelectedItems([]);
       fetchData();
     } catch (err: any) { 
       alert(err.message); 
@@ -422,35 +449,59 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
                       )}
                   </div>
                   <div className="space-y-4">
-                      <div className="space-y-1.5">
-                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">ফি-র আইটেম নির্বাচন করুন</label>
-                          <select 
-                            className="w-full h-14 bg-slate-50 rounded-2xl px-4 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20"
-                            value={selectedFeeStructure}
-                            onChange={(e) => {
-                              setSelectedFeeStructure(e.target.value);
-                              const structure = classStructures.find(s => s.id === e.target.value);
-                              if (structure) {
-                                setCollectAmount(structure.amount.toString());
-                                setFeeNote(structure.fee_name);
-                              }
-                            }}
-                          >
-                            <option value="">অন্যান্য ফি (Manual)</option>
-                            {classStructures.map(s => (
-                              <option key={s.id} value={s.id}>{s.fee_name} (৳{s.amount})</option>
-                            ))}
-                          </select>
-                      </div>
-                      <div className="space-y-1.5">
-                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">জমা টাকার পরিমাণ</label>
-                          <div className="relative">
-                            <input type="number" className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-lg outline-none border-2 border-transparent focus:border-[#2563EB]/20" placeholder="0.00" value={collectAmount} onChange={(e) => setCollectAmount(e.target.value)} />
-                            <DollarSign className="absolute left-4 top-4 text-[#2563EB]" size={20}/>
+                      <div className="space-y-2.5">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">ফি-র আইটেমগুলো সিলেক্ট করুন</label>
+                          <div className="space-y-2">
+                            {selectedStudent.fee_breakdown.map((item: any) => {
+                              const isPaid = selectedStudent.paid_map && selectedStudent.paid_map[item.id];
+                              return (
+                                <div 
+                                  key={item.id} 
+                                  onClick={() => {
+                                    if (isPaid) return;
+                                    setSelectedItems(prev => 
+                                      prev.includes(item.id) ? prev.filter(id => id !== item.id) : [...prev, item.id]
+                                    );
+                                  }}
+                                  className={`p-4 rounded-2xl border transition-all flex items-center justify-between cursor-pointer ${isPaid ? 'bg-emerald-50 border-emerald-100 opacity-60' : selectedItems.includes(item.id) ? 'bg-blue-50 border-blue-200 ring-2 ring-blue-100' : 'bg-slate-50 border-slate-100 hover:border-slate-200'}`}
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${isPaid ? 'bg-emerald-500 border-emerald-500 text-white' : selectedItems.includes(item.id) ? 'bg-blue-500 border-blue-500 text-white' : 'bg-white border-slate-200'}`}>
+                                      {(isPaid || selectedItems.includes(item.id)) && <CheckCircle2 size={14} />}
+                                    </div>
+                                    <div>
+                                      <p className="text-sm font-black text-[#1E3A8A] font-noto">{item.name}</p>
+                                      <p className="text-[10px] font-bold text-slate-400 uppercase">{item.is_monthly ? 'মাসিক' : 'এককালীন'}</p>
+                                    </div>
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="text-sm font-black text-[#2563EB]">৳{item.amount}</p>
+                                    {isPaid && <p className="text-[8px] font-black text-emerald-500 uppercase">পরিশোধিত</p>}
+                                  </div>
+                                </div>
+                              );
+                            })}
                           </div>
                       </div>
-                       <button onClick={handleCollectFee} disabled={isSaving || !collectAmount} className="w-full py-5 bg-[#2563EB] text-white font-black rounded-full shadow-premium flex items-center justify-center gap-3 active:scale-95 transition-all text-base">
-                          {isSaving ? <Loader2 className="animate-spin" /> : <><CheckCircle2 size={20}/> পেমেন্ট নিশ্চিত করুন</>}
+
+                      {selectedItems.length === 0 && (
+                        <div className="space-y-1.5 pt-2 border-t border-slate-100">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">অন্যান্য ফি (ম্যানুয়াল)</label>
+                            <div className="relative">
+                              <input type="number" className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-lg outline-none border-2 border-transparent focus:border-[#2563EB]/20" placeholder="0.00" value={collectAmount} onChange={(e) => setCollectAmount(e.target.value)} />
+                              <DollarSign className="absolute left-4 top-4 text-[#2563EB]" size={20}/>
+                            </div>
+                        </div>
+                      )}
+
+                      <button 
+                        onClick={handleCollectFee} 
+                        disabled={isSaving || (selectedItems.length === 0 && !collectAmount)} 
+                        className="w-full py-5 bg-[#2563EB] text-white font-black rounded-full shadow-premium flex items-center justify-center gap-3 active:scale-95 transition-all text-base mt-4"
+                      >
+                          {isSaving ? <Loader2 className="animate-spin" /> : (
+                            <><CheckCircle2 size={20}/> {selectedItems.length > 0 ? `৳${selectedStudent.fee_breakdown.filter((i: any) => selectedItems.includes(i.id)).reduce((s: number, i: any) => s + i.amount, 0)} জমা নিন` : 'পেমেন্ট নিশ্চিত করুন'}</>
+                          )}
                       </button>
                   </div>
               </div>

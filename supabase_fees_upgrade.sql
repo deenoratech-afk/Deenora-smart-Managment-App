@@ -51,7 +51,7 @@ BEGIN
         SELECT 
             f.student_id, 
             COALESCE(SUM(f.amount_paid), 0) as total_collected,
-            jsonb_object_agg(COALESCE(f.fee_structure_id::text, 'other'), f.amount_paid) as paid_items
+            jsonb_object_agg(COALESCE(f.fee_structure_id::text, 'other'), f.amount_paid) as paid_map
         FROM public.fees f
         WHERE f.madrasah_id = p_madrasah_id AND f.month = p_month
         GROUP BY f.student_id
@@ -70,7 +70,8 @@ BEGIN
             WHEN COALESCE(sp.total_collected, 0) > 0 THEN 'partial'
             ELSE 'unpaid'
         END as status,
-        COALESCE(cf.breakdown, '[]'::jsonb) as fee_breakdown
+        COALESCE(cf.breakdown, '[]'::jsonb) as fee_breakdown,
+        COALESCE(sp.paid_map, '{}'::jsonb) as paid_map
     FROM public.students s
     LEFT JOIN class_fees cf ON s.class_id = cf.class_id
     LEFT JOIN student_payments sp ON s.id = sp.student_id
