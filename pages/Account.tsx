@@ -210,11 +210,7 @@ const Account: React.FC<AccountProps> = ({ lang, setLang, onProfileUpdate, setVi
              </div>
 
              {!isSuperAdmin && (
-              <div className="grid grid-cols-2 gap-4 mt-8 pt-4">
-                  <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-bubble"><Users size={20} className="mx-auto mb-2 text-purple-500" /><h4 className="text-lg font-black text-[#1E3A8A]">{stats.students}</h4><p className="text-[8px] uppercase font-black text-slate-400">{t('students', lang)}</p></div>
-                  <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-bubble"><Layers size={20} className="mx-auto mb-2 text-blue-500" /><h4 className="text-lg font-black text-[#1E3A8A]">{stats.classes}</h4><p className="text-[8px] uppercase font-black text-slate-400">{t('classes', lang)}</p></div>
-                  <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-bubble"><GraduationCap size={20} className="mx-auto mb-2 text-emerald-500" /><h4 className="text-lg font-black text-[#1E3A8A]">{stats.teachers}</h4><p className="text-[8px] uppercase font-black text-slate-400">{t('teachers', lang)}</p></div>
-                  <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-bubble"><Zap size={20} className="mx-auto mb-2 text-amber-500" /><h4 className="text-lg font-black text-[#1E3A8A]">{madrasah.sms_balance || 0}</h4><p className="text-[8px] uppercase font-black text-slate-400">{t('wallet', lang)}</p></div>
+              <div className="mt-4">
               </div>
              )}
           </div>
