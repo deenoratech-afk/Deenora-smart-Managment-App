@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Home, User, BookOpen, Wallet, ShieldCheck, BarChart3, CreditCard, RefreshCw, Smartphone, Bell, X, Info, AlertTriangle, CheckCircle2, Clock, Calculator, ClipboardList, GraduationCap, Banknote, MessageSquare } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
 import { View, Language, Madrasah, Transaction, Profile } from '../types';
 import { t } from '../translations';
 import { supabase } from '../supabase';
@@ -23,6 +24,7 @@ interface AppNotification {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, currentView, setView, lang, madrasah, profile }) => {
+  const location = useLocation();
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const isSuperAdmin = profile?.role === 'super_admin';
@@ -40,15 +42,16 @@ const Layout: React.FC<LayoutProps> = ({ children, currentView, setView, lang, m
   useEffect(() => { if (showNotifications) fetchDynamicNotifications(); }, [showNotifications, madrasah?.id]);
 
   const isTabActive = (tab: string) => {
-    if (tab === 'home' && currentView === 'home') return true;
-    if (tab === 'account' && currentView === 'account') return true;
-    if (tab === 'dashboard' && currentView === 'admin-dashboard') return true;
-    if (tab === 'approvals' && currentView === 'admin-approvals') return true;
-    if (tab === 'accounting' && currentView === 'accounting') return true;
-    if (tab === 'attendance' && currentView === 'attendance') return true;
-    if (tab === 'exams' && currentView === 'exams') return true;
-    if (tab === 'wallet' && currentView === 'wallet-sms') return true;
-    if (tab === 'classes' && (currentView === 'classes' || currentView === 'students' || currentView === 'student-details' || currentView === 'student-form')) return true;
+    const path = location.pathname;
+    if (tab === 'home' && path === '/') return true;
+    if (tab === 'account' && path === '/account') return true;
+    if (tab === 'dashboard' && path === '/admin/dashboard') return true;
+    if (tab === 'approvals' && path === '/admin/approvals') return true;
+    if (tab === 'accounting' && path === '/accounting') return true;
+    if (tab === 'attendance' && path === '/attendance') return true;
+    if (tab === 'exams' && path === '/exams') return true;
+    if (tab === 'wallet' && path === '/wallet') return true;
+    if (tab === 'classes' && (path.startsWith('/classes') || path.startsWith('/students'))) return true;
     return false;
   };
 
@@ -88,49 +91,49 @@ const Layout: React.FC<LayoutProps> = ({ children, currentView, setView, lang, m
 
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[92%] max-w-md z-[200]">
         <nav className="bg-white/95 backdrop-blur-[25px] border border-slate-200 flex justify-around items-center py-4 px-1 rounded-[2.5rem] shadow-bubble">
-          <button onClick={() => setView('home')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('home') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
+          <Link to="/" className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('home') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
             <Home size={20} strokeWidth={isTabActive('home') ? 3 : 2} />
             <span className="text-[9px] font-black font-noto opacity-80">{t('home', lang)}</span>
-          </button>
+          </Link>
           
           {isSuperAdmin ? (
             <>
-              <button onClick={() => setView('admin-approvals')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('approvals') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
+              <Link to="/admin/approvals" className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('approvals') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
                 <CreditCard size={20} />
                 <span className="text-[9px] font-black font-noto opacity-80">{t('approvals', lang)}</span>
-              </button>
-              <button onClick={() => setView('admin-dashboard')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('dashboard') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
+              </Link>
+              <Link to="/admin/dashboard" className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('dashboard') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
                 <BarChart3 size={20} />
                 <span className="text-[9px] font-black font-noto opacity-80">{t('dashboard', lang)}</span>
-              </button>
+              </Link>
             </>
           ) : (
             <>
-              <button onClick={() => setView('attendance')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('attendance') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
+              <Link to="/attendance" className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('attendance') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
                 <ClipboardList size={20} />
                 <span className="text-[9px] font-black font-noto opacity-80">হাজিরা</span>
-              </button>
-              <button onClick={() => setView('exams')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('exams') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
+              </Link>
+              <Link to="/exams" className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('exams') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
                 <GraduationCap size={20} />
                 <span className="text-[9px] font-black font-noto opacity-80">পরীক্ষা</span>
-              </button>
+              </Link>
               {(role === 'madrasah_admin' || role === 'accountant') && (
-                <button onClick={() => setView('accounting')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('accounting') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
+                <Link to="/accounting" className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('accounting') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
                   <Banknote size={20} />
                   <span className="text-[9px] font-black font-noto opacity-80">হিসাব</span>
-                </button>
+                </Link>
               )}
-              <button onClick={() => setView('classes')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('classes') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
+              <Link to="/classes" className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('classes') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
                 <BookOpen size={20} />
                 <span className="text-[9px] font-black font-noto opacity-80">ছাত্র</span>
-              </button>
+              </Link>
             </>
           )}
           
-          <button onClick={() => setView('account')} className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('account') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
+          <Link to="/account" className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('account') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
             <User size={20} />
             <span className="text-[9px] font-black font-noto opacity-80">{t('account', lang)}</span>
-          </button>
+          </Link>
         </nav>
       </div>
 
