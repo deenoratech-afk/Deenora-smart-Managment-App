@@ -434,19 +434,6 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
                           </div>
                       </div>
 
-                      {classStructures.length > 0 && (
-                        <div className="mt-4 pt-4 border-t border-slate-200 text-left">
-                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">ফি-র ধরণ (Breakdown)</p>
-                            <div className="space-y-1.5">
-                                {classStructures.map(fs => (
-                                    <div key={fs.id} className="flex justify-between items-center bg-white/50 px-3 py-1.5 rounded-lg border border-slate-100">
-                                        <span className="text-[11px] font-bold text-slate-600 font-noto">{fs.fee_name}</span>
-                                        <span className="text-[11px] font-black text-[#1E3A8A]">৳{fs.amount}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                      )}
                   </div>
                   <div className="space-y-4">
                       <div className="space-y-2.5">
