@@ -449,14 +449,7 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
                             <DollarSign className="absolute left-4 top-4 text-[#2563EB]" size={20}/>
                           </div>
                       </div>
-                      <div className="space-y-1.5">
-                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">মন্তব্য (ঐচ্ছিক)</label>
-                          <div className="relative">
-                            <input type="text" className="w-full h-12 bg-slate-50 rounded-xl px-12 font-bold text-sm outline-none border border-slate-100 focus:border-[#2563EB]/20" placeholder="যেমন: মাসিক বেতন ও পরীক্ষার ফি" value={feeNote} onChange={(e) => setFeeNote(e.target.value)} />
-                            <FileText className="absolute left-4 top-3.5 text-slate-300" size={18}/>
-                          </div>
-                      </div>
-                      <button onClick={handleCollectFee} disabled={isSaving || !collectAmount} className="w-full py-5 bg-[#2563EB] text-white font-black rounded-full shadow-premium flex items-center justify-center gap-3 active:scale-95 transition-all text-base">
+                       <button onClick={handleCollectFee} disabled={isSaving || !collectAmount} className="w-full py-5 bg-[#2563EB] text-white font-black rounded-full shadow-premium flex items-center justify-center gap-3 active:scale-95 transition-all text-base">
                           {isSaving ? <Loader2 className="animate-spin" /> : <><CheckCircle2 size={20}/> পেমেন্ট নিশ্চিত করুন</>}
                       </button>
                   </div>
