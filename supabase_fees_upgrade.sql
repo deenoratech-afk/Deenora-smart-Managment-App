@@ -2,8 +2,9 @@
 -- ১. fee_structures টেবিলে is_monthly কলাম যোগ করা
 ALTER TABLE public.fee_structures ADD COLUMN IF NOT EXISTS is_monthly BOOLEAN DEFAULT true;
 
--- ২. fees টেবিলে fee_structure_id কলাম যোগ করা
+-- ২. fees টেবিলে প্রয়োজনীয় কলাম যোগ করা
 ALTER TABLE public.fees ADD COLUMN IF NOT EXISTS fee_structure_id UUID REFERENCES public.fee_structures(id) ON DELETE SET NULL;
+ALTER TABLE public.fees ADD COLUMN IF NOT EXISTS description TEXT;
 
 -- ৩. get_monthly_dues_report ফাংশন আপডেট করা
 DROP FUNCTION IF EXISTS get_monthly_dues_report(UUID, UUID, TEXT);
