@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
+import { useSearchParams } from 'react-router-dom';
 import { Madrasah, LedgerEntry, Fee, Language, UserRole, Class, Student } from '../types';
 import { Calculator, Plus, ArrowUpCircle, ArrowDownCircle, Wallet, History, Users, Loader2, Save, X, Calendar, DollarSign, Tag, FileText, CheckCircle2, TrendingUp, AlertCircle, Send, Search, ChevronDown, BarChart3, Settings2, RefreshCw, Info } from 'lucide-react';
 import { t } from '../translations';
@@ -15,7 +16,18 @@ interface AccountingProps {
 }
 
 const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role }) => {
-  const [activeTab, setActiveTab] = useState<'summary' | 'ledger' | 'fees' | 'structures'>('fees');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = (searchParams.get('tab') as 'summary' | 'ledger' | 'fees' | 'structures') || 'fees';
+  
+  const setActiveTab = (tab: string) => {
+    if (tab === 'fees') {
+      searchParams.delete('tab');
+    } else {
+      searchParams.set('tab', tab);
+    }
+    setSearchParams(searchParams);
+  };
+
   const [ledger, setLedger] = useState<LedgerEntry[]>([]);
   const [feesReport, setFeesReport] = useState<any[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);

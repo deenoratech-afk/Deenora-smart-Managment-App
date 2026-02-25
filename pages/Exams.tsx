@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
+import { useSearchParams } from 'react-router-dom';
 import { Madrasah, Class, Student, Exam, ExamSubject, Language, UserRole } from '../types';
 import { GraduationCap, Plus, ChevronRight, BookOpen, Trophy, Save, X, Edit3, Trash2, Loader2, ArrowLeft, Calendar, LayoutGrid, CheckCircle2, FileText, Send, User, Hash, Star, AlertCircle, TrendingUp } from 'lucide-react';
 import { t } from '../translations';
@@ -15,10 +16,36 @@ interface ExamsProps {
 }
 
 const Exams: React.FC<ExamsProps> = ({ lang, madrasah, onBack, role }) => {
-  const [view, setView] = useState<'list' | 'subjects' | 'marks' | 'report' | 'insights'>('list');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const view = (searchParams.get('v') as 'list' | 'subjects' | 'marks' | 'report' | 'insights') || 'list';
+  
+  const setView = (v: string) => {
+    if (v === 'list') {
+      searchParams.delete('v');
+      searchParams.delete('examId');
+    } else {
+      searchParams.set('v', v);
+    }
+    setSearchParams(searchParams);
+  };
+
   const [exams, setExams] = useState<Exam[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
   const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
+  const examIdParam = searchParams.get('examId');
+
+  useEffect(() => {
+    if (examIdParam && exams.length > 0) {
+      const exam = exams.find(e => e.id === examIdParam);
+      if (exam) {
+        setSelectedExam(exam);
+        if (view === 'subjects') fetchSubjects(exam.id);
+        if (view === 'marks') { fetchSubjects(exam.id); fetchMarkEntryData(exam.id, exam.class_id); }
+        if (view === 'report') { fetchSubjects(exam.id); fetchRanking(exam.id); }
+      }
+    }
+  }, [examIdParam, exams, view]);
+
   const [subjects, setSubjects] = useState<ExamSubject[]>([]);
   const [marksData, setMarksData] = useState<any>({});
   const [rankingData, setRankingData] = useState<any[]>([]);
@@ -209,9 +236,18 @@ const Exams: React.FC<ExamsProps> = ({ lang, madrasah, onBack, role }) => {
                     <div className="text-[10px] font-black text-slate-300 uppercase">{new Date(exam.exam_date).toLocaleDateString('bn-BD')}</div>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
-                    <button onClick={() => { setSelectedExam(exam); setView('subjects'); fetchSubjects(exam.id); }} className="py-2.5 bg-slate-50 text-slate-500 rounded-xl text-[9px] font-black uppercase tracking-widest border border-slate-100 active:scale-95 transition-all">{t('subject', lang)}</button>
-                    <button onClick={() => { setSelectedExam(exam); setView('marks'); fetchSubjects(exam.id); fetchMarkEntryData(exam.id, exam.class_id); }} className="py-2.5 bg-blue-50 text-[#2563EB] rounded-xl text-[9px] font-black uppercase tracking-widest border border-blue-100 active:scale-95 transition-all">{t('enter_marks', lang)}</button>
-                    <button onClick={() => { setSelectedExam(exam); setView('report'); fetchSubjects(exam.id); fetchRanking(exam.id); }} className="py-2.5 bg-[#2563EB] text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-premium active:scale-95 transition-all">{t('rank', lang)}</button>
+                    <button onClick={() => { 
+                      searchParams.set('examId', exam.id);
+                      setView('subjects'); 
+                    }} className="py-2.5 bg-slate-50 text-slate-500 rounded-xl text-[9px] font-black uppercase tracking-widest border border-slate-100 active:scale-95 transition-all">{t('subject', lang)}</button>
+                    <button onClick={() => { 
+                      searchParams.set('examId', exam.id);
+                      setView('marks'); 
+                    }} className="py-2.5 bg-blue-50 text-[#2563EB] rounded-xl text-[9px] font-black uppercase tracking-widest border border-blue-100 active:scale-95 transition-all">{t('enter_marks', lang)}</button>
+                    <button onClick={() => { 
+                      searchParams.set('examId', exam.id);
+                      setView('report'); 
+                    }} className="py-2.5 bg-[#2563EB] text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-premium active:scale-95 transition-all">{t('rank', lang)}</button>
                 </div>
             </div>
           ))}

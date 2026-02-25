@@ -100,6 +100,30 @@ const Home: React.FC<HomeProps> = ({ onStudentClick, lang, dataVersion, triggerR
 
           <div className="px-1 space-y-3">
              <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] px-3 opacity-80">
+               Quick Actions
+             </h2>
+             <div className="grid grid-cols-4 gap-2">
+                <button onClick={onNavigateToAttendance} className="flex flex-col items-center gap-2 p-3 bg-white rounded-3xl border border-slate-100 shadow-sm active:scale-95 transition-all">
+                  <div className="w-10 h-10 bg-blue-50 text-blue-500 rounded-xl flex items-center justify-center"><ClipboardList size={20} /></div>
+                  <span className="text-[8px] font-black text-slate-500 uppercase">হাজিরা</span>
+                </button>
+                <button onClick={onNavigateToExams} className="flex flex-col items-center gap-2 p-3 bg-white rounded-3xl border border-slate-100 shadow-sm active:scale-95 transition-all">
+                  <div className="w-10 h-10 bg-indigo-50 text-indigo-500 rounded-xl flex items-center justify-center"><GraduationCap size={20} /></div>
+                  <span className="text-[8px] font-black text-slate-500 uppercase">পরীক্ষা</span>
+                </button>
+                <button onClick={onNavigateToAccounting} className="flex flex-col items-center gap-2 p-3 bg-white rounded-3xl border border-slate-100 shadow-sm active:scale-95 transition-all">
+                  <div className="w-10 h-10 bg-emerald-50 text-emerald-500 rounded-xl flex items-center justify-center"><Banknote size={20} /></div>
+                  <span className="text-[8px] font-black text-slate-500 uppercase">হিসাব</span>
+                </button>
+                <button onClick={onNavigateToWallet} className="flex flex-col items-center gap-2 p-3 bg-white rounded-3xl border border-slate-100 shadow-sm active:scale-95 transition-all">
+                  <div className="w-10 h-10 bg-amber-50 text-amber-500 rounded-xl flex items-center justify-center"><Wallet size={20} /></div>
+                  <span className="text-[8px] font-black text-slate-500 uppercase">Wallet</span>
+                </button>
+             </div>
+          </div>
+
+          <div className="px-1 space-y-3">
+             <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] px-3 opacity-80">
                Result Insights
              </h2>
              <SmartResultAnalytics 
