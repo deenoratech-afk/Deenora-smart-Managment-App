@@ -126,7 +126,9 @@ export interface FeeStructure {
   class_id: string;
   fee_name: string;
   amount: number;
+  is_monthly: boolean;
   created_at: string;
+  classes?: Class;
 }
 
 export interface Fee {
@@ -134,9 +136,10 @@ export interface Fee {
   madrasah_id: string;
   student_id: string;
   class_id: string;
+  fee_structure_id?: string;
   amount_paid: number;
-  amount_due: number;
   month: string; // YYYY-MM
+  description: string;
   status: 'paid' | 'unpaid' | 'partial';
   paid_at?: string;
   students?: Student;

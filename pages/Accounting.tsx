@@ -50,6 +50,8 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
   const [desc, setDesc] = useState('');
 
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [selectedFeeStructure, setSelectedFeeStructure] = useState<string>('');
+  const [isMonthlyFee, setIsMonthlyFee] = useState(true);
   const [collectAmount, setCollectAmount] = useState('');
   const [feeNote, setFeeNote] = useState('');
   const [classStructures, setClassStructures] = useState<any[]>([]);
@@ -141,6 +143,7 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
         madrasah_id: madrasah.id,
         student_id: selectedStudent.student_id,
         class_id: selectedStudent.class_id,
+        fee_structure_id: selectedFeeStructure || null,
         amount_paid: amt,
         month: selectedMonth,
         description: feeNote.trim() || null,
@@ -420,6 +423,26 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
                   </div>
                   <div className="space-y-4">
                       <div className="space-y-1.5">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">ফি-র আইটেম নির্বাচন করুন</label>
+                          <select 
+                            className="w-full h-14 bg-slate-50 rounded-2xl px-4 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20"
+                            value={selectedFeeStructure}
+                            onChange={(e) => {
+                              setSelectedFeeStructure(e.target.value);
+                              const structure = classStructures.find(s => s.id === e.target.value);
+                              if (structure) {
+                                setCollectAmount(structure.amount.toString());
+                                setFeeNote(structure.fee_name);
+                              }
+                            }}
+                          >
+                            <option value="">অন্যান্য ফি (Manual)</option>
+                            {classStructures.map(s => (
+                              <option key={s.id} value={s.id}>{s.fee_name} (৳{s.amount})</option>
+                            ))}
+                          </select>
+                      </div>
+                      <div className="space-y-1.5">
                           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">জমা টাকার পরিমাণ</label>
                           <div className="relative">
                             <input type="number" className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-lg outline-none border-2 border-transparent focus:border-[#2563EB]/20" placeholder="0.00" value={collectAmount} onChange={(e) => setCollectAmount(e.target.value)} />
@@ -506,6 +529,25 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
                     </div>
                  </div>
                  <div className="relative">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2 mb-1.5 block">ফি-র ধরণ</label>
+                    <div className="flex p-1 bg-slate-100 rounded-2xl border border-slate-200">
+                       <button 
+                          type="button"
+                          onClick={() => setIsMonthlyFee(true)} 
+                          className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all ${isMonthlyFee ? 'bg-white text-[#2563EB] shadow-md' : 'text-slate-400'}`}
+                       >
+                          মাসিক (Monthly)
+                       </button>
+                       <button 
+                          type="button"
+                          onClick={() => setIsMonthlyFee(false)} 
+                          className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all ${!isMonthlyFee ? 'bg-white text-[#2563EB] shadow-md' : 'text-slate-400'}`}
+                       >
+                          এককালীন (One-time)
+                       </button>
+                    </div>
+                 </div>
+                 <div className="relative">
                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2 mb-1.5 block">টাকার পরিমাণ</label>
                     <input type="number" className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-lg outline-none border-2 border-transparent focus:border-[#2563EB]/20" placeholder="0" value={amount} onChange={(e) => setAmount(e.target.value)} />
                     <DollarSign className="absolute left-4 top-[44px] text-[#2563EB]" size={20}/>
@@ -519,7 +561,8 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
                             madrasah_id: madrasah?.id,
                             class_id: selectedClass,
                             fee_name: category,
-                            amount: parseFloat(amount)
+                            amount: parseFloat(amount),
+                            is_monthly: isMonthlyFee
                         });
                         if (error) throw error;
                         setShowAddStructure(false);
