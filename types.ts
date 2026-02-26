@@ -120,19 +120,6 @@ export interface LedgerEntry {
   created_at: string;
 }
 
-export interface FeeStructure {
-  id: string;
-  madrasah_id: string;
-  class_id: string;
-  category_id?: string;
-  fee_name: string;
-  amount: number;
-  is_monthly: boolean;
-  created_at: string;
-  classes?: Class;
-  fee_categories?: FeeCategory;
-}
-
 export interface FeeCategory {
   id: string;
   madrasah_id: string;
@@ -142,6 +129,19 @@ export interface FeeCategory {
   created_at: string;
 }
 
+export interface FeeStructure {
+  id: string;
+  madrasah_id: string;
+  class_id: string;
+  category_id: string;
+  fee_name: string;
+  amount: number;
+  is_monthly: boolean;
+  created_at: string;
+  classes?: Class;
+  fee_categories?: FeeCategory;
+}
+
 export interface StudentFeeOverride {
   id: string;
   student_id: string;
@@ -149,13 +149,15 @@ export interface StudentFeeOverride {
   override_amount?: number;
   discount_percentage?: number;
   created_at: string;
+  students?: Student;
+  fee_structures?: FeeStructure;
 }
 
 export interface ExamSession {
   id: string;
   madrasah_id: string;
   name: string;
-  date: string;
+  exam_date: string;
   created_at: string;
 }
 
@@ -171,7 +173,10 @@ export interface CoachingEnrollment {
   id: string;
   batch_id: string;
   student_id: string;
-  created_at: string;
+  enrolled_at?: string;
+  created_at?: string;
+  coaching_batches?: CoachingBatch;
+  students?: Student;
 }
 
 export interface Fee {
@@ -180,7 +185,9 @@ export interface Fee {
   student_id: string;
   class_id: string;
   fee_structure_id?: string;
-  amount_paid: number;
+  amount: number;
+  paid_amount: number;
+  due_amount: number;
   month: string; // YYYY-MM
   description: string;
   status: 'paid' | 'unpaid' | 'partial';
