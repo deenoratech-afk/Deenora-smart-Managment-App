@@ -156,7 +156,33 @@ export const translations = {
     gpa: 'জিপিএ',
     result_card: 'ফলাফল পত্র',
     publish_result: 'ফলাফল প্রকাশ',
-    enter_marks: 'নম্বর এন্ট্রি'
+    enter_marks: 'নম্বর এন্ট্রি',
+    accounting: 'অ্যাকাউন্টিং',
+    back: 'পিছনে',
+    add_category: 'ক্যাটাগরি যোগ করুন',
+    add_fee_structure: 'ফি স্ট্রাকচার যোগ করুন',
+    fee_categories: 'ফি ক্যাটাগরি সমূহ',
+    no_fee_categories: 'কোনো ফি ক্যাটাগরি পাওয়া যায়নি',
+    confirm_delete_category: 'আপনি কি নিশ্চিতভাবে "{{categoryName}}" ক্যাটাগরি ডিলিট করতে চান?',
+    fee_structures: 'ফি স্ট্রাকচার সমূহ',
+    no_fee_structures: 'কোনো ফি স্ট্রাকচার পাওয়া যায়নি',
+    confirm_delete_structure: 'আপনি কি নিশ্চিতভাবে "{{structureName}}" ফি স্ট্রাকচার ডিলিট করতে চান?',
+    monthly: 'মাসিক',
+    'one-time': 'এককালীন',
+    add_new_category: 'নতুন ক্যাটাগরি যোগ করুন',
+    category_name: 'ক্যাটাগরির নাম',
+    category_name_placeholder: 'যেমন: মাসিক ফি, ভর্তি ফি ইত্যাদি',
+    category_type: 'ক্যাটাগরির ধরণ',
+    recurring: 'পুনরাবৃত্ত (Recurring)',
+    optional: 'ঐচ্ছিক (Optional)',
+    setup_fee: 'ফি সেটআপ করুন',
+    select_class_placeholder: 'ক্লাস নির্বাচন করুন',
+    select_category: 'ক্যাটাগরি নির্বাচন করুন',
+    select_category_placeholder: 'ক্যাটাগরি বেছে নিন',
+    fee_name: 'ফি-র নাম',
+    fee_name_placeholder: 'যেমন: জানুয়ারি মাসের বেতন',
+    fee_type: 'ফি-র ধরণ',
+    amount: 'টাকার পরিমাণ'
   },
   en: {
     home: 'Dashboard',
@@ -293,29 +319,41 @@ export const translations = {
     result_card: 'Result Card',
     publish_result: 'Publish Result',
     enter_marks: 'Enter Marks',
-    prediction_system: 'Risk Analysis',
-    dropout_risk: 'Dropout Risk',
-    late_regularity: 'Late Regularity',
-    result_decline: 'Result Decline',
-    risk_safe: 'Safe',
-    risk_warning: 'Warning',
-    risk_high: 'High Risk',
-    student_insights: 'Student Insights',
-    no_risk_found: 'No risks detected',
-    smart_fee_mgmt: 'Smart Fee Management',
-    expected_income: 'Expected Monthly Income',
-    collection_prediction: 'Collection Prediction',
-    current_collection: 'Current Collection',
-    reminders: 'Reminders',
-    soft_reminder: 'Soft Reminder',
-    strong_reminder: 'Strong Reminder',
-    final_warning: 'Final Warning',
-    send_reminder: 'Send Reminder',
-    collection_rate_label: 'Collection Rate',
-    predicted_total: 'Predicted Total Collection',
+    accounting: 'Accounting',
+    back: 'Back',
+    add_category: 'Add Category',
+    add_fee_structure: 'Add Fee Structure',
+    fee_categories: 'Fee Categories',
+    no_fee_categories: 'No fee categories found',
+    confirm_delete_category: 'Are you sure you want to delete the category "{{categoryName}}"?',
+    fee_structures: 'Fee Structures',
+    no_fee_structures: 'No fee structures found',
+    confirm_delete_structure: 'Are you sure you want to delete the fee structure "{{structureName}}"?',
+    monthly: 'Monthly',
+    'one-time': 'One-time',
+    add_new_category: 'Add New Category',
+    category_name: 'Category Name',
+    category_name_placeholder: 'e.g. Monthly Fee, Admission Fee',
+    category_type: 'Category Type',
+    recurring: 'Recurring',
+    optional: 'Optional',
+    setup_fee: 'Setup Fee',
+    select_class_placeholder: 'Select a class',
+    select_category: 'Select Category',
+    select_category_placeholder: 'Choose a category',
+    fee_name: 'Fee Name',
+    fee_name_placeholder: 'e.g. January Tuition Fee',
+    fee_type: 'Fee Type',
+    amount: 'Amount'
   }
 };
 
-export const t = (key: keyof typeof translations.bn, lang: Language) => {
-  return translations[lang][key] || key;
+export const t = (key: keyof typeof translations.bn, lang: Language, params?: Record<string, any>) => {
+  let text = translations[lang][key] || key;
+  if (params) {
+    Object.entries(params).forEach(([k, v]) => {
+      text = text.replace(`{{${k}}}`, String(v));
+    });
+  }
+  return text;
 };

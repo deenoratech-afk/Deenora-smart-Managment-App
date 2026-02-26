@@ -1,636 +1,207 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
-import { useSearchParams } from 'react-router-dom';
-import { Madrasah, LedgerEntry, Fee, Language, UserRole, Class, Student } from '../types';
-import { Calculator, Plus, ArrowUpCircle, ArrowDownCircle, Wallet, History, Users, Loader2, Save, X, Calendar, DollarSign, Tag, FileText, CheckCircle2, TrendingUp, AlertCircle, Send, Search, ChevronDown, BarChart3, Settings2, RefreshCw, Info } from 'lucide-react';
+import { Loader2, Plus, X, ChevronDown, Tag, DollarSign } from 'lucide-react';
 import { t } from '../translations';
-import { sortMadrasahClasses } from './Classes';
-import SmartFeeAnalytics from '../components/SmartFeeAnalytics';
+import { Madrasah, Class, FeeCategory, FeeStructure, Language } from '../types';
 
 interface AccountingProps {
   lang: Language;
   madrasah: Madrasah | null;
   onBack: () => void;
-  role: UserRole;
+  role: string;
 }
 
 const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role }) => {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = (searchParams.get('tab') as 'summary' | 'ledger' | 'fees' | 'structures' | 'categories' | 'exams' | 'coaching') || 'fees';
-  
-  const setActiveTab = (tab: string) => {
-    if (tab === 'fees') {
-      searchParams.delete('tab');
-    } else {
-      searchParams.set('tab', tab);
-    }
-    setSearchParams(searchParams);
-  };
-
-  const [ledger, setLedger] = useState<LedgerEntry[]>([]);
-  const [feesReport, setFeesReport] = useState<any[]>([]);
+  const [feeCategories, setFeeCategories] = useState<FeeCategory[]>([]);
+  const [feeStructures, setFeeStructures] = useState<FeeStructure[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
-  const [structures, setStructures] = useState<any[]>([]);
-  const [feeCategories, setFeeCategories] = useState<any[]>([]);
-  const [examSessions, setExamSessions] = useState<any[]>([]);
-  const [coachingBatches, setCoachingBatches] = useState<any[]>([]);
-  const [studentOverrides, setStudentOverrides] = useState<any[]>([]);
-  
-  const [loading, setLoading] = useState(false);
-  const [fetchError, setFetchError] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [showAddLedger, setShowAddLedger] = useState(false);
   const [showAddStructure, setShowAddStructure] = useState(false);
   const [showAddCategory, setShowAddCategory] = useState(false);
-  const [showAddExam, setShowAddExam] = useState(false);
-  const [showAddCoaching, setShowAddCoaching] = useState(false);
-  const [showFeeCollection, setShowFeeCollection] = useState(false);
-  
-  const [anyStudentsInMadrasah, setAnyStudentsInMadrasah] = useState<boolean | null>(null);
-
-  const [selectedClass, setSelectedClass] = useState<string>('');
-  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
-  const [type, setType] = useState<'income' | 'expense'>('income');
-  const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState('');
-  const [categoryType, setCategoryType] = useState<'recurring' | 'one-time' | 'optional'>('recurring');
-  const [desc, setDesc] = useState('');
-
-  const [selectedStudent, setSelectedStudent] = useState<any>(null);
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [isMonthlyFee, setIsMonthlyFee] = useState(true);
-  const [collectAmount, setCollectAmount] = useState('');
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryType, setNewCategoryType] = useState<'recurring' | 'one-time' | 'optional'>('one-time');
+  const [selectedClass, setSelectedClass] = useState<string | null>(null);
+  const [category, setCategory] = useState<string | null>(null);
   const [feeNote, setFeeNote] = useState('');
-  const [classStructures, setClassStructures] = useState<any[]>([]);
+  const [amount, setAmount] = useState('');
+  const [isMonthlyFee, setIsMonthlyFee] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [showClassDropdown, setShowClassDropdown] = useState(false);
-
-  useEffect(() => {
-    if (selectedStudent && madrasah) {
-      const fetchClassStructures = async () => {
-        const { data } = await supabase
-          .from('fee_structures')
-          .select('*')
-          .eq('class_id', selectedStudent.class_id);
-        if (data) setClassStructures(data);
-      };
-      fetchClassStructures();
-    } else {
-      setClassStructures([]);
-    }
-  }, [selectedStudent, madrasah]);
-
-  useEffect(() => {
-    if (madrasah) {
-      fetchData();
-      fetchClasses();
-    }
-  }, [madrasah?.id, activeTab, selectedMonth, selectedClass]);
-
-  const fetchClasses = async () => {
-    const { data } = await supabase.from('classes').select('*').eq('madrasah_id', madrasah?.id);
-    if (data) setClasses(sortMadrasahClasses(data));
-  };
 
   const fetchData = async () => {
     if (!madrasah?.id) return;
-    setLoading(true);
-    setFetchError(null);
-    try {
-      if (activeTab === 'summary' || activeTab === 'ledger') {
-        const { data } = await supabase.from('ledger').select('*').eq('madrasah_id', madrasah.id).order('transaction_date', { ascending: false });
-        if (data) setLedger(data);
-      }
-      
-      if (activeTab === 'fees') {
-        const classId = selectedClass === '' ? null : selectedClass;
-        
-        const { data, error } = await supabase.rpc('get_monthly_dues_report', {
-          p_madrasah_id: madrasah.id,
-          p_class_id: classId,
-          p_month: selectedMonth
-        });
-        
-        if (error) {
-          console.error("RPC Error:", error);
-          setFetchError(error.message);
-          setFeesReport([]);
-          return;
-        }
 
-        setFeesReport(data || []);
+    const { data: categoriesData, error: categoriesError } = await supabase
+      .from('fee_categories')
+      .select('*')
+      .eq('madrasah_id', madrasah.id);
+    if (categoriesError) console.error('Error fetching fee categories:', categoriesError);
+    else setFeeCategories(categoriesData || []);
 
-        if (!data || data.length === 0) {
-          let checkQuery = supabase.from('students').select('id', { count: 'exact', head: true }).eq('madrasah_id', madrasah.id);
-          if (classId) checkQuery = checkQuery.eq('class_id', classId);
-          const { count } = await checkQuery;
-          setAnyStudentsInMadrasah(count && count > 0 ? true : false);
-        } else {
-          setAnyStudentsInMadrasah(true);
-        }
-      }
+    const { data: structuresData, error: structuresError } = await supabase
+      .from('fee_structures')
+      .select('*, classes(class_name), fee_categories(name)')
+      .eq('madrasah_id', madrasah.id);
+    if (structuresError) console.error('Error fetching fee structures:', structuresError);
+    else setFeeStructures(structuresData || []);
 
-      if (activeTab === 'structures') {
-        const { data: structuresData } = await supabase.from('fee_structures').select('*, classes(class_name), fee_categories(name)').eq('madrasah_id', madrasah.id);
-        if (structuresData) setStructures(structuresData);
-        
-        const { data: categoriesData } = await supabase.from('fee_categories').select('*').eq('madrasah_id', madrasah.id);
-        if (categoriesData) setFeeCategories(categoriesData);
-      }
-
-      if (activeTab === 'categories') {
-        const { data } = await supabase.from('fee_categories').select('*').eq('madrasah_id', madrasah.id);
-        if (data) setFeeCategories(data);
-      }
-
-      if (activeTab === 'exams') {
-        const { data } = await supabase.from('exam_sessions').select('*').eq('madrasah_id', madrasah.id);
-        if (data) setExamSessions(data);
-      }
-
-      if (activeTab === 'coaching') {
-        const { data } = await supabase.from('coaching_batches').select('*').eq('madrasah_id', madrasah.id);
-        if (data) setCoachingBatches(data);
-      }
-    } catch (e: any) { 
-      console.error("Accounting Fetch Error:", e);
-      setFetchError(e.message);
-    } finally { setLoading(false); }
+    const { data: classesData, error: classesError } = await supabase
+      .from('classes')
+      .select('*')
+      .eq('madrasah_id', madrasah.id);
+    if (classesError) console.error('Error fetching classes:', classesError);
+    else setClasses(classesData || []);
   };
 
-  const handleCollectFee = async () => {
-    if (!madrasah || !selectedStudent) return;
-    
-    const itemsToPay = selectedItems.length > 0 
-      ? selectedStudent.fee_breakdown.filter((item: any) => selectedItems.includes(item.id))
-      : [];
-      
-    if (itemsToPay.length === 0 && !collectAmount) return;
-
-    setIsSaving(true);
-    try {
-      if (itemsToPay.length > 0) {
-        // একাধিক ফি আইটেম জমা দেওয়া
-        const feeEntries = itemsToPay.map((item: any) => ({
-          madrasah_id: madrasah.id,
-          student_id: selectedStudent.student_id,
-          class_id: selectedStudent.class_id,
-          fee_structure_id: item.id,
-          amount_paid: item.amount,
-          month: selectedMonth,
-          description: item.name,
-          status: 'paid'
-        }));
-
-        const { error: feeErr } = await supabase.from('fees').insert(feeEntries);
-        if (feeErr) throw feeErr;
-
-        // লেজারে এন্ট্রি
-        const totalAmt = itemsToPay.reduce((sum: number, item: any) => sum + item.amount, 0);
-        await supabase.from('ledger').insert({
-          madrasah_id: madrasah.id,
-          type: 'income',
-          amount: totalAmt,
-          category: 'Student Fee',
-          description: `Fees for ${selectedStudent.student_name}: ${itemsToPay.map((i: any) => i.name).join(', ')}`,
-          transaction_date: new Date().toISOString().split('T')[0]
-        });
-      } else if (collectAmount) {
-        // ম্যানুয়াল ফি জমা দেওয়া
-        const amt = parseFloat(collectAmount);
-        const { error: feeErr } = await supabase.from('fees').insert({
-          madrasah_id: madrasah.id,
-          student_id: selectedStudent.student_id,
-          class_id: selectedStudent.class_id,
-          amount_paid: amt,
-          month: selectedMonth,
-          description: feeNote.trim() || 'Manual Fee',
-          status: 'paid'
-        });
-        if (feeErr) throw feeErr;
-
-        await supabase.from('ledger').insert({
-          madrasah_id: madrasah.id,
-          type: 'income',
-          amount: amt,
-          category: 'Student Fee',
-          description: feeNote.trim() || `Manual Fee for ${selectedStudent.student_name}`,
-          transaction_date: new Date().toISOString().split('T')[0]
-        });
-      }
-
-      setShowFeeCollection(false);
-      setCollectAmount('');
-      setFeeNote('');
-      setSelectedStudent(null);
-      setSelectedItems([]);
-      fetchData();
-    } catch (err: any) { 
-      alert(err.message); 
-    } finally { 
-      setIsSaving(false); 
-    }
-  };
-
-  const handleAddLedger = async () => {
-    if (!madrasah || !amount || !category) return;
-    setIsSaving(true);
-    try {
-      const { error } = await supabase.from('ledger').insert({
-        madrasah_id: madrasah.id,
-        type: type,
-        amount: parseFloat(amount),
-        category: category.trim(),
-        description: desc.trim(),
-        transaction_date: new Date().toISOString().split('T')[0]
-      });
-      if (error) throw error;
-      setShowAddLedger(false);
-      setAmount(''); setCategory(''); setDesc('');
-      fetchData();
-    } catch (err: any) { alert(err.message); } finally { setIsSaving(false); }
-  };
-
-  const totals = ledger.reduce((acc, curr) => {
-    if (curr.type === 'income') acc.income += curr.amount;
-    else acc.expense += curr.amount;
-    return acc;
-  }, { income: 0, expense: 0 });
-
-  const totalDues = feesReport.reduce((sum, item) => sum + Number(item.balance_due), 0);
+  useEffect(() => {
+    fetchData();
+  }, [madrasah?.id]);
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 pb-20">
-      <div className="flex items-center justify-between px-2">
-        <div className="flex items-center gap-3">
-          <button onClick={onBack} className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-[#2563EB] border border-blue-100">
-            <Calculator size={20}/>
-          </button>
-          <h1 className="text-xl font-black text-[#1E293B] font-noto">ফি ও হিসাব</h1>
-        </div>
-        <div className="flex gap-2">
-            <button onClick={() => fetchData()} className={`w-10 h-10 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center active:scale-95 transition-all ${loading ? 'animate-spin' : ''}`}><RefreshCw size={18}/></button>
-            <button onClick={() => setShowAddLedger(true)} className="w-10 h-10 bg-[#2563EB] text-white rounded-xl shadow-premium flex items-center justify-center active:scale-95 transition-all"><Plus size={20}/></button>
-        </div>
-      </div>
-
-      <div className="flex p-1.5 bg-slate-50 rounded-[1.5rem] border border-slate-100 overflow-x-auto no-scrollbar">
-        {(['fees', 'summary', 'ledger', 'structures', 'categories', 'exams', 'coaching'] as const).map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 min-w-[85px] py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${activeTab === tab ? 'bg-[#2563EB] text-white shadow-premium' : 'text-slate-400'}`}>
-            {tab === 'summary' ? 'ড্যাশবোর্ড' : tab === 'ledger' ? 'লেনদেন' : tab === 'fees' ? 'ছাত্র ফি' : tab === 'structures' ? 'ফি সেটিংস' : tab === 'categories' ? 'ক্যাটাগরি' : tab === 'exams' ? 'পরীক্ষা' : 'কোচিং'}
-          </button>
-        ))}
-      </div>
-
-      {activeTab === 'fees' && (
-        <div className="space-y-4 animate-in slide-in-from-bottom-5">
-           <div className="bg-white p-5 rounded-[2.2rem] border border-slate-100 shadow-bubble space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                 <div className="relative">
-                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1 mb-1 block">শ্রেণি</label>
-                    <button onClick={() => setShowClassDropdown(!showClassDropdown)} className="w-full h-12 px-4 rounded-xl border bg-slate-50 flex items-center justify-between text-xs font-black">
-                       <span className="truncate">{classes.find(c => c.id === selectedClass)?.class_name || 'সব শ্রেণি'}</span>
-                       <ChevronDown size={16} />
-                    </button>
-                    {showClassDropdown && (
-                        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border z-50 p-1 max-h-40 overflow-y-auto">
-                            <button onClick={() => { setSelectedClass(''); setShowClassDropdown(false); }} className="w-full text-left px-3 py-2 text-[10px] font-black uppercase hover:bg-slate-50">সব শ্রেণি</button>
-                            {classes.map(c => (
-                                <button key={c.id} onClick={() => { setSelectedClass(c.id); setShowClassDropdown(false); }} className="w-full text-left px-3 py-2 text-[10px] font-black uppercase hover:bg-slate-50">{c.class_name}</button>
-                            ))}
-                        </div>
-                    )}
-                 </div>
-                 <div className="relative">
-                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1 mb-1 block">মাস</label>
-                    <input type="month" className="w-full h-12 px-4 bg-slate-50 border rounded-xl text-xs font-black outline-none" value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} />
-                 </div>
-              </div>
-           </div>
-
-           {fetchError && (
-              <div className="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 text-red-600 text-xs font-bold shadow-sm">
-                 <div className="bg-red-500 text-white p-2 rounded-xl">
-                    <AlertCircle size={20} />
-                 </div>
-                 <div className="flex-1">
-                    <p className="font-black">স্কিমা এরর!</p>
-                    <p className="opacity-70">{fetchError}</p>
-                    <p className="mt-1 font-normal opacity-60">সমাধান: SQL এডিটর থেকে নতুন প্রোভাইড করা কোডটি রান করুন।</p>
-                 </div>
-                 <button onClick={() => fetchData()} className="bg-white px-3 py-1.5 rounded-lg border border-red-200 text-red-600 active:scale-95"><RefreshCw size={14}/></button>
-              </div>
-           )}
-
-           <div className="space-y-2.5">
-              {loading ? (
-                <div className="flex flex-col items-center justify-center py-16 text-slate-400">
-                  <Loader2 className="animate-spin mb-4" size={32} />
-                  <p className="text-[10px] font-black uppercase tracking-widest">ডাটা লোড হচ্ছে...</p>
-                </div>
-              ) : feesReport.length > 0 ? (
-                  feesReport.map((item: any) => (
-                    <div key={item.student_id} className="bg-white p-4 rounded-[1.8rem] border border-slate-100 shadow-bubble flex items-center justify-between group active:scale-[0.98] transition-all">
-                       <div className="flex items-center gap-3.5 min-w-0">
-                          <div className={`w-11 h-11 rounded-[1rem] flex items-center justify-center font-black shrink-0 ${item.status === 'paid' ? 'bg-emerald-50 text-emerald-500' : item.status === 'partial' ? 'bg-orange-50 text-orange-500' : 'bg-blue-50 text-[#2563EB]'}`}>
-                             {item.roll || '-'}
-                          </div>
-                          <div className="min-w-0">
-                             <h5 className="font-black text-[#1E3A8A] font-noto truncate leading-tight mb-1">{item.student_name}</h5>
-                             <div className="flex items-center gap-2">
-                                <p className="text-[10px] text-slate-400 font-bold uppercase">বকেয়া: ৳{item.balance_due}</p>
-                                {Number(item.total_payable) === 0 && <span className="text-[8px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-md font-black uppercase">No Fee Set</span>}
-                             </div>
-                          </div>
-                       </div>
-                       <button onClick={() => { setSelectedStudent(item); setCollectAmount(item.balance_due.toString()); setShowFeeCollection(true); }} disabled={item.status === 'paid' || Number(item.total_payable) === 0} className={`px-5 py-3 rounded-xl text-[10px] font-black uppercase transition-all shadow-sm ${item.status === 'paid' ? 'bg-emerald-100 text-emerald-600 border border-emerald-200' : Number(item.total_payable) === 0 ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-[#2563EB] text-white active:scale-95'}`}>
-                          {item.status === 'paid' ? 'PAID' : 'ফি জমা নিন'}
-                       </button>
-                    </div>
-                  ))
-              ) : !fetchError && (
-                <div className="text-center py-16 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200 mx-2 px-6 flex flex-col items-center">
-                   <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center text-blue-200 mb-5">
-                      {anyStudentsInMadrasah ? <Info size={32} /> : <Users size={32} />}
-                   </div>
-                   <h3 className="text-[#1E293B] text-lg font-black font-noto leading-tight">
-                     {anyStudentsInMadrasah ? 'রিপোর্ট পাওয়া যায়নি' : 'কোনো ছাত্র পাওয়া যায়নি'}
-                   </h3>
-                   <p className="text-slate-400 text-[10px] font-bold mt-2 uppercase tracking-wide leading-relaxed">
-                     {anyStudentsInMadrasah 
-                        ? 'আপনার ডাটাবেসে ছাত্র আছে, কিন্তু তারা সম্ভবত সঠিক শ্রেণিতে নিবন্ধিত নয় অথবা ডাটাবেস ফাংশনে সমস্যা হচ্ছে।'
-                        : 'এই মাদরাসার অধীনে কোনো ছাত্র নিবন্ধিত নেই। অনুগ্রহ করে ছাত্র যোগ করুন।'}
-                   </p>
-                </div>
-              )}
-           </div>
-        </div>
-      )}
-      
-      {/* বাকি ট্যাবগুলো একই থাকবে */}
-      {activeTab === 'summary' && (
-        <div className="space-y-6 animate-in slide-in-from-bottom-5">
-          {madrasah && (
-            <SmartFeeAnalytics 
-              madrasahId={madrasah.id} 
-              lang={lang} 
-              month={selectedMonth} 
-            />
+    <div className="w-full max-w-4xl mx-auto p-4">
+      <div className="flex items-center justify-between mb-6">
+        <button onClick={onBack} className="text-slate-500 hover:text-slate-700">&larr; {t('back', lang)}</button>
+        <h2 className="text-2xl font-black text-[#1E3A8A]">{t('accounting', lang)}</h2>
+        <div className="flex space-x-2">
+          {role === 'super_admin' && (
+            <button onClick={() => setShowAddCategory(true)} className="px-4 py-2 bg-[#2563EB] text-white rounded-full text-sm font-black flex items-center">
+              <Plus size={16} className="mr-1" /> {t('add_category', lang)}
+            </button>
           )}
+          <button onClick={() => setShowAddStructure(true)} className="px-4 py-2 bg-[#2563EB] text-white rounded-full text-sm font-black flex items-center">
+            <Plus size={16} className="mr-1" /> {t('add_fee_structure', lang)}
+          </button>
         </div>
-      )}
+      </div>
 
-      {activeTab === 'ledger' && (
-        <div className="space-y-3 animate-in slide-in-from-bottom-5">
-          {loading ? <div className="flex justify-center py-10"><Loader2 className="animate-spin text-[#2563EB]" /></div> : ledger.length > 0 ? (
-            ledger.map(entry => (
-              <div key={entry.id} className="bg-white p-4 rounded-[1.8rem] border border-slate-100 shadow-bubble flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${entry.type === 'income' ? 'bg-emerald-50 text-emerald-500' : 'bg-red-50 text-red-500'}`}>
-                    {entry.type === 'income' ? <ArrowUpCircle size={20} /> : <ArrowDownCircle size={20} />}
-                  </div>
-                  <div>
-                    <h5 className="font-black text-[#1E3A8A] font-noto leading-none mb-1">{entry.category}</h5>
-                    <p className="text-[10px] text-slate-400 font-bold">{new Date(entry.transaction_date).toLocaleDateString('bn-BD')}</p>
-                  </div>
+      {/* Fee Categories Section */}
+      <div className="mb-8">
+        <h3 className="text-xl font-black text-[#1E3A8A] mb-4">{t('fee_categories', lang)}</h3>
+        {feeCategories.length === 0 ? (
+          <p className="text-slate-500">{t('no_fee_categories', lang)}</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {feeCategories.map(category => (
+              <div key={category.id} className="bg-white rounded-2xl p-4 shadow-sm flex items-center justify-between">
+                <div>
+                  <p className="font-black text-[#1E3A8A]">{category.name}</p>
+                  <p className="text-xs text-slate-500">{t(category.type as any, lang)}</p>
                 </div>
-                <div className={`text-right ${entry.type === 'income' ? 'text-emerald-600' : 'text-red-600'} font-black`}>
-                  {entry.type === 'income' ? '+' : '-'} ৳{entry.amount}
-                </div>
+                {role === 'super_admin' && (
+                  <button 
+                    onClick={async () => {
+                      if (confirm(t('confirm_delete_category', lang, { categoryName: category.name }))) {
+                        await supabase.from('fee_categories').delete().eq('id', category.id);
+                        fetchData();
+                      }
+                    }}
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    <X size={16} />
+                  </button>
+                )}
               </div>
-            ))
-          ) : <div className="text-center py-20 text-slate-400 uppercase text-xs font-black">No transactions</div>}
-        </div>
-      )}
-
-      {activeTab === 'structures' && (
-        <div className="space-y-4 animate-in slide-in-from-bottom-5">
-           <button onClick={() => setShowAddStructure(true)} className="w-full py-5 bg-white rounded-[2.2rem] text-[#2563EB] font-black flex items-center justify-center gap-3 shadow-bubble active:scale-95 transition-all border border-slate-100">
-              <Plus size={24} strokeWidth={3} /> নতুন ফি আইটেম যোগ করুন
-           </button>
-           <div className="space-y-3">
-              {structures.length > 0 ? structures.map(s => (
-                <div key={s.id} className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-bubble flex items-center justify-between">
-                   <div className="min-w-0">
-                      <h5 className="font-black text-[#1E3A8A] font-noto text-[17px] truncate">{s.fee_name}</h5>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[10px] font-black text-[#2563EB] uppercase tracking-widest">{s.classes?.class_name}</span>
-                        {s.fee_categories?.name && <span className="text-[8px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-md font-black uppercase">{s.fee_categories.name}</span>}
-                      </div>
-                   </div>
-                   <div className="flex items-center gap-3">
-                       <div className="text-2xl font-black text-[#2563EB] shrink-0">৳{s.amount}</div>
-                       <button onClick={async () => {
-                           if(confirm('এটি ডিলিট করতে চান?')) {
-                               await supabase.from('fee_structures').delete().eq('id', s.id);
-                               fetchData();
-                           }
-                       }} className="p-2 text-red-300 hover:text-red-500"><X size={18}/></button>
-                   </div>
-                </div>
-              )) : (
-                <div className="text-center py-20 text-slate-400 uppercase text-xs font-black">No Fee Structures Set</div>
-              )}
-           </div>
-        </div>
-      )}
-
-      {activeTab === 'categories' && (
-        <div className="space-y-4 animate-in slide-in-from-bottom-5">
-           <button onClick={() => setShowAddCategory(true)} className="w-full py-5 bg-white rounded-[2.2rem] text-[#2563EB] font-black flex items-center justify-center gap-3 shadow-bubble active:scale-95 transition-all border border-slate-100">
-              <Plus size={24} strokeWidth={3} /> নতুন ক্যাটাগরি যোগ করুন
-           </button>
-           <div className="space-y-3">
-              {feeCategories.map(c => (
-                <div key={c.id} className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-bubble flex items-center justify-between">
-                   <div>
-                      <h5 className="font-black text-[#1E3A8A] font-noto text-[17px]">{c.name}</h5>
-                      <p className="text-[10px] font-black text-[#2563EB] uppercase tracking-widest">{c.type}</p>
-                   </div>
-                   <button onClick={async () => {
-                       if(confirm('এটি ডিলিট করতে চান?')) {
-                           await supabase.from('fee_categories').delete().eq('id', c.id);
-                           fetchData();
-                       }
-                   }} className="p-2 text-red-300 hover:text-red-500"><X size={18}/></button>
-                </div>
-              ))}
-           </div>
-        </div>
-      )}
-
-      {activeTab === 'exams' && (
-        <div className="space-y-4 animate-in slide-in-from-bottom-5">
-           <button onClick={() => setShowAddExam(true)} className="w-full py-5 bg-white rounded-[2.2rem] text-[#2563EB] font-black flex items-center justify-center gap-3 shadow-bubble active:scale-95 transition-all border border-slate-100">
-              <Plus size={24} strokeWidth={3} /> নতুন পরীক্ষা সেশন যোগ করুন
-           </button>
-           <div className="space-y-3">
-              {examSessions.map(e => (
-                <div key={e.id} className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-bubble flex items-center justify-between">
-                   <div>
-                      <h5 className="font-black text-[#1E3A8A] font-noto text-[17px]">{e.name}</h5>
-                      <p className="text-[10px] font-black text-slate-400 uppercase">{e.date}</p>
-                   </div>
-                   <button onClick={async () => {
-                       if(confirm('এটি ডিলিট করতে চান?')) {
-                           await supabase.from('exam_sessions').delete().eq('id', e.id);
-                           fetchData();
-                       }
-                   }} className="p-2 text-red-300 hover:text-red-500"><X size={18}/></button>
-                </div>
-              ))}
-           </div>
-        </div>
-      )}
-
-      {activeTab === 'coaching' && (
-        <div className="space-y-4 animate-in slide-in-from-bottom-5">
-           <button onClick={() => setShowAddCoaching(true)} className="w-full py-5 bg-white rounded-[2.2rem] text-[#2563EB] font-black flex items-center justify-center gap-3 shadow-bubble active:scale-95 transition-all border border-slate-100">
-              <Plus size={24} strokeWidth={3} /> নতুন কোচিং ব্যাচ যোগ করুন
-           </button>
-           <div className="space-y-3">
-              {coachingBatches.map(b => (
-                <div key={b.id} className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-bubble flex items-center justify-between">
-                   <div>
-                      <h5 className="font-black text-[#1E3A8A] font-noto text-[17px]">{b.name}</h5>
-                      <p className="text-[10px] font-black text-[#2563EB] uppercase tracking-widest">৳{b.fee_amount}</p>
-                   </div>
-                   <button onClick={async () => {
-                       if(confirm('এটি ডিলিট করতে চান?')) {
-                           await supabase.from('coaching_batches').delete().eq('id', b.id);
-                           fetchData();
-                       }
-                   }} className="p-2 text-red-300 hover:text-red-500"><X size={18}/></button>
-                </div>
-              ))}
-           </div>
-        </div>
-      )}
-
-      {/* COLLECT FEE MODAL */}
-      {showFeeCollection && selectedStudent && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-[999] flex items-center justify-center p-6">
-              <div className="bg-white w-full max-w-sm rounded-[3rem] p-8 space-y-6 animate-in zoom-in-95 overflow-y-auto max-h-[80vh] shadow-2xl">
-                  <div className="flex items-center justify-between">
-                      <h3 className="text-xl font-black text-[#1E3A8A] font-noto">ফি সংগ্রহ করুন</h3>
-                      <button onClick={() => setShowFeeCollection(false)} className="w-9 h-9 bg-slate-50 text-slate-300 rounded-xl flex items-center justify-center"><X size={20} /></button>
-                  </div>
-                  <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 text-center">
-                      <p className="text-[10px] font-black text-slate-400 uppercase mb-1">ছাত্রের নাম</p>
-                      <h4 className="text-xl font-black text-[#1E3A8A] font-noto">{selectedStudent.student_name}</h4>
-                      <div className="grid grid-cols-3 gap-2 mt-4">
-                          <div className="bg-white p-2.5 rounded-2xl border border-slate-100 shadow-sm">
-                            <p className="text-[7px] font-black text-slate-400 uppercase"> Payable </p>
-                            <p className="font-black text-blue-600 text-sm">৳{selectedStudent.total_payable}</p>
-                          </div>
-                          <div className="bg-white p-2.5 rounded-2xl border border-slate-100 shadow-sm">
-                            <p className="text-[7px] font-black text-slate-400 uppercase"> Paid </p>
-                            <p className="font-black text-green-600 text-sm">৳{selectedStudent.total_paid}</p>
-                          </div>
-                          <div className="bg-white p-2.5 rounded-2xl border border-slate-100 shadow-sm">
-                            <p className="text-[7px] font-black text-slate-400 uppercase"> Due </p>
-                            <p className="font-black text-red-600 text-sm">৳{selectedStudent.balance_due}</p>
-                          </div>
-                      </div>
-
-                  </div>
-                  <div className="space-y-4">
-                      <div className="space-y-2.5">
-                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">ফি-র আইটেমগুলো সিলেক্ট করুন</label>
-                          <div className="space-y-2">
-                            {selectedStudent.fee_breakdown.map((item: any) => {
-                              const isPaid = selectedStudent.paid_map && selectedStudent.paid_map[item.id];
-                              return (
-                                <div 
-                                  key={item.id} 
-                                  onClick={() => {
-                                    if (isPaid) return;
-                                    setSelectedItems(prev => 
-                                      prev.includes(item.id) ? prev.filter(id => id !== item.id) : [...prev, item.id]
-                                    );
-                                  }}
-                                  className={`p-4 rounded-2xl border transition-all flex items-center justify-between cursor-pointer ${isPaid ? 'bg-emerald-50 border-emerald-100 opacity-60' : selectedItems.includes(item.id) ? 'bg-blue-50 border-blue-200 ring-2 ring-blue-100' : 'bg-slate-50 border-slate-100 hover:border-slate-200'}`}
-                                >
-                                  <div className="flex items-center gap-3">
-                                    <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${isPaid ? 'bg-emerald-500 border-emerald-500 text-white' : selectedItems.includes(item.id) ? 'bg-blue-500 border-blue-500 text-white' : 'bg-white border-slate-200'}`}>
-                                      {(isPaid || selectedItems.includes(item.id)) && <CheckCircle2 size={14} />}
-                                    </div>
-                                    <div>
-                                      <p className="text-sm font-black text-[#1E3A8A] font-noto">{item.name}</p>
-                                      <p className="text-[10px] font-bold text-slate-400 uppercase">{item.is_monthly ? 'মাসিক' : 'এককালীন'}</p>
-                                    </div>
-                                  </div>
-                                  <div className="text-right">
-                                    <p className="text-sm font-black text-[#2563EB]">৳{item.amount}</p>
-                                    {isPaid && <p className="text-[8px] font-black text-emerald-500 uppercase">পরিশোধিত</p>}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                      </div>
-
-                      {selectedItems.length === 0 && (
-                        <div className="space-y-1.5 pt-2 border-t border-slate-100">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">অন্যান্য ফি (ম্যানুয়াল)</label>
-                            <div className="relative">
-                              <input type="number" className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-lg outline-none border-2 border-transparent focus:border-[#2563EB]/20" placeholder="0.00" value={collectAmount} onChange={(e) => setCollectAmount(e.target.value)} />
-                              <DollarSign className="absolute left-4 top-4 text-[#2563EB]" size={20}/>
-                            </div>
-                        </div>
-                      )}
-
-                      <button 
-                        onClick={handleCollectFee} 
-                        disabled={isSaving || (selectedItems.length === 0 && !collectAmount)} 
-                        className="w-full py-5 bg-[#2563EB] text-white font-black rounded-full shadow-premium flex items-center justify-center gap-3 active:scale-95 transition-all text-base mt-4"
-                      >
-                          {isSaving ? <Loader2 className="animate-spin" /> : (
-                            <><CheckCircle2 size={20}/> {selectedItems.length > 0 ? `৳${selectedStudent.fee_breakdown.filter((i: any) => selectedItems.includes(i.id)).reduce((s: number, i: any) => s + i.amount, 0)} জমা নিন` : 'পেমেন্ট নিশ্চিত করুন'}</>
-                          )}
-                      </button>
-                  </div>
-              </div>
+            ))}
           </div>
-      )}
+        )}
+      </div>
 
-      {/* ADD LEDGER MODAL */}
-      {showAddLedger && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-[999] flex items-center justify-center p-6">
+      {/* Fee Structures Section */}
+      <div>
+        <h3 className="text-xl font-black text-[#1E3A8A] mb-4">{t('fee_structures', lang)}</h3>
+        {feeStructures.length === 0 ? (
+          <p className="text-slate-500">{t('no_fee_structures', lang)}</p>
+        ) : (
+          <div className="space-y-4">
+            {feeStructures.map(structure => (
+              <div key={structure.id} className="bg-white rounded-2xl p-4 shadow-sm">
+                <p className="font-black text-[#1E3A8A]">{structure.fee_name}</p>
+                <p className="text-sm text-slate-600">{structure.classes?.class_name} - {structure.fee_categories?.name}</p>
+                <p className="text-lg font-bold text-[#2563EB]">৳{structure.amount} {structure.is_monthly ? t('monthly', lang) : t('one-time', lang)}</p>
+                {role === 'super_admin' && (
+                  <button 
+                    onClick={async () => {
+                      if (confirm(t('confirm_delete_structure', lang, { structureName: structure.fee_name }))) {
+                        await supabase.from('fee_structures').delete().eq('id', structure.id);
+                        fetchData();
+                      }
+                    }}
+                    className="text-red-500 hover:text-red-700 mt-2"
+                  >
+                    <X size={16} />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ADD CATEGORY MODAL */}
+      {showAddCategory && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-[999] flex items-center justify-center p-6 text-slate-900">
           <div className="bg-white w-full max-w-sm rounded-[3rem] p-8 space-y-6 animate-in zoom-in-95 shadow-2xl">
-             <div className="flex items-center justify-between">
-               <h3 className="text-xl font-black text-[#1E3A8A]">নতুন লেনদেন যোগ করুন</h3>
-               <button onClick={() => setShowAddLedger(false)} className="w-9 h-9 bg-slate-50 text-slate-300 rounded-xl flex items-center justify-center"><X size={20} /></button>
-             </div>
-             <div className="flex p-1.5 bg-slate-100 rounded-2xl border border-slate-200">
-                <button onClick={() => setType('income')} className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all ${type === 'income' ? 'bg-white text-emerald-50 shadow-md text-emerald-500' : 'text-slate-400'}`}>আয় (Income)</button>
-                <button onClick={() => setType('expense')} className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all ${type === 'expense' ? 'bg-white text-red-50 shadow-md text-red-500' : 'text-slate-400'}`}>ব্যয় (Expense)</button>
-             </div>
-             <div className="space-y-4">
-                <div className="relative"><input type="number" className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-lg outline-none border-2 border-transparent focus:border-[#2563EB]/20" placeholder="টাকার পরিমাণ" value={amount} onChange={(e) => setAmount(e.target.value)} /><DollarSign className="absolute left-4 top-4 text-slate-300" size={20}/></div>
-                <div className="relative"><input type="text" className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20" placeholder="ক্যাটাগরি (যেমন: বেতন, বিদ্যুৎ)" value={category} onChange={(e) => setCategory(e.target.value)} /><Tag className="absolute left-4 top-4 text-slate-300" size={20}/></div>
-                <div className="relative"><textarea className="w-full h-24 bg-slate-50 rounded-2xl px-12 py-4 font-bold text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20 resize-none" placeholder="বিবরণ" value={desc} onChange={(e) => setDesc(e.target.value)} /><FileText className="absolute left-4 top-4 text-slate-300" size={20}/></div>
-                <button onClick={handleAddLedger} disabled={isSaving} className="w-full py-5 bg-[#2563EB] text-white font-black rounded-full shadow-premium flex items-center justify-center gap-3 active:scale-95 transition-all">
-                  {isSaving ? <Loader2 className="animate-spin" size={20} /> : <><Save size={20}/> সংরক্ষণ করুন</>}
-                </button>
-             </div>
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-black text-[#1E3A8A]">{t('add_new_category', lang)}</h3>
+              <button onClick={() => setShowAddCategory(false)} className="w-9 h-9 bg-slate-50 text-slate-300 rounded-xl flex items-center justify-center"><X size={20} /></button>
+            </div>
+            <div className="space-y-4">
+              <div className="relative">
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2 mb-1.5 block">{t('category_name', lang)}</label>
+                <input 
+                  type="text" 
+                  className="w-full h-14 bg-slate-50 rounded-2xl px-6 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20"
+                  placeholder={t('category_name_placeholder', lang)} 
+                  value={newCategoryName} 
+                  onChange={(e) => setNewCategoryName(e.target.value)} 
+                />
+              </div>
+              <div className="relative">
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2 mb-1.5 block">{t('category_type', lang)}</label>
+                <select 
+                  className="w-full h-14 bg-slate-50 rounded-2xl px-6 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20"
+                  value={newCategoryType}
+                  onChange={(e) => setNewCategoryType(e.target.value as 'recurring' | 'one-time' | 'optional')}
+                >
+                  <option value="recurring">{t('recurring', lang)}</option>
+                  <option value="one-time">{t('one-time', lang)}</option>
+                  <option value="optional">{t('optional', lang)}</option>
+                </select>
+              </div>
+              <button onClick={async () => {
+                if (!newCategoryName) return;
+                setIsSaving(true);
+                try {
+                  const { error } = await supabase.from('fee_categories').insert({
+                    madrasah_id: madrasah?.id,
+                    name: newCategoryName,
+                    type: newCategoryType
+                  });
+                  if (error) throw error;
+                  setShowAddCategory(false);
+                  setNewCategoryName('');
+                  fetchData();
+                } catch (e: any) { alert(e.message); } finally { setIsSaving(false); }
+              }} className="w-full py-5 bg-[#2563EB] text-white font-black rounded-full shadow-premium active:scale-95 transition-all text-base">
+                {isSaving ? <Loader2 className="animate-spin mx-auto" /> : t('add_category', lang)}
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {/* ADD STRUCTURE MODAL */}
       {showAddStructure && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-[999] flex items-center justify-center p-6">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-[999] flex items-center justify-center p-6 text-slate-900">
            <div className="bg-white w-full max-w-sm rounded-[3rem] p-8 space-y-6 animate-in zoom-in-95 shadow-2xl relative">
               <div className="flex items-center justify-between">
-                <h3 className="text-xl font-black text-[#1E3A8A]">ফি সেটআপ করুন</h3>
+                <h3 className="text-xl font-black text-[#1E3A8A]">{t('setup_fee', lang)}</h3>
                 <button onClick={() => setShowAddStructure(false)} className="w-9 h-9 bg-slate-50 text-slate-300 rounded-xl flex items-center justify-center"><X size={20} /></button>
               </div>
               <div className="space-y-4">
                  <div className="relative">
-                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2 mb-1.5 block">শ্রেণি নির্বাচন করুন</label>
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2 mb-1.5 block">{t('select_class', lang)}</label>
                     <button onClick={() => setShowClassDropdown(!showClassDropdown)} className="w-full h-14 px-6 rounded-2xl border-2 border-slate-100 bg-slate-50 flex items-center justify-between font-black text-[#1E3A8A]">
-                       <span className="truncate">{classes.find(c => c.id === selectedClass)?.class_name || 'শ্রেণি বেছে নিন'}</span>
+                       <span className="truncate">{classes.find(c => c.id === selectedClass)?.class_name || t('select_class_placeholder', lang)}</span>
                        <ChevronDown size={20} className="text-slate-300" />
                     </button>
                     {showClassDropdown && (
@@ -642,45 +213,50 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
                     )}
                  </div>
                  <div className="relative">
-                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2 mb-1.5 block">ফি-র নাম</label>
-                    <input type="text" className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20" placeholder="যেমন: মাসিক বেতন" value={category} onChange={(e) => setCategory(e.target.value)} />
-                    <Tag className="absolute left-4 top-[44px] text-slate-300" size={20}/>
-                    <div className="flex flex-wrap gap-2 mt-2 px-1">
-                       {['পরীক্ষার ফি', 'কোচিং ফি', 'অন্যান্য ফি'].map(suggestion => (
-                          <button 
-                             key={suggestion}
-                             type="button"
-                             onClick={() => setCategory(suggestion)}
-                             className={`px-3 py-1.5 rounded-lg text-[10px] font-black border transition-all ${category === suggestion ? 'bg-blue-50 text-[#2563EB] border-[#2563EB]/20' : 'bg-white text-slate-400 border-slate-100 hover:border-slate-200'}`}
-                          >
-                             {suggestion}
-                          </button>
-                       ))}
+                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2 mb-1.5 block">{t('select_category', lang)}</label>
+                     <select 
+                        className="w-full h-14 bg-slate-50 rounded-2xl px-6 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20"
+                        value={category || ''}
+                        onChange={(e) => setCategory(e.target.value)}
+                     >
+                        <option value="">{t('select_category_placeholder', lang)}</option>
+                        {feeCategories.map(c => (
+                           <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                     </select>
+                  </div>
+                 <div className="relative">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2 mb-1.5 block">{t('fee_name', lang)}</label>
+                    <div className="relative">
+                      <input type="text" className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20" placeholder={t('fee_name_placeholder', lang)} value={feeNote} onChange={(e) => setFeeNote(e.target.value)} />
+                      <Tag className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={20}/>
                     </div>
                  </div>
                  <div className="relative">
-                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2 mb-1.5 block">ফি-র ধরণ</label>
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2 mb-1.5 block">{t('fee_type', lang)}</label>
                     <div className="flex p-1 bg-slate-100 rounded-2xl border border-slate-200">
                        <button 
                           type="button"
                           onClick={() => setIsMonthlyFee(true)} 
                           className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all ${isMonthlyFee ? 'bg-white text-[#2563EB] shadow-md' : 'text-slate-400'}`}
                        >
-                          মাসিক (Monthly)
+                          {t('monthly', lang)}
                        </button>
                        <button 
                           type="button"
                           onClick={() => setIsMonthlyFee(false)} 
                           className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all ${!isMonthlyFee ? 'bg-white text-[#2563EB] shadow-md' : 'text-slate-400'}`}
                        >
-                          এককালীন (One-time)
+                          {t('one-time', lang)}
                        </button>
                     </div>
                  </div>
                  <div className="relative">
-                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2 mb-1.5 block">টাকার পরিমাণ</label>
-                    <input type="number" className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-lg outline-none border-2 border-transparent focus:border-[#2563EB]/20" placeholder="0" value={amount} onChange={(e) => setAmount(e.target.value)} />
-                    <DollarSign className="absolute left-4 top-[44px] text-[#2563EB]" size={20}/>
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2 mb-1.5 block">{t('amount', lang)}</label>
+                    <div className="relative">
+                      <input type="number" className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-lg outline-none border-2 border-transparent focus:border-[#2563EB]/20" placeholder="0" value={amount} onChange={(e) => setAmount(e.target.value)} />
+                      <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-[#2563EB]" size={20}/>
+                    </div>
                  </div>
                  
                  <button onClick={async () => {
@@ -690,128 +266,21 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
                         const { error } = await supabase.from('fee_structures').insert({
                             madrasah_id: madrasah?.id,
                             class_id: selectedClass,
-                            fee_name: category,
+                            category_id: category,
+                            fee_name: feeNote,
                             amount: parseFloat(amount),
                             is_monthly: isMonthlyFee
                         });
                         if (error) throw error;
                         setShowAddStructure(false);
-                        setCategory(''); setAmount(''); setSelectedClass('');
+                        setCategory(''); setFeeNote(''); setAmount(''); setSelectedClass('');
                         fetchData();
                     } catch (e: any) { alert(e.message); } finally { setIsSaving(false); }
                  }} className="w-full py-5 bg-[#2563EB] text-white font-black rounded-full shadow-premium active:scale-95 transition-all text-base">
-                    {isSaving ? <Loader2 className="animate-spin" /> : 'সেভ করুন'}
+                    {isSaving ? <Loader2 className="animate-spin mx-auto" /> : t('save', lang)}
                  </button>
               </div>
            </div>
-        </div>
-      )}
-      {/* ADD CATEGORY MODAL */}
-      {showAddCategory && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-[999] flex items-center justify-center p-6">
-          <div className="bg-white w-full max-w-sm rounded-[3rem] p-8 space-y-6 animate-in zoom-in-95 shadow-2xl">
-             <div className="flex items-center justify-between">
-               <h3 className="text-xl font-black text-[#1E3A8A]">নতুন ক্যাটাগরি</h3>
-               <button onClick={() => setShowAddCategory(false)} className="w-9 h-9 bg-slate-50 text-slate-300 rounded-xl flex items-center justify-center"><X size={20} /></button>
-             </div>
-             <div className="space-y-4">
-                <div className="relative">
-                   <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2 mb-1.5 block">ক্যাটাগরির নাম</label>
-                   <input type="text" className="w-full h-14 bg-slate-50 rounded-2xl px-6 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20" placeholder="যেমন: মাসিক ফি" value={category} onChange={(e) => setCategory(e.target.value)} />
-                </div>
-                <div className="relative">
-                   <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2 mb-1.5 block">ধরণ</label>
-                   <select className="w-full h-14 bg-slate-50 rounded-2xl px-6 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20" value={categoryType} onChange={(e) => setCategoryType(e.target.value as any)}>
-                      <option value="recurring">Recurring (মাসিক)</option>
-                      <option value="one-time">One-time (এককালীন)</option>
-                      <option value="optional">Optional (ঐচ্ছিক)</option>
-                   </select>
-                </div>
-                <button onClick={async () => {
-                   if (!category) return;
-                   setIsSaving(true);
-                   try {
-                       const { error } = await supabase.from('fee_categories').insert({
-                           madrasah_id: madrasah?.id,
-                           name: category,
-                           type: categoryType
-                       });
-                       if (error) throw error;
-                       setShowAddCategory(false);
-                       setCategory('');
-                       fetchData();
-                   } catch (e: any) { alert(e.message); } finally { setIsSaving(false); }
-                }} className="w-full py-5 bg-[#2563EB] text-white font-black rounded-full shadow-premium active:scale-95 transition-all">
-                   {isSaving ? <Loader2 className="animate-spin" /> : 'সেভ করুন'}
-                </button>
-             </div>
-          </div>
-        </div>
-      )}
-
-      {/* ADD EXAM MODAL */}
-      {showAddExam && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-[999] flex items-center justify-center p-6">
-          <div className="bg-white w-full max-w-sm rounded-[3rem] p-8 space-y-6 animate-in zoom-in-95 shadow-2xl">
-             <div className="flex items-center justify-between">
-               <h3 className="text-xl font-black text-[#1E3A8A]">নতুন পরীক্ষা সেশন</h3>
-               <button onClick={() => setShowAddExam(false)} className="w-9 h-9 bg-slate-50 text-slate-300 rounded-xl flex items-center justify-center"><X size={20} /></button>
-             </div>
-             <div className="space-y-4">
-                <input type="text" className="w-full h-14 bg-slate-50 rounded-2xl px-6 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20" placeholder="পরীক্ষার নাম" value={category} onChange={(e) => setCategory(e.target.value)} />
-                <input type="date" className="w-full h-14 bg-slate-50 rounded-2xl px-6 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20" value={desc} onChange={(e) => setDesc(e.target.value)} />
-                <button onClick={async () => {
-                   if (!category) return;
-                   setIsSaving(true);
-                   try {
-                       const { error } = await supabase.from('exam_sessions').insert({
-                           madrasah_id: madrasah?.id,
-                           name: category,
-                           date: desc
-                       });
-                       if (error) throw error;
-                       setShowAddExam(false);
-                       setCategory(''); setDesc('');
-                       fetchData();
-                   } catch (e: any) { alert(e.message); } finally { setIsSaving(false); }
-                }} className="w-full py-5 bg-[#2563EB] text-white font-black rounded-full shadow-premium active:scale-95 transition-all">
-                   {isSaving ? <Loader2 className="animate-spin" /> : 'সেভ করুন'}
-                </button>
-             </div>
-          </div>
-        </div>
-      )}
-
-      {/* ADD COACHING MODAL */}
-      {showAddCoaching && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-[999] flex items-center justify-center p-6">
-          <div className="bg-white w-full max-w-sm rounded-[3rem] p-8 space-y-6 animate-in zoom-in-95 shadow-2xl">
-             <div className="flex items-center justify-between">
-               <h3 className="text-xl font-black text-[#1E3A8A]">নতুন কোচিং ব্যাচ</h3>
-               <button onClick={() => setShowAddCoaching(false)} className="w-9 h-9 bg-slate-50 text-slate-300 rounded-xl flex items-center justify-center"><X size={20} /></button>
-             </div>
-             <div className="space-y-4">
-                <input type="text" className="w-full h-14 bg-slate-50 rounded-2xl px-6 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20" placeholder="ব্যাচের নাম" value={category} onChange={(e) => setCategory(e.target.value)} />
-                <input type="number" className="w-full h-14 bg-slate-50 rounded-2xl px-6 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20" placeholder="টাকার পরিমাণ" value={amount} onChange={(e) => setAmount(e.target.value)} />
-                <button onClick={async () => {
-                   if (!category || !amount) return;
-                   setIsSaving(true);
-                   try {
-                       const { error } = await supabase.from('coaching_batches').insert({
-                           madrasah_id: madrasah?.id,
-                           name: category,
-                           fee_amount: parseFloat(amount)
-                       });
-                       if (error) throw error;
-                       setShowAddCoaching(false);
-                       setCategory(''); setAmount('');
-                       fetchData();
-                   } catch (e: any) { alert(e.message); } finally { setIsSaving(false); }
-                }} className="w-full py-5 bg-[#2563EB] text-white font-black rounded-full shadow-premium active:scale-95 transition-all">
-                   {isSaving ? <Loader2 className="animate-spin" /> : 'সেভ করুন'}
-                </button>
-             </div>
-          </div>
         </div>
       )}
     </div>
