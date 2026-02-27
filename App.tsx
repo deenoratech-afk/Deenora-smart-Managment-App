@@ -95,7 +95,7 @@ const App: React.FC = () => {
       else if (v === 'admin-panel') navigate('/admin');
       else if (v === 'admin-approvals') navigate('/admin/approvals');
       else if (v === 'admin-dashboard') navigate('/admin/dashboard');
-      else if (v === 'accounting') navigate('/accounting');
+
       else if (v === 'attendance') navigate('/attendance');
       else if (v === 'exams') navigate('/exams');
     }} lang={lang} madrasah={madrasah} profile={profile}>
@@ -108,7 +108,7 @@ const App: React.FC = () => {
             triggerRefresh={triggerRefresh} 
             madrasahId={madrasah?.id} 
             onNavigateToWallet={() => navigate('/wallet')}
-            onNavigateToAccounting={() => navigate('/accounting')}
+
             onNavigateToAttendance={() => navigate('/attendance')}
             onNavigateToExams={() => navigate('/exams')}
           />
@@ -190,7 +190,7 @@ const App: React.FC = () => {
         <Route path="/wallet" element={<WalletSMS lang={lang} madrasah={madrasah} triggerRefresh={triggerRefresh} dataVersion={dataVersion} />} />
         <Route path="/data" element={<DataManagement lang={lang} madrasah={madrasah} onBack={() => navigate('/account')} triggerRefresh={triggerRefresh} />} />
         <Route path="/teachers" element={<Teachers lang={lang} madrasah={madrasah} onBack={() => navigate('/account')} />} />
-        <Route path="/accounting" element={<Accounting lang={lang} madrasah={madrasah} onBack={() => navigate('/')} role={role} />} />
+
         <Route path="/attendance" element={<Attendance lang={lang} madrasah={madrasah} onBack={() => navigate('/')} userId={session?.user?.id} />} />
         <Route path="/exams" element={<Exams lang={lang} madrasah={madrasah} onBack={() => navigate('/')} role={role} />} />
         
