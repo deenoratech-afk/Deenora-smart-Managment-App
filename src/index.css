@@ -1,0 +1,164 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-blue: #2563EB;
+  --color-brand-light: #EFF6FF;
+  --color-brand-soft: #F0F7FF;
+  --color-brand-lavender: #60A5FA;
+  --color-brand-deep: #1E3A8A;
+  --color-brand-dark: #1E293B;
+
+  --shadow-bubble: 0 20px 40px -15px rgba(37, 99, 235, 0.2);
+  --shadow-premium: 0 12px 28px -5px rgba(37, 99, 235, 0.3);
+
+  --animate-mesh: mesh 15s ease infinite;
+  --animate-float: float 3s ease-in-out infinite;
+  --animate-shake: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+  --animate-in: animate-in 0.3s ease-out;
+  --animate-zoom-in: zoom-in 0.3s ease-out;
+  --animate-slide-in-from-bottom: slide-in-from-bottom 0.3s ease-out;
+  --animate-slide-in-from-top: slide-in-from-top 0.3s ease-out;
+  --animate-slide-in-from-right: slide-in-from-right 0.3s ease-out;
+
+  @keyframes mesh {
+    0%, 100% { background-position: 0% 50% }
+    50% { background-position: 100% 50% }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0) }
+    50% { transform: translateY(-10px) }
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+  }
+  @keyframes animate-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes zoom-in {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes slide-in-from-bottom {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slide-in-from-top {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slide-in-from-right {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+}
+
+:root {
+  --safe-top: env(safe-area-inset-top);
+  --safe-bottom: env(safe-area-inset-bottom);
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; 
+  background-color: #F0F7FF;
+  position: fixed; 
+  left: 0;
+  top: 0;
+  overscroll-behavior: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family: 'Hind Siliguri', 'Noto Sans Bengali', sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  color: #2D3142;
+}
+
+#root {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.font-noto { font-family: 'Noto Sans Bengali', sans-serif; }
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border-radius: 2.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+}
+
+.premium-btn {
+  background: linear-gradient(135deg, #2563EB 0%, #60A5FA 100%);
+  box-shadow: var(--shadow-premium);
+  color: white;
+}
+
+.mesh-bg-vibrant {
+  background: linear-gradient(-45deg, #3B82F6, #2563EB, #1D4ED8, #60A5FA);
+  background-size: 400% 400%;
+  animation: mesh 15s ease infinite;
+}
+
+.custom-scrollbar::-webkit-scrollbar { width: 4px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.3); border-radius: 10px; }
+
+input::placeholder, textarea::placeholder {
+  color: #94A3B8;
+  font-weight: 500;
+}
+
+.scroll-container {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  height: 100%;
+}
+
+/* Portaled Fix */
+.modal-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  z-index: 99999 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 !important;
+  padding: 20px;
+  backdrop-filter: blur(30px) !important;
+  -webkit-backdrop-filter: blur(30px) !important;
+  background-color: rgba(8, 10, 18, 0.5) !important;
+}
+
+@keyframes shimmer-fast {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(250%); }
+}
+
+/* Disable default select arrow in some browsers */
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+/* Animation Utility Classes */
+.animate-in { animation: animate-in 0.3s ease-out; }
+.fade-in { animation: animate-in 0.3s ease-out; }
+.zoom-in-95 { animation: zoom-in 0.3s ease-out; }
+.slide-in-from-bottom-5 { animation: slide-in-from-bottom 0.3s ease-out; }
+.slide-in-from-top-2 { animation: slide-in-from-top 0.3s ease-out; }
+.slide-in-from-right-4 { animation: slide-in-from-right 0.3s ease-out; }
+.duration-500 { animation-duration: 500ms; }
+.duration-300 { animation-duration: 300ms; }

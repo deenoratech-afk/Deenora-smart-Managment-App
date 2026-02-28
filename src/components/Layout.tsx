@@ -1,0 +1,166 @@
+
+import * as React from 'react';
+import { useState, useEffect } from 'react';
+import { Home, User, BookOpen, Wallet, ShieldCheck, BarChart3, CreditCard, RefreshCw, Smartphone, Bell, X, Info, AlertTriangle, CheckCircle2, Clock, Calculator, ClipboardList, GraduationCap, Banknote, MessageSquare } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { View, Language, Madrasah, Transaction, Profile } from '../types';
+import { t } from '../translations';
+import { supabase } from '../supabase';
+
+interface LayoutProps {
+  children: React.ReactNode;
+  currentView: View;
+  setView: (view: View) => void;
+  lang: Language;
+  madrasah: Madrasah | null;
+  profile?: Profile | null;
+}
+
+interface AppNotification {
+  id: string;
+  title: string;
+  desc: string;
+  type: 'info' | 'success' | 'error' | 'warning';
+  time: string;
+}
+
+const Layout: React.FC<LayoutProps> = ({ children, currentView, setView, lang, madrasah, profile }) => {
+  const location = useLocation();
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const isSuperAdmin = profile?.role === 'super_admin';
+  const role = profile?.role || 'teacher';
+
+  const fetchDynamicNotifications = async () => {
+    if (!madrasah?.id) return;
+    const newNotifications: AppNotification[] = [];
+    if (madrasah.sms_balance < 50) {
+      newNotifications.push({ id: 'low-bal', title: t('low_balance_title', lang), desc: t('low_balance_msg', lang), type: 'error', time: 'Active' });
+    }
+    setNotifications(newNotifications);
+  };
+
+  useEffect(() => { if (showNotifications) fetchDynamicNotifications(); }, [showNotifications, madrasah?.id]);
+
+  const isTabActive = (tab: string) => {
+    const path = location.pathname;
+    if (tab === 'home' && path === '/') return true;
+    if (tab === 'account' && path === '/account') return true;
+    if (tab === 'dashboard' && path === '/admin/dashboard') return true;
+    if (tab === 'approvals' && path === '/admin/approvals') return true;
+    if (tab === 'accounting' && path === '/fees') return true;
+    if (tab === 'attendance' && path === '/attendance') return true;
+    if (tab === 'exams' && path === '/exams') return true;
+    if (tab === 'wallet' && path === '/wallet') return true;
+    if (tab === 'classes' && (path.startsWith('/classes') || path.startsWith('/students'))) return true;
+    return false;
+  };
+
+  const activeColor = '#2563EB';
+  const inactiveColor = '#94A3B8';
+
+  return (
+    <div className="flex flex-col w-full h-full relative bg-[#F0F7FF] overflow-hidden">
+      <header className="flex-none px-6 pt-[calc(env(safe-area-inset-top)+8px)] pb-3 flex items-center justify-between relative z-10 bg-[#F0F7FF]/80 backdrop-blur-md border-b border-slate-100">
+        <div className="flex items-center gap-4 flex-1 min-w-0">
+          <div className="w-11 h-11 rounded-full flex items-center justify-center bg-blue-50 shadow-sm border border-blue-100 shrink-0 overflow-hidden">
+            {isSuperAdmin ? <ShieldCheck size={24} className="text-[#2563EB]" /> : (madrasah?.logo_url ? <img src={madrasah.logo_url} className="w-full h-full object-cover" alt="Logo" /> : <BookOpen size={22} className="text-[#2563EB]" />)}
+          </div>
+          <div className="min-w-0 flex-1">
+            <h1 className="text-[16px] font-black text-[#1E293B] leading-[1.2] tracking-tight font-noto line-clamp-2">
+              {isSuperAdmin ? (lang === 'bn' ? 'সুপার অ্যাডমিন' : 'Super Admin') : (madrasah?.name || 'Madrasah Portal')}
+            </h1>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1 font-noto">
+              {role === 'teacher' ? 'Teacher Portal' : role === 'accountant' ? 'Accounts Portal' : 'Admin Portal'}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setShowNotifications(true)} className="relative p-2.5 bg-blue-50 rounded-[1rem] text-[#2563EB] active:scale-95 border border-blue-100 shadow-sm">
+            <Bell size={18} />
+            {notifications.length > 0 && <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>}
+          </button>
+          <button onClick={() => window.location.reload()} className="p-2.5 bg-slate-50 rounded-[1rem] text-slate-400 active:scale-95 transition-all border border-slate-100 shadow-sm">
+            <RefreshCw size={18} />
+          </button>
+        </div>
+      </header>
+
+      <main className="flex-1 overflow-y-auto px-5 pt-4 pb-44 w-full max-w-md mx-auto scroll-smooth custom-scrollbar">
+        {children}
+      </main>
+
+      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[92%] max-w-md z-[200]">
+        <nav className="bg-white/95 backdrop-blur-[25px] border border-slate-200 flex justify-around items-center py-4 px-1 rounded-[2.5rem] shadow-bubble">
+          <Link to="/" className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('home') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
+            <Home size={20} strokeWidth={isTabActive('home') ? 3 : 2} />
+            <span className="text-[9px] font-black font-noto opacity-80">{t('home', lang)}</span>
+          </Link>
+          
+          {isSuperAdmin ? (
+            <>
+              <Link to="/admin/approvals" className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('approvals') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
+                <CreditCard size={20} />
+                <span className="text-[9px] font-black font-noto opacity-80">{t('approvals', lang)}</span>
+              </Link>
+              <Link to="/admin/dashboard" className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('dashboard') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
+                <BarChart3 size={20} />
+                <span className="text-[9px] font-black font-noto opacity-80">{t('dashboard', lang)}</span>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link to="/attendance" className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('attendance') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
+                <ClipboardList size={20} />
+                <span className="text-[9px] font-black font-noto opacity-80">হাজিরা</span>
+              </Link>
+              <Link to="/exams" className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('exams') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
+                <GraduationCap size={20} />
+                <span className="text-[9px] font-black font-noto opacity-80">পরীক্ষা</span>
+              </Link>
+              {(role === 'madrasah_admin' || role === 'accountant') && (
+                <Link to="/fees" className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('accounting') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
+                  <Banknote size={20} />
+                  <span className="text-[9px] font-black font-noto opacity-80">ফি কালেকশন</span>
+                </Link>
+              )}
+              <Link to="/classes" className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('classes') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
+                <BookOpen size={20} />
+                <span className="text-[9px] font-black font-noto opacity-80">ছাত্র</span>
+              </Link>
+            </>
+          )}
+          
+          <Link to="/account" className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('account') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
+            <User size={20} />
+            <span className="text-[9px] font-black font-noto opacity-80">{t('account', lang)}</span>
+          </Link>
+        </nav>
+      </div>
+
+      {showNotifications && (
+        <div className="fixed inset-0 bg-[#080A12]/60 backdrop-blur-xl z-[9999] flex items-start justify-center p-4 pt-12">
+           <div className="bg-white w-full max-w-sm rounded-[3rem] shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[80vh]">
+              <div className="p-6 border-b border-slate-50 flex items-center justify-between shrink-0">
+                 <h3 className="text-xl font-black text-[#2E0B5E] font-noto tracking-tight">{t('notifications', lang)}</h3>
+                 <button onClick={() => setShowNotifications(false)} className="w-9 h-9 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center"><X size={18} /></button>
+              </div>
+              <div className="p-4 space-y-3 overflow-y-auto flex-1">
+                 {notifications.length > 0 ? notifications.map(n => (
+                    <div key={n.id} className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex gap-4">
+                       <div className="w-10 h-10 bg-red-50 text-red-500 rounded-xl flex items-center justify-center shrink-0"><AlertTriangle size={18} /></div>
+                       <div className="min-w-0 flex-1">
+                          <h4 className="text-[13px] font-black text-[#2E0B5E] truncate">{n.title}</h4>
+                          <p className="text-[11px] font-bold text-slate-500 font-noto leading-relaxed">{n.desc}</p>
+                       </div>
+                    </div>
+                 )) : <div className="py-12 text-center text-slate-400 text-xs font-black uppercase">No Alerts</div>}
+              </div>
+           </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Layout;
