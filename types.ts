@@ -146,6 +146,48 @@ export interface Fee {
   students?: Student;
 }
 
+export interface FeeCategory {
+  id: string;
+  madrasah_id: string;
+  name: string;
+  description?: string;
+  created_at: string;
+}
+
+export interface StudentFeeOverride {
+  id: string;
+  student_id: string;
+  fee_structure_id: string;
+  custom_amount: number;
+  reason?: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface CoachingBatch {
+  id: string;
+  madrasah_id: string;
+  batch_name: string;
+  fee_amount: number;
+  teacher_id?: string;
+  schedule?: string;
+  created_at: string;
+}
+
+export interface StudentCoaching {
+  id: string;
+  student_id: string;
+  batch_id: string;
+  enrolled_at: string;
+}
+
+export interface ExamFee {
+  id: string;
+  exam_id: string;
+  amount: number;
+  created_at: string;
+}
+
 export type View = 
   | 'home' 
   | 'classes' 
@@ -163,7 +205,9 @@ export type View =
   | 'teachers' 
   | 'accounting' 
   | 'attendance'
-  | 'exams';
+  | 'exams'
+  | 'coaching'
+  | 'fee-categories';
 
 export interface AppState {
   currentView: View;

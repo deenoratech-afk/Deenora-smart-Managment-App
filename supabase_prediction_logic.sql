@@ -11,7 +11,8 @@ RETURNS TABLE (
     latest_avg NUMERIC,
     dropout_risk TEXT,
     late_risk TEXT,
-    result_risk TEXT
+    result_risk TEXT,
+    fee_risk TEXT
 ) 
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -19,6 +20,8 @@ SET search_path = public
 AS $$
 DECLARE
     v_start_date DATE := CURRENT_DATE - INTERVAL '30 days';
+    v_current_month TEXT := TO_CHAR(CURRENT_DATE, 'YYYY-MM');
+    v_prev_month TEXT := TO_CHAR(CURRENT_DATE - INTERVAL '1 month', 'YYYY-MM');
 BEGIN
     RETURN QUERY
     WITH 
@@ -50,6 +53,16 @@ BEGIN
         JOIN public.exam_marks em ON s.id = em.student_id AND em.exam_id = le.id
         JOIN public.exam_subjects es ON em.subject_id = es.id
         GROUP BY s.id
+    ),
+    -- 3. Fee Metrics (Unpaid in current or previous month)
+    fee_metrics AS (
+        SELECT 
+            s.id as s_id,
+            COUNT(DISTINCT f.month) FILTER (WHERE f.status != 'paid') as unpaid_months
+        FROM public.students s
+        LEFT JOIN public.fees f ON s.id = f.student_id AND f.month IN (v_current_month, v_prev_month)
+        WHERE s.madrasah_id = p_madrasah_id
+        GROUP BY s.id
     )
     SELECT 
         s.id,
@@ -77,15 +90,22 @@ BEGIN
             WHEN em.avg_pct < 40 THEN 'high'
             WHEN em.avg_pct < 60 THEN 'warning'
             ELSE 'safe'
-        END as result_risk
+        END as result_risk,
+        -- Fee Risk Logic
+        CASE 
+            WHEN fm.unpaid_months >= 2 THEN 'high'
+            WHEN fm.unpaid_months >= 1 THEN 'warning'
+            ELSE 'safe'
+        END as fee_risk
     FROM public.students s
     JOIN public.classes c ON s.class_id = c.id
     LEFT JOIN att_metrics am ON s.id = am.s_id
     LEFT JOIN exam_metrics em ON s.id = em.s_id
+    LEFT JOIN fee_metrics fm ON s.id = fm.s_id
     WHERE s.madrasah_id = p_madrasah_id
     ORDER BY 
-        CASE WHEN dropout_risk = 'high' OR late_risk = 'high' OR result_risk = 'high' THEN 0 
-             WHEN dropout_risk = 'warning' OR late_risk = 'warning' OR result_risk = 'warning' THEN 1 
+        CASE WHEN dropout_risk = 'high' OR late_risk = 'high' OR result_risk = 'high' OR fee_risk = 'high' THEN 0 
+             WHEN dropout_risk = 'warning' OR late_risk = 'warning' OR result_risk = 'warning' OR fee_risk = 'warning' THEN 1 
              ELSE 2 END ASC,
         s.student_name ASC;
 END;

@@ -2,8 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { useSearchParams } from 'react-router-dom';
-import { Madrasah, LedgerEntry, Fee, Language, UserRole, Class, Student } from '../types';
-import { Calculator, Plus, ArrowUpCircle, ArrowDownCircle, Wallet, History, Users, Loader2, Save, X, Calendar, DollarSign, Tag, FileText, CheckCircle2, TrendingUp, AlertCircle, Send, Search, ChevronDown, BarChart3, Settings2, RefreshCw, Info } from 'lucide-react';
+import { Madrasah, LedgerEntry, Fee, Language, UserRole, Class, Student, FeeCategory, StudentFeeOverride } from '../types';
+import { Calculator, Plus, ArrowUpCircle, ArrowDownCircle, Wallet, History, Users, Loader2, Save, X, Calendar, DollarSign, Tag, FileText, CheckCircle2, TrendingUp, AlertCircle, Send, Search, ChevronDown, BarChart3, Settings2, RefreshCw, Info, GraduationCap, BookOpen, LayoutGrid, UserPlus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { t } from '../translations';
 import { sortMadrasahClasses } from './Classes';
 import SmartFeeAnalytics from '../components/SmartFeeAnalytics';
@@ -16,6 +17,7 @@ interface AccountingProps {
 }
 
 const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role }) => {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = (searchParams.get('tab') as 'summary' | 'ledger' | 'fees' | 'structures') || 'fees';
   
@@ -32,6 +34,7 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
   const [feesReport, setFeesReport] = useState<any[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
   const [structures, setStructures] = useState<any[]>([]);
+  const [categories, setCategories] = useState<FeeCategory[]>([]);
   
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -47,6 +50,7 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
   const [type, setType] = useState<'income' | 'expense'>('income');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('');
+  const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [desc, setDesc] = useState('');
 
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
@@ -55,6 +59,10 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
   const [collectAmount, setCollectAmount] = useState('');
   const [discountAmount, setDiscountAmount] = useState('');
   const [feeNote, setFeeNote] = useState('');
+
+  const [showOverride, setShowOverride] = useState(false);
+  const [overrideAmount, setOverrideAmount] = useState('');
+  const [overrideStructureId, setOverrideStructureId] = useState('');
 
   useEffect(() => {
     if (selectedItems.length > 0 && selectedStudent) {
@@ -107,7 +115,7 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
       if (activeTab === 'fees') {
         const classId = selectedClass === '' ? null : selectedClass;
         
-        const { data, error } = await supabase.rpc('get_monthly_dues_report', {
+        const { data, error } = await supabase.rpc('get_monthly_dues_report_v2', {
           p_madrasah_id: madrasah.id,
           p_class_id: classId,
           p_month: selectedMonth
@@ -133,8 +141,11 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
       }
 
       if (activeTab === 'structures') {
-        const { data } = await supabase.from('fee_structures').select('*, classes(class_name)').eq('madrasah_id', madrasah.id);
-        if (data) setStructures(data);
+        const { data: structData } = await supabase.from('fee_structures').select('*, classes(class_name), fee_categories(name)').eq('madrasah_id', madrasah.id);
+        if (structData) setStructures(structData);
+        
+        const { data: catData } = await supabase.from('fee_categories').select('*').eq('madrasah_id', madrasah.id);
+        if (catData) setCategories(catData);
       }
     } catch (e: any) { 
       console.error("Accounting Fetch Error:", e);
@@ -199,6 +210,28 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
     }
   };
 
+  const handleAddOverride = async () => {
+    if (!selectedStudent || !overrideStructureId || !overrideAmount) return;
+    setIsSaving(true);
+    try {
+      const { error } = await supabase.from('student_fee_overrides').upsert({
+        student_id: selectedStudent.student_id,
+        fee_structure_id: overrideStructureId,
+        custom_amount: parseFloat(overrideAmount),
+        is_active: true
+      });
+      if (error) throw error;
+      setShowOverride(false);
+      setOverrideAmount('');
+      setOverrideStructureId('');
+      fetchData();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleAddLedger = async () => {
     if (!madrasah || !amount || !category) return;
     setIsSaving(true);
@@ -250,7 +283,25 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
       </div>
 
       {activeTab === 'fees' && (
-        <div className="space-y-4 animate-in slide-in-from-bottom-5">
+        <>
+          <div className="grid grid-cols-2 gap-3 px-1">
+            <button onClick={() => navigate('/coaching')} className="bg-white p-4 rounded-3xl border border-slate-100 shadow-bubble flex items-center gap-3 active:scale-95 transition-all">
+              <div className="w-10 h-10 bg-blue-50 text-[#2563EB] rounded-2xl flex items-center justify-center shrink-0"><GraduationCap size={20}/></div>
+              <div className="text-left">
+                <p className="text-[10px] font-black text-[#1E3A8A] font-noto">কোচিং ম্যানেজমেন্ট</p>
+                <p className="text-[8px] font-bold text-slate-400 uppercase">ব্যাচ ও ফি</p>
+              </div>
+            </button>
+            <button onClick={() => navigate('/fee-categories')} className="bg-white p-4 rounded-3xl border border-slate-100 shadow-bubble flex items-center gap-3 active:scale-95 transition-all">
+              <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center shrink-0"><Tag size={20}/></div>
+              <div className="text-left">
+                <p className="text-[10px] font-black text-[#1E3A8A] font-noto">ফি ক্যাটাগরি</p>
+                <p className="text-[8px] font-bold text-slate-400 uppercase">ক্যাটাগরি লিস্ট</p>
+              </div>
+            </button>
+          </div>
+
+          <div className="space-y-4 animate-in slide-in-from-bottom-5">
            <div className="bg-white p-5 rounded-[2.2rem] border border-slate-100 shadow-bubble space-y-4">
               <div className="grid grid-cols-2 gap-3">
                  <div className="relative">
@@ -333,6 +384,7 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
               )}
            </div>
         </div>
+        </>
       )}
       
       {/* বাকি ট্যাবগুলো একই থাকবে */}
@@ -410,7 +462,14 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
                       <h3 className="text-xl font-black text-[#1E3A8A] font-noto">ফি সংগ্রহ করুন</h3>
                       <button onClick={() => setShowFeeCollection(false)} className="w-9 h-9 bg-slate-50 text-slate-300 rounded-xl flex items-center justify-center"><X size={20} /></button>
                   </div>
-                  <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 text-center">
+                  <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 text-center relative">
+                      <button 
+                        onClick={() => setShowOverride(true)}
+                        className="absolute top-4 right-4 text-[#2563EB] hover:text-blue-700 transition-colors"
+                        title="Custom Amount Override"
+                      >
+                        <Settings2 size={18} />
+                      </button>
                       <p className="text-[10px] font-black text-slate-400 uppercase mb-1">ছাত্রের নাম</p>
                       <h4 className="text-xl font-black text-[#1E3A8A] font-noto">{selectedStudent.student_name}</h4>
                       <div className="grid grid-cols-3 gap-2 mt-4">
@@ -559,9 +618,16 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
                 <h3 className="text-xl font-black text-[#1E3A8A]">ফি সেটআপ করুন</h3>
                 <button onClick={() => setShowAddStructure(false)} className="w-9 h-9 bg-slate-50 text-slate-300 rounded-xl flex items-center justify-center"><X size={20} /></button>
               </div>
-              <div className="space-y-4">
-                 <div className="relative">
-                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2 mb-1.5 block">শ্রেণি নির্বাচন করুন</label>
+                  <div className="space-y-4">
+                     <div className="relative">
+                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2 mb-1.5 block">ক্যাটাগরি</label>
+                        <select className="w-full h-14 bg-slate-50 rounded-2xl px-6 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20 appearance-none" value={selectedCategoryId} onChange={(e) => setSelectedCategoryId(e.target.value)}>
+                            <option value="">ক্যাটাগরি নির্বাচন করুন (ঐচ্ছিক)</option>
+                            {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+                        </select>
+                     </div>
+                     <div className="relative">
+                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2 mb-1.5 block">শ্রেণি নির্বাচন করুন</label>
                     <button onClick={() => setShowClassDropdown(!showClassDropdown)} className="w-full h-14 px-6 rounded-2xl border-2 border-slate-100 bg-slate-50 flex items-center justify-between font-black text-[#1E3A8A]">
                        <span className="truncate">{classes.find(c => c.id === selectedClass)?.class_name || 'শ্রেণি বেছে নিন'}</span>
                        <ChevronDown size={20} className="text-slate-300" />
@@ -623,6 +689,7 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
                         const { error } = await supabase.from('fee_structures').insert({
                             madrasah_id: madrasah?.id,
                             class_id: selectedClass,
+                            category_id: selectedCategoryId || null,
                             fee_name: category,
                             amount: parseFloat(amount),
                             is_monthly: isMonthlyFee
@@ -637,6 +704,39 @@ const Accounting: React.FC<AccountingProps> = ({ lang, madrasah, onBack, role })
                  </button>
               </div>
            </div>
+        </div>
+      )}
+
+      {/* STUDENT OVERRIDE MODAL */}
+      {showOverride && selectedStudent && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-[1001] flex items-center justify-center p-6">
+          <div className="bg-white w-full max-w-sm rounded-[3rem] p-8 space-y-6 animate-in zoom-in-95 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-black text-[#1E3A8A]">কাস্টম ফি সেটআপ</h3>
+              <button onClick={() => setShowOverride(false)} className="w-9 h-9 bg-slate-50 text-slate-300 rounded-xl flex items-center justify-center"><X size={20} /></button>
+            </div>
+            <div className="space-y-4">
+              <p className="text-[10px] font-black text-slate-400 uppercase text-center">ছাত্র: {selectedStudent.student_name}</p>
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2">ফি আইটেম</label>
+                <select className="w-full h-14 bg-slate-50 rounded-2xl px-6 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20 appearance-none" value={overrideStructureId} onChange={(e) => setOverrideStructureId(e.target.value)}>
+                  <option value="">ফি নির্বাচন করুন</option>
+                  {classStructures.map(fs => <option key={fs.id} value={fs.id}>{fs.fee_name} (Base: ৳{fs.amount})</option>)}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2">নতুন পরিমাণ</label>
+                <input type="number" className="w-full h-14 bg-slate-50 rounded-2xl px-6 font-black text-lg outline-none border-2 border-transparent focus:border-[#2563EB]/20" placeholder="0" value={overrideAmount} onChange={(e) => setOverrideAmount(e.target.value)} />
+              </div>
+              <button 
+                onClick={handleAddOverride} 
+                disabled={isSaving || !overrideStructureId || !overrideAmount} 
+                className="w-full py-5 bg-[#2563EB] text-white font-black rounded-full shadow-premium flex items-center justify-center gap-3 active:scale-95 transition-all"
+              >
+                {isSaving ? <Loader2 className="animate-spin" size={20} /> : <><Save size={20}/> আপডেট করুন</>}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
