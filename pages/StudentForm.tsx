@@ -2,7 +2,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowLeft, Save, User as UserIcon, Phone, List, Hash, Loader2, ChevronDown, Camera, X, Check, UserCheck, AlertCircle, BookOpen } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
 import { supabase, offlineApi } from '../supabase';
 import { Student, Class, Language, Madrasah } from '../types';
 import { t } from '../translations';
@@ -19,15 +18,12 @@ interface StudentFormProps {
 }
 
 const StudentForm: React.FC<StudentFormProps> = ({ student, madrasah, defaultClassId, isEditing, onSuccess, onCancel, lang }) => {
-  const location = useLocation();
-  const stateDefaultClassId = location.state?.defaultClassId;
-  
   const [name, setName] = useState(student?.student_name || '');
   const [guardianName, setGuardianName] = useState(student?.guardian_name || '');
   const [roll, setRoll] = useState(student?.roll?.toString() || '');
   const [phone, setPhone] = useState(student?.guardian_phone || '');
   const [phone2, setPhone2] = useState(student?.guardian_phone_2 || '');
-  const [classId, setClassId] = useState(student?.class_id || defaultClassId || stateDefaultClassId || '');
+  const [classId, setClassId] = useState(student?.class_id || defaultClassId || '');
   const [classes, setClasses] = useState<Class[]>([]);
   const [loading, setLoading] = useState(false);
   const [showClassModal, setShowClassModal] = useState(false);

@@ -27,7 +27,6 @@ const Home: React.FC<HomeProps> = ({ onStudentClick, lang, dataVersion, triggerR
   const [stats, setStats] = useState({
     totalStudents: 0,
     totalClasses: 0,
-    totalTeachers: 0,
     smsBalance: 0,
     attendanceToday: 0
   });
@@ -41,10 +40,9 @@ const Home: React.FC<HomeProps> = ({ onStudentClick, lang, dataVersion, triggerR
     setLoadingStats(true);
     try {
       const today = new Date().toISOString().split('T')[0];
-      const [stdRes, clsRes, teaRes, mRes, attRes] = await Promise.all([
+      const [stdRes, clsRes, mRes, attRes] = await Promise.all([
         supabase.from('students').select('*', { count: 'exact', head: true }).eq('madrasah_id', madrasahId),
         supabase.from('classes').select('*', { count: 'exact', head: true }).eq('madrasah_id', madrasahId),
-        supabase.from('teachers').select('*', { count: 'exact', head: true }).eq('madrasah_id', madrasahId),
         supabase.from('madrasahs').select('sms_balance').eq('id', madrasahId).maybeSingle(),
         supabase.from('attendance').select('*', { count: 'exact', head: true }).eq('madrasah_id', madrasahId).eq('date', today).eq('status', 'present')
       ]);
@@ -52,7 +50,6 @@ const Home: React.FC<HomeProps> = ({ onStudentClick, lang, dataVersion, triggerR
       setStats({
         totalStudents: stdRes.count || 0,
         totalClasses: clsRes.count || 0,
-        totalTeachers: teaRes.count || 0,
         smsBalance: mRes.data?.sms_balance || 0,
         attendanceToday: attRes.count || 0
       });
@@ -80,28 +77,6 @@ const Home: React.FC<HomeProps> = ({ onStudentClick, lang, dataVersion, triggerR
            <h4 className="text-xl font-black text-[#1E3A8A]">{loadingStats ? '...' : stats.attendanceToday}</h4>
            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">আজকের হাজিরা</p>
         </div>
-        <div className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-bubble flex flex-col items-center text-center animate-in zoom-in duration-300 delay-100">
-           <div className="w-10 h-10 bg-indigo-50 text-indigo-500 rounded-2xl flex items-center justify-center mb-2 shadow-inner"><BookOpen size={20} /></div>
-           <h4 className="text-xl font-black text-[#1E3A8A]">{loadingStats ? '...' : stats.totalClasses}</h4>
-           <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">{t('classes', lang)}</p>
-        </div>
-        <div className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-bubble flex flex-col items-center text-center animate-in zoom-in duration-300 delay-150">
-           <div className="w-10 h-10 bg-purple-50 text-purple-500 rounded-2xl flex items-center justify-center mb-2 shadow-inner"><GraduationCap size={20} /></div>
-           <h4 className="text-xl font-black text-[#1E3A8A]">{loadingStats ? '...' : stats.totalTeachers}</h4>
-           <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">শিক্ষক</p>
-        </div>
-        <div className="col-span-2 bg-white p-5 rounded-[2rem] border border-slate-100 shadow-bubble flex items-center justify-between px-8 animate-in zoom-in duration-300 delay-200">
-           <div className="flex items-center gap-4">
-             <div className="w-12 h-12 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center shadow-inner"><MessageCircle size={24} /></div>
-             <div className="text-left">
-               <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">SMS ব্যালেন্স</p>
-               <h4 className="text-xl font-black text-[#1E3A8A]">{loadingStats ? '...' : stats.smsBalance}</h4>
-             </div>
-           </div>
-           <div className="w-10 h-10 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center">
-             <TrendingUp size={18} />
-           </div>
-        </div>
       </div>
 
       {madrasahId && (
@@ -121,30 +96,6 @@ const Home: React.FC<HomeProps> = ({ onStudentClick, lang, dataVersion, triggerR
                lang={lang} 
                month={new Date().toISOString().slice(0, 7)} 
              />
-          </div>
-
-          <div className="px-1 space-y-3">
-             <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] px-3 opacity-80">
-               Quick Actions
-             </h2>
-             <div className="grid grid-cols-4 gap-2">
-                <button onClick={onNavigateToAttendance} className="flex flex-col items-center gap-2 p-3 bg-white rounded-3xl border border-slate-100 shadow-sm active:scale-95 transition-all">
-                  <div className="w-10 h-10 bg-blue-50 text-blue-500 rounded-xl flex items-center justify-center"><ClipboardList size={20} /></div>
-                  <span className="text-[8px] font-black text-slate-500 uppercase">হাজিরা</span>
-                </button>
-                <button onClick={onNavigateToExams} className="flex flex-col items-center gap-2 p-3 bg-white rounded-3xl border border-slate-100 shadow-sm active:scale-95 transition-all">
-                  <div className="w-10 h-10 bg-indigo-50 text-indigo-500 rounded-xl flex items-center justify-center"><GraduationCap size={20} /></div>
-                  <span className="text-[8px] font-black text-slate-500 uppercase">পরীক্ষা</span>
-                </button>
-                <button onClick={onNavigateToAccounting} className="flex flex-col items-center gap-2 p-3 bg-white rounded-3xl border border-slate-100 shadow-sm active:scale-95 transition-all">
-                  <div className="w-10 h-10 bg-emerald-50 text-emerald-500 rounded-xl flex items-center justify-center"><Banknote size={20} /></div>
-                  <span className="text-[8px] font-black text-slate-500 uppercase">ফি কালেকশন</span>
-                </button>
-                <button onClick={onNavigateToWallet} className="flex flex-col items-center gap-2 p-3 bg-white rounded-3xl border border-slate-100 shadow-sm active:scale-95 transition-all">
-                  <div className="w-10 h-10 bg-amber-50 text-amber-500 rounded-xl flex items-center justify-center"><Wallet size={20} /></div>
-                  <span className="text-[8px] font-black text-slate-500 uppercase">Wallet</span>
-                </button>
-             </div>
           </div>
 
           <div className="px-1 space-y-3">

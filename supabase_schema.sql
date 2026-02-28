@@ -85,7 +85,6 @@ CREATE TABLE IF NOT EXISTS public.fees (
   class_id UUID REFERENCES public.classes(id) ON DELETE CASCADE,
   amount_paid NUMERIC NOT NULL DEFAULT 0,
   month TEXT NOT NULL, -- Format: YYYY-MM
-  description TEXT,
   status TEXT DEFAULT 'paid', -- paid, partial, unpaid
   paid_at TIMESTAMPTZ DEFAULT NOW()
 );

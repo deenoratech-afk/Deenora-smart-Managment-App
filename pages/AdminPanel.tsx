@@ -4,7 +4,6 @@ import { createPortal } from 'react-dom';
 // Fix: Import icons from lucide-react instead of ../supabase
 import { Loader2, Search, ChevronRight, User as UserIcon, ShieldCheck, Database, Globe, CheckCircle, XCircle, CreditCard, Save, X, Settings, Smartphone, MessageSquare, Key, Shield, ArrowLeft, Copy, Check, Calendar, Users, Layers, MonitorSmartphone, Server, BarChart3, TrendingUp, RefreshCcw, Clock, Hash, History as HistoryIcon, Zap, Activity, PieChart, Users2, CheckCircle2, AlertCircle, AlertTriangle, RefreshCw, Trash2, Sliders, ToggleLeft, ToggleRight, GraduationCap, Banknote, PhoneCall } from 'lucide-react';
 import { supabase, smsApi } from '../supabase';
-import { useSearchParams } from 'react-router-dom';
 import { Madrasah, Language, Transaction, AdminSMSStock } from '../types';
 
 interface MadrasahWithStats extends Madrasah {
@@ -19,28 +18,15 @@ interface AdminPanelProps {
 }
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ lang, currentView = 'list', dataVersion = 0 }) => {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const view = (searchParams.get('v') as 'list' | 'approvals' | 'details' | 'dashboard') || currentView;
-  
-  const setView = (v: string) => {
-    if (v === 'list') {
-      searchParams.delete('v');
-      searchParams.delete('id');
-    } else {
-      searchParams.set('v', v);
-    }
-    setSearchParams(searchParams);
-  };
-
   const [madrasahs, setMadrasahs] = useState<MadrasahWithStats[]>([]);
   const [pendingTrans, setPendingTrans] = useState<Transaction[]>([]);
   const [transactionHistory, setTransactionHistory] = useState<Transaction[]>([]);
   const [adminStock, setAdminStock] = useState<AdminSMSStock | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  
-  const idParam = searchParams.get('id');
-
+  const [view, setView] = useState<'list' | 'approvals' | 'details' | 'dashboard'>(
+    currentView === 'approvals' ? 'approvals' : currentView === 'dashboard' ? 'dashboard' : 'list'
+  );
   const [smsToCredit, setSmsToCredit] = useState<{ [key: string]: string }>({});
   const [approvingIds, setApprovingIds] = useState<Set<string>>(new Set());
   
@@ -65,23 +51,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, currentView = 'list', dat
     currentInUserWallets: 0 
   });
   const [selectedUser, setSelectedUser] = useState<MadrasahWithStats | null>(null);
-
-  useEffect(() => {
-    if (idParam && madrasahs.length > 0) {
-      const m = madrasahs.find(item => item.id === idParam);
-      if (m) {
-        setSelectedUser(m);
-        setEditName(m.name || '');
-        setEditPhone(m.phone || '');
-        setEditLoginCode(m.login_code || '');
-        setEditActive(m.is_active);
-        setEditReveApiKey(m.reve_api_key || '');
-        setEditReveSecretKey(m.reve_secret_key || '');
-        setEditReveCallerId(m.reve_caller_id || '');
-        fetchUserStats(m.id);
-      }
-    }
-  }, [idParam, madrasahs]);
   const [userStats, setUserStats] = useState({ students: 0, classes: 0, teachers: 0 });
   
   const [editName, setEditName] = useState('');
@@ -205,28 +174,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, currentView = 'list', dat
   }, [currentView]);
 
   // Fix: Add missing handleUserClick function to manage details view and stats
-  const fetchUserStats = async (userId: string) => {
-    setUserStats({ students: 0, classes: 0, teachers: 0 });
-    try {
-      const [stdRes, clsRes, teaRes] = await Promise.all([
-        supabase.from('students').select('*', { count: 'exact', head: true }).eq('madrasah_id', userId),
-        supabase.from('classes').select('*', { count: 'exact', head: true }).eq('madrasah_id', userId),
-        supabase.from('teachers').select('*', { count: 'exact', head: true }).eq('madrasah_id', userId)
-      ]);
-      setUserStats({
-        students: stdRes.count || 0,
-        classes: clsRes.count || 0,
-        teachers: teaRes.count || 0
-      });
-    } catch (e) {
-      console.error("Error fetching user stats:", e);
-    }
-  };
-
   const handleUserClick = async (user: MadrasahWithStats) => {
-    searchParams.set('id', user.id);
-    setView('details');
-    
     setSelectedUser(user);
     setEditName(user.name || '');
     setEditPhone(user.phone || '');
@@ -236,7 +184,24 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, currentView = 'list', dat
     setEditReveSecretKey(user.reve_secret_key || '');
     setEditReveCallerId(user.reve_caller_id || '');
     
-    fetchUserStats(user.id);
+    setView('details');
+    
+    // Fetch user stats
+    setUserStats({ students: 0, classes: 0, teachers: 0 });
+    try {
+      const [stdRes, clsRes, teaRes] = await Promise.all([
+        supabase.from('students').select('*', { count: 'exact', head: true }).eq('madrasah_id', user.id),
+        supabase.from('classes').select('*', { count: 'exact', head: true }).eq('madrasah_id', user.id),
+        supabase.from('teachers').select('*', { count: 'exact', head: true }).eq('madrasah_id', user.id)
+      ]);
+      setUserStats({
+        students: stdRes.count || 0,
+        classes: clsRes.count || 0,
+        teachers: teaRes.count || 0
+      });
+    } catch (e) {
+      console.error("Error fetching user stats:", e);
+    }
   };
 
   // Fix: Add missing handleUserUpdate function to save changes to madrasah profile
