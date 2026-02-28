@@ -117,12 +117,6 @@ const Layout: React.FC<LayoutProps> = ({ children, currentView, setView, lang, m
                 <GraduationCap size={20} />
                 <span className="text-[9px] font-black font-noto opacity-80">পরীক্ষা</span>
               </Link>
-              {(role === 'madrasah_admin' || role === 'accountant') && (
-                <Link to="/accounting" className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('accounting') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
-                  <Banknote size={20} />
-                  <span className="text-[9px] font-black font-noto opacity-80">হিসাব</span>
-                </Link>
-              )}
               <Link to="/classes" className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('classes') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
                 <BookOpen size={20} />
                 <span className="text-[9px] font-black font-noto opacity-80">ছাত্র</span>

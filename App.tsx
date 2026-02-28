@@ -15,7 +15,6 @@ import AdminPanel from './pages/AdminPanel';
 import WalletSMS from './pages/WalletSMS';
 import DataManagement from './pages/DataManagement';
 import Teachers from './pages/Teachers';
-import Accounting from './pages/Accounting';
 import Attendance from './pages/Attendance';
 import Exams from './pages/Exams';
 import { Routes, Route, useNavigate, useLocation, Navigate, useParams } from 'react-router-dom';
@@ -96,6 +95,7 @@ const App: React.FC = () => {
       else if (v === 'admin-approvals') navigate('/admin/approvals');
       else if (v === 'admin-dashboard') navigate('/admin/dashboard');
 
+      else if (v === 'accounting') navigate('/accounting');
       else if (v === 'attendance') navigate('/attendance');
       else if (v === 'exams') navigate('/exams');
     }} lang={lang} madrasah={madrasah} profile={profile}>
