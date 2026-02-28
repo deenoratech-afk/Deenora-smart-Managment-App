@@ -6,6 +6,7 @@ import { supabase, offlineApi } from '../supabase';
 import { Student, Language } from '../types';
 import { t } from '../translations';
 import RiskAnalysis from '../components/RiskAnalysis';
+import SmartFeeAnalytics from '../components/SmartFeeAnalytics';
 import SmartResultAnalytics from '../components/SmartResultAnalytics';
 
 interface HomeProps {
@@ -15,11 +16,12 @@ interface HomeProps {
   triggerRefresh: () => void;
   madrasahId?: string;
   onNavigateToWallet?: () => void;
+  onNavigateToAccounting?: () => void;
   onNavigateToAttendance?: () => void;
   onNavigateToExams?: () => void;
 }
 
-const Home: React.FC<HomeProps> = ({ onStudentClick, lang, dataVersion, triggerRefresh, madrasahId, onNavigateToWallet, onNavigateToAttendance, onNavigateToExams }) => {
+const Home: React.FC<HomeProps> = ({ onStudentClick, lang, dataVersion, triggerRefresh, madrasahId, onNavigateToWallet, onNavigateToAccounting, onNavigateToAttendance, onNavigateToExams }) => {
   const [fetchError, setFetchError] = useState<string | null>(null);
   
   const [stats, setStats] = useState({
@@ -109,6 +111,17 @@ const Home: React.FC<HomeProps> = ({ onStudentClick, lang, dataVersion, triggerR
             lang={lang} 
             onStudentClick={onStudentClick} 
           />
+          
+          <div className="px-1 space-y-3">
+             <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] px-3 opacity-80">
+               {t('smart_fee_mgmt', lang)}
+             </h2>
+             <SmartFeeAnalytics 
+               madrasahId={madrasahId} 
+               lang={lang} 
+               month={new Date().toISOString().slice(0, 7)} 
+             />
+          </div>
 
           <div className="px-1 space-y-3">
              <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] px-3 opacity-80">
@@ -122,6 +135,10 @@ const Home: React.FC<HomeProps> = ({ onStudentClick, lang, dataVersion, triggerR
                 <button onClick={onNavigateToExams} className="flex flex-col items-center gap-2 p-3 bg-white rounded-3xl border border-slate-100 shadow-sm active:scale-95 transition-all">
                   <div className="w-10 h-10 bg-indigo-50 text-indigo-500 rounded-xl flex items-center justify-center"><GraduationCap size={20} /></div>
                   <span className="text-[8px] font-black text-slate-500 uppercase">পরীক্ষা</span>
+                </button>
+                <button onClick={onNavigateToAccounting} className="flex flex-col items-center gap-2 p-3 bg-white rounded-3xl border border-slate-100 shadow-sm active:scale-95 transition-all">
+                  <div className="w-10 h-10 bg-emerald-50 text-emerald-500 rounded-xl flex items-center justify-center"><Banknote size={20} /></div>
+                  <span className="text-[8px] font-black text-slate-500 uppercase">ফি কালেকশন</span>
                 </button>
                 <button onClick={onNavigateToWallet} className="flex flex-col items-center gap-2 p-3 bg-white rounded-3xl border border-slate-100 shadow-sm active:scale-95 transition-all">
                   <div className="w-10 h-10 bg-amber-50 text-amber-500 rounded-xl flex items-center justify-center"><Wallet size={20} /></div>

@@ -17,6 +17,7 @@ import DataManagement from './pages/DataManagement';
 import Teachers from './pages/Teachers';
 import Attendance from './pages/Attendance';
 import Exams from './pages/Exams';
+import Fees from './pages/Fees';
 import { Routes, Route, useNavigate, useLocation, Navigate, useParams } from 'react-router-dom';
 import { View, Class, Student, Language } from './types';
 import { BookOpen, ShieldAlert, Loader2 } from 'lucide-react';
@@ -46,6 +47,7 @@ const App: React.FC = () => {
     if (path === '/accounting') return 'accounting';
     if (path === '/attendance') return 'attendance';
     if (path === '/exams') return 'exams';
+    if (path === '/fees') return 'accounting';
     return 'home';
   };
 
@@ -95,7 +97,7 @@ const App: React.FC = () => {
       else if (v === 'admin-approvals') navigate('/admin/approvals');
       else if (v === 'admin-dashboard') navigate('/admin/dashboard');
 
-      else if (v === 'accounting') navigate('/accounting');
+      else if (v === 'accounting') navigate('/fees');
       else if (v === 'attendance') navigate('/attendance');
       else if (v === 'exams') navigate('/exams');
     }} lang={lang} madrasah={madrasah} profile={profile}>
@@ -192,6 +194,7 @@ const App: React.FC = () => {
         <Route path="/teachers" element={<Teachers lang={lang} madrasah={madrasah} onBack={() => navigate('/account')} />} />
 
         <Route path="/attendance" element={<Attendance lang={lang} madrasah={madrasah} onBack={() => navigate('/')} userId={session?.user?.id} />} />
+        <Route path="/fees" element={<Fees lang={lang} madrasah={madrasah} onBack={() => navigate('/')} role={role} />} />
         <Route path="/exams" element={<Exams lang={lang} madrasah={madrasah} onBack={() => navigate('/')} role={role} />} />
         
         <Route path="*" element={<Navigate to="/" />} />

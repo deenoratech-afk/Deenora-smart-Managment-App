@@ -47,7 +47,7 @@ const Layout: React.FC<LayoutProps> = ({ children, currentView, setView, lang, m
     if (tab === 'account' && path === '/account') return true;
     if (tab === 'dashboard' && path === '/admin/dashboard') return true;
     if (tab === 'approvals' && path === '/admin/approvals') return true;
-    if (tab === 'accounting' && path === '/accounting') return true;
+    if (tab === 'accounting' && path === '/fees') return true;
     if (tab === 'attendance' && path === '/attendance') return true;
     if (tab === 'exams' && path === '/exams') return true;
     if (tab === 'wallet' && path === '/wallet') return true;
@@ -117,6 +117,12 @@ const Layout: React.FC<LayoutProps> = ({ children, currentView, setView, lang, m
                 <GraduationCap size={20} />
                 <span className="text-[9px] font-black font-noto opacity-80">পরীক্ষা</span>
               </Link>
+              {(role === 'madrasah_admin' || role === 'accountant') && (
+                <Link to="/fees" className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('accounting') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
+                  <Banknote size={20} />
+                  <span className="text-[9px] font-black font-noto opacity-80">ফি কালেকশন</span>
+                </Link>
+              )}
               <Link to="/classes" className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('classes') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
                 <BookOpen size={20} />
                 <span className="text-[9px] font-black font-noto opacity-80">ছাত্র</span>
