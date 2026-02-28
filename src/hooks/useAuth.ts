@@ -1,15 +1,16 @@
 
+import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { offlineService } from '../services/offline.service';
 import { Profile, Madrasah } from '../types';
 
 export const useAuth = () => {
-  const [session, setSession] = useState<any>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [madrasah, setMadrasah] = useState<Madrasah | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [authError, setAuthError] = useState<string | null>(null);
+  const [session, setSession] = React.useState<any>(null);
+  const [profile, setProfile] = React.useState<Profile | null>(null);
+  const [madrasah, setMadrasah] = React.useState<Madrasah | null>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [authError, setAuthError] = React.useState<string | null>(null);
 
   const fetchUserProfile = async (userId: string) => {
     try {
@@ -54,7 +55,7 @@ export const useAuth = () => {
     window.location.reload();
   };
 
-  useEffect(() => {
+  React.useEffect(() => {
     const initializeAuth = async () => {
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       

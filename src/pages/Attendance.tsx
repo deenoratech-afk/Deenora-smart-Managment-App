@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase, smsApi } from '../supabase';
+import { useSearchParams } from 'react-router-dom';
 import { Madrasah, Class, Student, Language, Attendance as AttendanceType } from '../types';
 import { ClipboardList, Users, CheckCircle, XCircle, Clock, Loader2, ArrowLeft, ChevronDown, Save, Calendar, BarChart3, Send, AlertTriangle, FileText, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
 import { sortMadrasahClasses } from './Classes';
@@ -14,7 +15,18 @@ interface AttendanceProps {
 }
 
 const Attendance: React.FC<AttendanceProps> = ({ lang, madrasah, onBack, userId }) => {
-  const [activeTab, setActiveTab] = useState<'daily' | 'report'>('daily');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = (searchParams.get('tab') as 'daily' | 'report') || 'daily';
+  
+  const setActiveTab = (tab: string) => {
+    if (tab === 'daily') {
+      searchParams.delete('tab');
+    } else {
+      searchParams.set('tab', tab);
+    }
+    setSearchParams(searchParams);
+  };
+
   const [classes, setClasses] = useState<Class[]>([]);
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
   const [students, setStudents] = useState<Student[]>([]);

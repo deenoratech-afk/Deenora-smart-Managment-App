@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { LogOut, Camera, Loader2, User as UserIcon, ShieldCheck, Database, ChevronRight, Check, MessageSquare, Zap, Globe, Smartphone, Save, Users, Layers, Edit3, UserPlus, Languages, Mail, Key, Settings, Fingerprint, Copy, History, Server, CreditCard, Shield, Sliders, Activity, Bell, RefreshCw, AlertTriangle, GraduationCap, ChevronLeft, ArrowRight, LayoutDashboard, Settings2, X, Sparkles, Box, ShieldAlert, Award, CheckCircle2, Lock, Terminal, Cpu } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { supabase, smsApi } from '../supabase';
 import { Madrasah, Language, View } from '../types';
 import { t } from '../translations';
@@ -209,11 +210,7 @@ const Account: React.FC<AccountProps> = ({ lang, setLang, onProfileUpdate, setVi
              </div>
 
              {!isSuperAdmin && (
-              <div className="grid grid-cols-2 gap-4 mt-8 pt-4">
-                  <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-bubble"><Users size={20} className="mx-auto mb-2 text-purple-500" /><h4 className="text-lg font-black text-[#1E3A8A]">{stats.students}</h4><p className="text-[8px] uppercase font-black text-slate-400">{t('students', lang)}</p></div>
-                  <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-bubble"><Layers size={20} className="mx-auto mb-2 text-blue-500" /><h4 className="text-lg font-black text-[#1E3A8A]">{stats.classes}</h4><p className="text-[8px] uppercase font-black text-slate-400">{t('classes', lang)}</p></div>
-                  <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-bubble"><GraduationCap size={20} className="mx-auto mb-2 text-emerald-500" /><h4 className="text-lg font-black text-[#1E3A8A]">{stats.teachers}</h4><p className="text-[8px] uppercase font-black text-slate-400">{t('teachers', lang)}</p></div>
-                  <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-bubble"><Zap size={20} className="mx-auto mb-2 text-amber-500" /><h4 className="text-lg font-black text-[#1E3A8A]">{madrasah.sms_balance || 0}</h4><p className="text-[8px] uppercase font-black text-slate-400">{t('wallet', lang)}</p></div>
+              <div className="mt-4">
               </div>
              )}
           </div>
@@ -228,12 +225,12 @@ const Account: React.FC<AccountProps> = ({ lang, setLang, onProfileUpdate, setVi
             </button>
             {!isSuperAdmin && (
               <>
-                <button onClick={() => setView('teachers')} className="w-full p-6 sm:p-8 flex items-center justify-between group">
+                <Link to="/teachers" className="w-full p-6 sm:p-8 flex items-center justify-between group">
                   <div className="flex items-center gap-4 sm:gap-6"><div className="w-12 h-12 bg-blue-50 text-[#2563EB] rounded-2xl flex items-center justify-center"><Users size={22} /></div><div className="text-left"><h5 className="text-[17px] font-black text-[#1E3A8A] font-noto">{t('manage_teachers', lang)}</h5><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Staff Access</p></div></div><ChevronRight size={22} className="text-slate-200" />
-                </button>
-                <button onClick={() => setView('data-management')} className="w-full p-6 sm:p-8 flex items-center justify-between group">
+                </Link>
+                <Link to="/data" className="w-full p-6 sm:p-8 flex items-center justify-between group">
                   <div className="flex items-center gap-4 sm:gap-6"><div className="w-12 h-12 bg-blue-50 text-[#2563EB] rounded-2xl flex items-center justify-center"><Database size={22} /></div><div className="text-left"><h5 className="text-[17px] font-black text-[#1E3A8A] font-noto">{t('backup_restore', lang)}</h5><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Excel Tools</p></div></div><ChevronRight size={22} className="text-slate-200" />
-                </button>
+                </Link>
               </>
             )}
           </>
