@@ -1,12 +1,12 @@
 
 import * as React from 'react';
-import { useState, useEffect, useCallback } from 'react';
-import { createPortal } from 'react-dom';
+import { useState, useEffect } from 'react';
 import { 
-  ArrowLeft, Plus, Search, Banknote, LayoutGrid, Settings, 
+  ArrowLeft, Plus, Search, Banknote, LayoutGrid, 
   History, Trash2, Edit3, Save, X, Loader2, CheckCircle2, 
   AlertCircle, ChevronRight, Calculator, User, Calendar,
-  Percent, DollarSign, Filter, ListChecks, ArrowUpRight
+  Percent, DollarSign, Filter, ListChecks, ArrowUpRight,
+  Receipt, Wallet
 } from 'lucide-react';
 import { supabase } from '../supabase';
 import { 
@@ -23,10 +23,10 @@ interface FeesProps {
   role: UserRole;
 }
 
-type FeeTab = 'collection' | 'setup' | 'generation' | 'overrides';
+type FeeTab = 'collect' | 'history' | 'setup';
 
 const Fees: React.FC<FeesProps> = ({ lang, madrasah, onBack, role }) => {
-  const [activeTab, setActiveTab] = useState<FeeTab>('collection');
+  const [activeTab, setActiveTab] = useState<FeeTab>('collect');
   const [loading, setLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -37,7 +37,6 @@ const Fees: React.FC<FeesProps> = ({ lang, madrasah, onBack, role }) => {
   const [students, setStudents] = useState<Student[]>([]);
   
   // Selection states
-  const [selectedClassId, setSelectedClassId] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [studentFees, setStudentFees] = useState<Fee[]>([]);
@@ -46,7 +45,7 @@ const Fees: React.FC<FeesProps> = ({ lang, madrasah, onBack, role }) => {
   // Form states
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [showAddStructure, setShowAddStructure] = useState(false);
-  const [showAddOverride, setShowAddOverride] = useState(false);
+  const [showQuickAddFee, setShowQuickAddFee] = useState(false);
   
   const [catName, setCatName] = useState('');
   const [catType, setCatType] = useState<'recurring' | 'one-time' | 'optional'>('recurring');
@@ -55,10 +54,10 @@ const Fees: React.FC<FeesProps> = ({ lang, madrasah, onBack, role }) => {
   const [structCatId, setStructCatId] = useState('');
   const [structName, setStructName] = useState('');
   const [structAmount, setStructAmount] = useState('');
-  const [structIsMonthly, setStructIsMonthly] = useState(true);
 
   const [paymentAmount, setPaymentAmount] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'bkash' | 'nagad' | 'bank'>('cash');
+  const [quickFeeAmount, setQuickFeeAmount] = useState('');
+  const [quickFeeDesc, setQuickFeeDesc] = useState('');
 
   useEffect(() => {
     if (madrasah) {
@@ -112,7 +111,6 @@ const Fees: React.FC<FeesProps> = ({ lang, madrasah, onBack, role }) => {
       .order('month', { ascending: true });
     if (data) {
       setStudentFees(data);
-      // Auto-select all unpaid fees by default
       setSelectedFeeIds(new Set(data.map(f => f.id)));
     }
     setLoading(false);
@@ -144,7 +142,6 @@ const Fees: React.FC<FeesProps> = ({ lang, madrasah, onBack, role }) => {
         
         if (error) throw error;
         
-        // Record in ledger
         await supabase.from('ledger').insert({
           madrasah_id: madrasah?.id,
           type: 'income',
@@ -161,6 +158,36 @@ const Fees: React.FC<FeesProps> = ({ lang, madrasah, onBack, role }) => {
       setSelectedStudent(null);
       setPaymentAmount('');
       setSearchQuery('');
+    } catch (e: any) {
+      alert(e.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleQuickAddFee = async () => {
+    if (!selectedStudent || !quickFeeAmount || !quickFeeDesc || !madrasah) return;
+    setIsSaving(true);
+    try {
+      const amount = parseFloat(quickFeeAmount);
+      const { data, error } = await supabase.from('fees').insert({
+        madrasah_id: madrasah.id,
+        student_id: selectedStudent.id,
+        class_id: selectedStudent.class_id,
+        amount: amount,
+        paid_amount: 0,
+        due_amount: amount,
+        month: new Date().toISOString().slice(0, 7),
+        description: quickFeeDesc,
+        status: 'unpaid'
+      }).select().single();
+
+      if (error) throw error;
+      
+      setShowQuickAddFee(false);
+      setQuickFeeAmount('');
+      setQuickFeeDesc('');
+      fetchStudentFees(selectedStudent.id);
     } catch (e: any) {
       alert(e.message);
     } finally {
@@ -193,7 +220,7 @@ const Fees: React.FC<FeesProps> = ({ lang, madrasah, onBack, role }) => {
       category_id: structCatId,
       fee_name: structName,
       amount: parseFloat(structAmount),
-      is_monthly: structIsMonthly
+      is_monthly: true
     });
     if (!error) {
       setShowAddStructure(false);
@@ -204,122 +231,57 @@ const Fees: React.FC<FeesProps> = ({ lang, madrasah, onBack, role }) => {
     setIsSaving(false);
   };
 
-  const handleGenerateFees = async (month: string) => {
-    if (!madrasah || !selectedClassId) return;
-    setIsSaving(true);
-    try {
-      // 1. Get all students of the class
-      const { data: students } = await supabase.from('students').select('id').eq('class_id', selectedClassId);
-      if (!students) return;
-
-      // 2. Get all structures for the class
-      const { data: structures } = await supabase.from('fee_structures').select('*').eq('class_id', selectedClassId);
-      if (!structures) return;
-
-      // 3. Get all overrides for the students
-      const { data: overrides } = await supabase
-        .from('student_fee_overrides')
-        .select('*')
-        .in('student_id', students.map(s => s.id));
-
-      const feeRecords: any[] = [];
-      
-      for (const std of students) {
-        for (const struct of structures) {
-          // Check if already generated
-          const { data: existing } = await supabase
-            .from('fees')
-            .select('id')
-            .eq('student_id', std.id)
-            .eq('fee_structure_id', struct.id)
-            .eq('month', month)
-            .maybeSingle();
-            
-          if (!existing) {
-            const override = overrides?.find(o => o.student_id === std.id && o.fee_structure_id === struct.id);
-            let finalAmount = struct.amount;
-            if (override) {
-              if (override.override_amount !== null && override.override_amount !== undefined) {
-                finalAmount = override.override_amount;
-              } else if (override.discount_percentage !== null && override.discount_percentage !== undefined) {
-                finalAmount = struct.amount * (1 - override.discount_percentage / 100);
-              }
-            }
-
-            feeRecords.push({
-              madrasah_id: madrasah.id,
-              student_id: std.id,
-              class_id: selectedClassId,
-              fee_structure_id: struct.id,
-              amount: finalAmount,
-              paid_amount: 0,
-              due_amount: finalAmount,
-              month: month,
-              description: struct.fee_name,
-              status: 'unpaid'
-            });
-          }
-        }
-      }
-
-      if (feeRecords.length > 0) {
-        const { error } = await supabase.from('fees').insert(feeRecords);
-        if (error) throw error;
-      }
-      
-      alert(lang === 'bn' ? `${feeRecords.length} টি ফি জেনারেট করা হয়েছে` : `${feeRecords.length} fees generated successfully`);
-    } catch (e: any) {
-      alert(e.message);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 pb-20">
-      <div className="flex items-center justify-between px-2">
-        <div className="flex items-center gap-3">
-          <button onClick={onBack} className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-[#2563EB] border border-blue-100">
-            <ArrowLeft size={20}/>
+    <div className="space-y-6 animate-in fade-in duration-500 pb-24">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 pt-4">
+        <div className="flex items-center gap-4">
+          <button onClick={onBack} className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-slate-400 shadow-sm border border-slate-100 active:scale-90 transition-all">
+            <ArrowLeft size={24}/>
           </button>
-          <h1 className="text-xl font-black text-[#1E293B] font-noto">{t('fee_collection', lang)}</h1>
+          <div>
+            <h1 className="text-2xl font-black text-slate-800 font-noto">{t('fee_collection', lang)}</h1>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Easy Payment Management</p>
+          </div>
+        </div>
+        <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 shadow-inner">
+          <Wallet size={24} />
         </div>
       </div>
 
-      <div className="flex bg-white p-1.5 rounded-[2rem] border border-slate-100 shadow-sm mx-1">
-        {(['collection', 'setup', 'generation', 'overrides'] as FeeTab[]).map((tab) => (
+      {/* Tabs */}
+      <div className="flex bg-slate-100 p-1.5 rounded-[2rem] mx-4">
+        {(['collect', 'history', 'setup'] as FeeTab[]).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`flex-1 py-3 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all ${
+            className={`flex-1 py-3.5 rounded-[1.5rem] text-[11px] font-black uppercase tracking-widest transition-all ${
               activeTab === tab 
-                ? 'bg-[#2563EB] text-white shadow-premium' 
+                ? 'bg-white text-blue-600 shadow-md' 
                 : 'text-slate-400 hover:text-slate-600'
             }`}
           >
-            {tab === 'collection' ? t('collection', lang) : 
-             tab === 'setup' ? 'Setup' : 
-             tab === 'generation' ? 'Generate' : 'Discount'}
+            {tab === 'collect' ? 'Collect' : tab === 'history' ? 'History' : 'Settings'}
           </button>
         ))}
       </div>
 
-      {activeTab === 'collection' && (
-        <div className="space-y-4 px-1">
+      {activeTab === 'collect' && (
+        <div className="space-y-6 px-4">
           {!selectedStudent ? (
-            <div className="space-y-4">
-              <div className="relative">
-                <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#2563EB]" size={20} />
+            <div className="space-y-6">
+              <div className="relative group">
+                <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-blue-500 group-focus-within:scale-110 transition-transform" size={22} />
                 <input 
                   type="text" 
                   placeholder={t('search_student', lang)}
-                  className="w-full pl-14 pr-6 py-5 bg-white rounded-[2rem] outline-none text-[#1E293B] font-black text-sm shadow-bubble border border-slate-100"
+                  className="w-full pl-16 pr-6 py-6 bg-white rounded-[2.5rem] outline-none text-slate-800 font-black text-lg shadow-xl border-2 border-transparent focus:border-blue-100 transition-all placeholder:text-slate-300"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
               
-              <div className="space-y-2">
+              <div className="grid grid-cols-1 gap-3">
                 {students.map(std => (
                   <button 
                     key={std.id}
@@ -327,69 +289,81 @@ const Fees: React.FC<FeesProps> = ({ lang, madrasah, onBack, role }) => {
                       setSelectedStudent(std);
                       fetchStudentFees(std.id);
                     }}
-                    className="w-full bg-white p-5 rounded-[2rem] border border-slate-100 shadow-bubble flex items-center justify-between group active:scale-[0.98] transition-all"
+                    className="w-full bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-lg flex items-center justify-between group active:scale-[0.98] transition-all"
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-blue-50 text-[#2563EB] rounded-2xl flex items-center justify-center shadow-inner">
-                        <User size={24} />
+                    <div className="flex items-center gap-5">
+                      <div className="w-14 h-14 bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-600 rounded-3xl flex items-center justify-center shadow-inner border border-white">
+                        <User size={28} />
                       </div>
                       <div className="text-left">
-                        <h4 className="font-black text-[#1E3A8A] font-noto leading-tight">{std.student_name}</h4>
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">
-                          Roll: {std.roll} • {std.classes?.class_name}
-                        </p>
+                        <h4 className="font-black text-slate-800 font-noto text-lg leading-tight">{std.student_name}</h4>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[9px] font-black rounded-full uppercase">Roll: {std.roll}</span>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{std.classes?.class_name}</span>
+                        </div>
                       </div>
                     </div>
-                    <ChevronRight size={20} className="text-slate-300 group-hover:translate-x-1 transition-transform" />
+                    <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-blue-50 group-hover:text-blue-500 transition-colors">
+                      <ChevronRight size={20} />
+                    </div>
                   </button>
                 ))}
+                {searchQuery && students.length === 0 && (
+                  <div className="text-center py-10 opacity-40">
+                    <Search size={48} className="mx-auto mb-4" />
+                    <p className="font-black uppercase tracking-widest text-xs">No students found</p>
+                  </div>
+                )}
               </div>
             </div>
           ) : (
-            <div className="space-y-6 animate-in slide-in-from-right-4">
-              <div className="bg-gradient-to-br from-[#1E3A8A] to-[#2563EB] p-6 rounded-[2.5rem] text-white shadow-premium relative overflow-hidden">
+            <div className="space-y-6 animate-in slide-in-from-bottom-10 duration-500">
+              {/* Student Card */}
+              <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-8 rounded-[3rem] text-white shadow-2xl relative overflow-hidden">
+                <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
                 <button 
                   onClick={() => setSelectedStudent(null)}
-                  className="absolute top-4 right-4 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center"
+                  className="absolute top-6 right-6 w-10 h-10 bg-white/20 hover:bg-white/30 rounded-2xl flex items-center justify-center backdrop-blur-md transition-colors"
                 >
-                  <X size={16} />
+                  <X size={20} />
                 </button>
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-white/20 rounded-[1.8rem] flex items-center justify-center backdrop-blur-md">
-                    <User size={32} />
+                <div className="flex items-center gap-6">
+                  <div className="w-20 h-20 bg-white/20 rounded-[2rem] flex items-center justify-center backdrop-blur-md border border-white/30 shadow-inner">
+                    <User size={40} />
                   </div>
                   <div>
-                    <h3 className="text-xl font-black font-noto">{selectedStudent.student_name}</h3>
-                    <p className="text-[10px] font-black uppercase opacity-70 tracking-widest">
-                      Roll: {selectedStudent.roll} • {selectedStudent.classes?.class_name}
-                    </p>
+                    <h3 className="text-2xl font-black font-noto">{selectedStudent.student_name}</h3>
+                    <div className="flex items-center gap-3 mt-2">
+                      <span className="px-3 py-1 bg-white/20 rounded-full text-[10px] font-black uppercase tracking-widest">Roll: {selectedStudent.roll}</span>
+                      <span className="text-xs font-bold opacity-80">{selectedStudent.classes?.class_name}</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <div className="flex items-center justify-between px-3">
-                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Select Items to Pay</h4>
+              {/* Fee List */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between px-2">
+                  <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Pending Fees</h4>
                   <button 
-                    onClick={() => {
-                      if (selectedFeeIds.size === studentFees.length) setSelectedFeeIds(new Set());
-                      else setSelectedFeeIds(new Set(studentFees.map(f => f.id)));
-                    }}
-                    className="text-[9px] font-black text-[#2563EB] uppercase"
+                    onClick={() => setShowQuickAddFee(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-colors"
                   >
-                    {selectedFeeIds.size === studentFees.length ? 'Deselect All' : 'Select All'}
+                    <Plus size={14} /> Quick Charge
                   </button>
                 </div>
                 
                 {loading ? (
-                  <div className="flex justify-center py-10"><Loader2 className="animate-spin text-[#2563EB]" /></div>
+                  <div className="flex justify-center py-10"><Loader2 className="animate-spin text-blue-600" /></div>
                 ) : studentFees.length === 0 ? (
-                  <div className="bg-white p-10 rounded-[2.5rem] text-center border border-slate-100 shadow-bubble">
-                    <CheckCircle2 size={40} className="mx-auto text-emerald-400 mb-3" />
-                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest">No Pending Fees</p>
+                  <div className="bg-white p-12 rounded-[3rem] text-center border-2 border-dashed border-slate-100">
+                    <div className="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-3xl flex items-center justify-center mx-auto mb-4">
+                      <CheckCircle2 size={32} />
+                    </div>
+                    <p className="text-sm font-black text-slate-400 uppercase tracking-widest">All fees are paid!</p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {studentFees.map(fee => (
                       <div 
                         key={fee.id}
@@ -399,27 +373,27 @@ const Fees: React.FC<FeesProps> = ({ lang, madrasah, onBack, role }) => {
                           else next.add(fee.id);
                           setSelectedFeeIds(next);
                         }}
-                        className={`p-4 rounded-[1.8rem] border transition-all flex items-center justify-between cursor-pointer ${
+                        className={`p-5 rounded-[2.2rem] border-2 transition-all flex items-center justify-between cursor-pointer active:scale-[0.98] ${
                           selectedFeeIds.has(fee.id) 
-                            ? 'bg-white border-[#2563EB] shadow-md' 
-                            : 'bg-white/50 border-slate-100 opacity-60'
+                            ? 'bg-white border-blue-500 shadow-xl' 
+                            : 'bg-slate-50 border-transparent opacity-60'
                         }`}
                       >
-                        <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                            selectedFeeIds.has(fee.id) ? 'bg-blue-50 text-[#2563EB]' : 'bg-slate-100 text-slate-300'
+                        <div className="flex items-center gap-4">
+                          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
+                            selectedFeeIds.has(fee.id) ? 'bg-blue-50 text-blue-600' : 'bg-slate-200 text-slate-400'
                           }`}>
-                            <ListChecks size={20} />
+                            {selectedFeeIds.has(fee.id) ? <CheckCircle2 size={24} /> : <div className="w-6 h-6 rounded-full border-2 border-slate-300" />}
                           </div>
                           <div>
-                            <h5 className="text-sm font-black text-[#1E3A8A] font-noto leading-tight">{fee.description}</h5>
-                            <p className="text-[9px] font-black text-slate-400 uppercase mt-0.5">{fee.month}</p>
+                            <h5 className="text-base font-black text-slate-800 font-noto leading-tight">{fee.description}</h5>
+                            <p className="text-[10px] font-black text-slate-400 uppercase mt-1 tracking-wider">{fee.month}</p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm font-black text-[#2563EB]">৳{fee.due_amount}</p>
+                          <p className="text-lg font-black text-blue-600">৳{fee.due_amount}</p>
                           {fee.status === 'partial' && (
-                            <p className="text-[8px] font-black text-emerald-500 uppercase">Paid: ৳{fee.paid_amount}</p>
+                            <p className="text-[9px] font-black text-emerald-500 uppercase">Paid: ৳{fee.paid_amount}</p>
                           )}
                         </div>
                       </div>
@@ -428,31 +402,31 @@ const Fees: React.FC<FeesProps> = ({ lang, madrasah, onBack, role }) => {
                 )}
               </div>
 
+              {/* Payment Box */}
               {selectedFeeIds.size > 0 && (
-                <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-bubble space-y-5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Total Selected Due</span>
-                    <span className="text-xl font-black text-[#1E3A8A]">
+                <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-2xl space-y-6 sticky bottom-4 z-20">
+                  <div className="flex items-center justify-between px-2">
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Total Payable</span>
+                    <span className="text-2xl font-black text-slate-800">
                       ৳{studentFees.filter(f => selectedFeeIds.has(f.id)).reduce((sum, f) => sum + f.due_amount, 0)}
                     </span>
                   </div>
                   
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Payment Amount</label>
+                  <div className="space-y-3">
                     <div className="relative">
-                      <Banknote className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={20} />
+                      <Banknote className="absolute left-6 top-1/2 -translate-y-1/2 text-blue-500" size={24} />
                       <input 
                         type="number" 
-                        className="w-full h-14 bg-slate-50 rounded-2xl px-12 font-black text-lg text-[#2563EB] outline-none border-2 border-transparent focus:border-[#2563EB]/20 transition-all"
+                        className="w-full h-20 bg-slate-50 rounded-[1.8rem] pl-16 pr-24 font-black text-2xl text-blue-600 outline-none border-2 border-transparent focus:border-blue-200 transition-all"
                         placeholder="0.00"
                         value={paymentAmount}
                         onChange={(e) => setPaymentAmount(e.target.value)}
                       />
                       <button 
                         onClick={() => setPaymentAmount(studentFees.filter(f => selectedFeeIds.has(f.id)).reduce((sum, f) => sum + f.due_amount, 0).toString())}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-[#2563EB] uppercase"
+                        className="absolute right-6 top-1/2 -translate-y-1/2 px-4 py-2 bg-blue-600 text-white text-[10px] font-black rounded-xl uppercase shadow-lg active:scale-90 transition-all"
                       >
-                        Full Pay
+                        Full
                       </button>
                     </div>
                   </div>
@@ -460,9 +434,9 @@ const Fees: React.FC<FeesProps> = ({ lang, madrasah, onBack, role }) => {
                   <button 
                     onClick={handleCollectPayment}
                     disabled={isSaving || !paymentAmount}
-                    className="w-full py-5 bg-[#2563EB] text-white font-black rounded-full shadow-premium flex items-center justify-center gap-3 active:scale-95 transition-all"
+                    className="w-full py-6 bg-blue-600 text-white font-black rounded-[1.8rem] shadow-xl shadow-blue-200 flex items-center justify-center gap-4 active:scale-95 transition-all text-lg"
                   >
-                    {isSaving ? <Loader2 className="animate-spin" /> : <><Save size={20}/> {t('record_payment', lang)}</>}
+                    {isSaving ? <Loader2 className="animate-spin" /> : <><Receipt size={24}/> {t('record_payment', lang)}</>}
                   </button>
                 </div>
               )}
@@ -472,46 +446,46 @@ const Fees: React.FC<FeesProps> = ({ lang, madrasah, onBack, role }) => {
       )}
 
       {activeTab === 'setup' && (
-        <div className="space-y-6 px-1">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between px-3">
-              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('fee_categories', lang)}</h4>
-              <button onClick={() => setShowAddCategory(true)} className="w-8 h-8 bg-blue-50 text-[#2563EB] rounded-lg flex items-center justify-center"><Plus size={18}/></button>
+        <div className="space-y-8 px-4">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between px-2">
+              <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Fee Categories</h4>
+              <button onClick={() => setShowAddCategory(true)} className="w-10 h-10 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center shadow-sm active:scale-90 transition-all"><Plus size={20}/></button>
             </div>
-            <div className="grid grid-cols-1 gap-2">
+            <div className="grid grid-cols-1 gap-3">
               {categories.map(cat => (
-                <div key={cat.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center"><LayoutGrid size={20}/></div>
+                <div key={cat.id} className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-md flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center"><LayoutGrid size={24}/></div>
                     <div>
-                      <h5 className="text-sm font-black text-[#1E3A8A] font-noto">{cat.name}</h5>
-                      <p className="text-[9px] font-black text-slate-400 uppercase">{cat.type}</p>
+                      <h5 className="text-base font-black text-slate-800 font-noto">{cat.name}</h5>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{cat.type}</p>
                     </div>
                   </div>
-                  <button className="text-slate-300"><Edit3 size={16}/></button>
+                  <button className="w-10 h-10 rounded-xl hover:bg-slate-50 text-slate-300 transition-colors"><Edit3 size={18}/></button>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="space-y-3">
-            <div className="flex items-center justify-between px-3">
-              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('fee_structures', lang)}</h4>
-              <button onClick={() => setShowAddStructure(true)} className="w-8 h-8 bg-blue-50 text-[#2563EB] rounded-lg flex items-center justify-center"><Plus size={18}/></button>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between px-2">
+              <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Standard Fee Setup</h4>
+              <button onClick={() => setShowAddStructure(true)} className="w-10 h-10 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center shadow-sm active:scale-90 transition-all"><Plus size={20}/></button>
             </div>
-            <div className="grid grid-cols-1 gap-2">
+            <div className="grid grid-cols-1 gap-3">
               {structures.map(struct => (
-                <div key={struct.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-50 text-[#2563EB] rounded-xl flex items-center justify-center"><Banknote size={20}/></div>
+                <div key={struct.id} className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-md flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center"><Banknote size={24}/></div>
                     <div>
-                      <h5 className="text-sm font-black text-[#1E3A8A] font-noto">{struct.fee_name}</h5>
-                      <p className="text-[9px] font-black text-slate-400 uppercase">
+                      <h5 className="text-base font-black text-slate-800 font-noto">{struct.fee_name}</h5>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                         {struct.classes?.class_name} • ৳{struct.amount}
                       </p>
                     </div>
                   </div>
-                  <button className="text-slate-300"><Edit3 size={16}/></button>
+                  <button className="w-10 h-10 rounded-xl hover:bg-slate-50 text-slate-300 transition-colors"><Edit3 size={18}/></button>
                 </div>
               ))}
             </div>
@@ -519,192 +493,68 @@ const Fees: React.FC<FeesProps> = ({ lang, madrasah, onBack, role }) => {
         </div>
       )}
 
-      {activeTab === 'generation' && (
-        <div className="px-1 space-y-6">
-          <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-bubble space-y-6">
-            <div className="text-center space-y-2">
-              <div className="w-16 h-16 bg-blue-50 text-[#2563EB] rounded-[1.5rem] flex items-center justify-center mx-auto shadow-inner">
-                <Calculator size={32} />
-              </div>
-              <h3 className="text-xl font-black text-[#1E3A8A] font-noto">{t('fee_generation', lang)}</h3>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed">
-                Generate monthly fees for all students in a class
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Select Class</label>
-                <select 
-                  className="w-full h-14 bg-slate-50 rounded-2xl px-6 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20 appearance-none"
-                  value={selectedClassId}
-                  onChange={(e) => setSelectedClassId(e.target.value)}
-                >
-                  <option value="">{t('select_class_placeholder', lang)}</option>
-                  {classes.map(c => <option key={c.id} value={c.id}>{c.class_name}</option>)}
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Select Month</label>
-                <input 
-                  type="month" 
-                  className="w-full h-14 bg-slate-50 rounded-2xl px-6 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20"
-                  defaultValue={new Date().toISOString().slice(0, 7)}
-                  id="gen-month"
-                />
-              </div>
-
-              <button 
-                onClick={() => {
-                  const month = (document.getElementById('gen-month') as HTMLInputElement).value;
-                  handleGenerateFees(month);
-                }}
-                disabled={isSaving || !selectedClassId}
-                className="w-full py-5 bg-[#2563EB] text-white font-black rounded-full shadow-premium flex items-center justify-center gap-3 active:scale-95 transition-all mt-4"
-              >
-                {isSaving ? <Loader2 className="animate-spin" /> : <><ArrowUpRight size={20}/> {t('generate_fees', lang)}</>}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'overrides' && (
-        <div className="px-1 space-y-4">
-          <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-bubble space-y-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-black text-[#1E3A8A] font-noto">Apply Student Discount</h3>
-              <div className="w-10 h-10 bg-blue-50 text-[#2563EB] rounded-xl flex items-center justify-center">
-                <Percent size={20} />
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-                <input 
-                  type="text" 
-                  placeholder="Search student for discount..."
-                  className="w-full h-12 pl-12 pr-4 bg-slate-50 rounded-xl font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-
-              {selectedStudent ? (
-                <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 flex items-center justify-between">
-                  <div>
-                    <h4 className="font-black text-[#1E3A8A] font-noto">{selectedStudent.student_name}</h4>
-                    <p className="text-[9px] font-black text-[#2563EB] uppercase tracking-widest">
-                      Roll: {selectedStudent.roll} • {selectedStudent.classes?.class_name}
-                    </p>
-                  </div>
-                  <button onClick={() => setSelectedStudent(null)} className="text-slate-400 hover:text-red-500"><X size={18}/></button>
-                </div>
-              ) : (
-                <div className="space-y-1 max-h-40 overflow-y-auto">
-                  {students.map(std => (
-                    <button 
-                      key={std.id}
-                      onClick={() => setSelectedStudent(std)}
-                      className="w-full p-3 text-left hover:bg-slate-50 rounded-xl transition-colors flex items-center gap-3"
-                    >
-                      <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-slate-400 border border-slate-100"><User size={14}/></div>
-                      <div>
-                        <p className="text-xs font-black text-[#1E3A8A]">{std.student_name}</p>
-                        <p className="text-[8px] font-black text-slate-400 uppercase">Roll: {std.roll}</p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {selectedStudent && (
-                <div className="space-y-4 pt-2 border-t border-slate-100">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Select Fee Structure</label>
-                    <select 
-                      className="w-full h-12 bg-slate-50 rounded-xl px-4 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20 appearance-none"
-                      id="override-struct"
-                    >
-                      <option value="">Select Structure</option>
-                      {structures.filter(s => s.class_id === selectedStudent.class_id).map(s => (
-                        <option key={s.id} value={s.id}>{s.fee_name} (৳{s.amount})</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Override Amount</label>
-                      <input type="number" id="override-amount" className="w-full h-12 bg-slate-50 rounded-xl px-4 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20" placeholder="e.g. 400" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Discount %</label>
-                      <input type="number" id="override-discount" className="w-full h-12 bg-slate-50 rounded-xl px-4 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20" placeholder="e.g. 10" />
-                    </div>
-                  </div>
-
-                  <button 
-                    onClick={async () => {
-                      const structId = (document.getElementById('override-struct') as HTMLSelectElement).value;
-                      const amount = (document.getElementById('override-amount') as HTMLInputElement).value;
-                      const discount = (document.getElementById('override-discount') as HTMLInputElement).value;
-                      
-                      if (!structId || (!amount && !discount)) return;
-                      
-                      setIsSaving(true);
-                      const { error } = await supabase.from('student_fee_overrides').upsert({
-                        student_id: selectedStudent.id,
-                        fee_structure_id: structId,
-                        override_amount: amount ? parseFloat(amount) : null,
-                        discount_percentage: discount ? parseFloat(discount) : null
-                      });
-                      
-                      if (!error) {
-                        alert(t('success', lang));
-                        setSelectedStudent(null);
-                      } else {
-                        alert(error.message);
-                      }
-                      setIsSaving(false);
-                    }}
-                    disabled={isSaving}
-                    className="w-full py-4 bg-[#2563EB] text-white font-black rounded-xl shadow-premium flex items-center justify-center gap-3 active:scale-95 transition-all"
-                  >
-                    {isSaving ? <Loader2 className="animate-spin" /> : <><Save size={18}/> Save Discount</>}
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-
       {/* MODALS */}
-      {showAddCategory && (
-        <div className="fixed inset-0 bg-[#080A12]/60 backdrop-blur-xl z-[999] flex items-center justify-center p-6">
+      {showQuickAddFee && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xl z-[999] flex items-center justify-center p-6">
           <div className="bg-white w-full max-w-sm rounded-[3rem] p-8 space-y-6 animate-in zoom-in-95">
              <div className="flex items-center justify-between">
-               <h3 className="text-xl font-black text-[#1E3A8A]">{t('add_category', lang)}</h3>
-               <button onClick={() => setShowAddCategory(false)} className="w-9 h-9 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center"><X size={18} /></button>
+               <h3 className="text-xl font-black text-slate-800">Quick Charge</h3>
+               <button onClick={() => setShowQuickAddFee(false)} className="w-10 h-10 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center"><X size={20} /></button>
              </div>
-             <div className="space-y-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Category Name</label>
-                  <input type="text" className="w-full h-14 bg-slate-50 rounded-2xl px-6 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20 transition-all" placeholder="e.g. Monthly Fee" value={catName} onChange={(e) => setCatName(e.target.value)} />
+             <div className="space-y-5">
+                <div className="space-y-2">
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-1">Fee Description</label>
+                  <input 
+                    type="text" 
+                    className="w-full h-16 bg-slate-50 rounded-2xl px-6 font-black text-sm outline-none border-2 border-transparent focus:border-blue-200 transition-all" 
+                    placeholder="e.g. Exam Fee, Books" 
+                    value={quickFeeDesc} 
+                    onChange={(e) => setQuickFeeDesc(e.target.value)} 
+                  />
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Type</label>
-                  <select className="w-full h-14 bg-slate-50 rounded-2xl px-6 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20 appearance-none" value={catType} onChange={(e) => setCatType(e.target.value as any)}>
+                <div className="space-y-2">
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-1">Amount (৳)</label>
+                  <input 
+                    type="number" 
+                    className="w-full h-16 bg-slate-50 rounded-2xl px-6 font-black text-lg text-blue-600 outline-none border-2 border-transparent focus:border-blue-200 transition-all" 
+                    placeholder="0.00" 
+                    value={quickFeeAmount} 
+                    onChange={(e) => setQuickFeeAmount(e.target.value)} 
+                  />
+                </div>
+                <button 
+                  onClick={handleQuickAddFee} 
+                  disabled={isSaving || !quickFeeAmount || !quickFeeDesc} 
+                  className="w-full py-6 bg-emerald-600 text-white font-black rounded-[1.5rem] shadow-xl shadow-emerald-100 flex items-center justify-center gap-3 active:scale-95 transition-all"
+                >
+                  {isSaving ? <Loader2 className="animate-spin" /> : <><Plus size={20}/> Add Charge</>}
+                </button>
+             </div>
+          </div>
+        </div>
+      )}
+
+      {showAddCategory && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xl z-[999] flex items-center justify-center p-6">
+          <div className="bg-white w-full max-w-sm rounded-[3rem] p-8 space-y-6 animate-in zoom-in-95">
+             <div className="flex items-center justify-between">
+               <h3 className="text-xl font-black text-slate-800">{t('add_category', lang)}</h3>
+               <button onClick={() => setShowAddCategory(false)} className="w-10 h-10 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center"><X size={20} /></button>
+             </div>
+             <div className="space-y-5">
+                <div className="space-y-2">
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-1">Category Name</label>
+                  <input type="text" className="w-full h-16 bg-slate-50 rounded-2xl px-6 font-black text-sm outline-none border-2 border-transparent focus:border-blue-200 transition-all" placeholder="e.g. Monthly Fee" value={catName} onChange={(e) => setCatName(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-1">Type</label>
+                  <select className="w-full h-16 bg-slate-50 rounded-2xl px-6 font-black text-sm outline-none border-2 border-transparent focus:border-blue-200 appearance-none" value={catType} onChange={(e) => setCatType(e.target.value as any)}>
                     <option value="recurring">Recurring (Monthly)</option>
                     <option value="one-time">One-time</option>
                     <option value="optional">Optional</option>
                   </select>
                 </div>
-                <button onClick={handleAddCategory} disabled={isSaving} className="w-full py-5 bg-[#2563EB] text-white font-black rounded-full shadow-premium flex items-center justify-center gap-3 active:scale-95 transition-all">
+                <button onClick={handleAddCategory} disabled={isSaving} className="w-full py-6 bg-blue-600 text-white font-black rounded-[1.5rem] shadow-xl shadow-blue-100 flex items-center justify-center gap-3 active:scale-95 transition-all">
                   {isSaving ? <Loader2 className="animate-spin" /> : 'Save Category'}
                 </button>
              </div>
@@ -713,36 +563,36 @@ const Fees: React.FC<FeesProps> = ({ lang, madrasah, onBack, role }) => {
       )}
 
       {showAddStructure && (
-        <div className="fixed inset-0 bg-[#080A12]/60 backdrop-blur-xl z-[999] flex items-center justify-center p-6">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xl z-[999] flex items-center justify-center p-6">
           <div className="bg-white w-full max-w-sm rounded-[3rem] p-8 space-y-6 animate-in zoom-in-95 max-h-[90vh] overflow-y-auto">
              <div className="flex items-center justify-between">
-               <h3 className="text-xl font-black text-[#1E3A8A]">{t('setup_fee', lang)}</h3>
-               <button onClick={() => setShowAddStructure(false)} className="w-9 h-9 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center"><X size={18} /></button>
+               <h3 className="text-xl font-black text-slate-800">{t('setup_fee', lang)}</h3>
+               <button onClick={() => setShowAddStructure(false)} className="w-10 h-10 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center"><X size={20} /></button>
              </div>
-             <div className="space-y-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Class</label>
-                  <select className="w-full h-14 bg-slate-50 rounded-2xl px-6 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20 appearance-none" value={structClassId} onChange={(e) => setStructClassId(e.target.value)}>
+             <div className="space-y-5">
+                <div className="space-y-2">
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-1">Class</label>
+                  <select className="w-full h-16 bg-slate-50 rounded-2xl px-6 font-black text-sm outline-none border-2 border-transparent focus:border-blue-200 appearance-none" value={structClassId} onChange={(e) => setStructClassId(e.target.value)}>
                     <option value="">Select Class</option>
                     {classes.map(c => <option key={c.id} value={c.id}>{c.class_name}</option>)}
                   </select>
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Category</label>
-                  <select className="w-full h-14 bg-slate-50 rounded-2xl px-6 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20 appearance-none" value={structCatId} onChange={(e) => setStructCatId(e.target.value)}>
+                <div className="space-y-2">
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-1">Category</label>
+                  <select className="w-full h-16 bg-slate-50 rounded-2xl px-6 font-black text-sm outline-none border-2 border-transparent focus:border-blue-200 appearance-none" value={structCatId} onChange={(e) => setStructCatId(e.target.value)}>
                     <option value="">Select Category</option>
                     {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Fee Name</label>
-                  <input type="text" className="w-full h-14 bg-slate-50 rounded-2xl px-6 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20 transition-all" placeholder="e.g. Tuition Fee" value={structName} onChange={(e) => setStructName(e.target.value)} />
+                <div className="space-y-2">
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-1">Fee Name</label>
+                  <input type="text" className="w-full h-16 bg-slate-50 rounded-2xl px-6 font-black text-sm outline-none border-2 border-transparent focus:border-blue-200 transition-all" placeholder="e.g. Tuition Fee" value={structName} onChange={(e) => setStructName(e.target.value)} />
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Amount</label>
-                  <input type="number" className="w-full h-14 bg-slate-50 rounded-2xl px-6 font-black text-sm outline-none border-2 border-transparent focus:border-[#2563EB]/20 transition-all" placeholder="0.00" value={structAmount} onChange={(e) => setStructAmount(e.target.value)} />
+                <div className="space-y-2">
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-1">Amount</label>
+                  <input type="number" className="w-full h-16 bg-slate-50 rounded-2xl px-6 font-black text-lg text-blue-600 outline-none border-2 border-transparent focus:border-blue-200 transition-all" placeholder="0.00" value={structAmount} onChange={(e) => setStructAmount(e.target.value)} />
                 </div>
-                <button onClick={handleAddStructure} disabled={isSaving} className="w-full py-5 bg-[#2563EB] text-white font-black rounded-full shadow-premium flex items-center justify-center gap-3 active:scale-95 transition-all">
+                <button onClick={handleAddStructure} disabled={isSaving} className="w-full py-6 bg-blue-600 text-white font-black rounded-[1.5rem] shadow-xl shadow-blue-100 flex items-center justify-center gap-3 active:scale-95 transition-all">
                   {isSaving ? <Loader2 className="animate-spin" /> : 'Save Structure'}
                 </button>
              </div>
