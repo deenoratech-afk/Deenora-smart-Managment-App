@@ -23,8 +23,7 @@ RETURNS TABLE (
     total_paid NUMERIC,
     balance_due NUMERIC,
     status TEXT,
-    fee_breakdown JSONB,
-    paid_map JSONB
+    fee_breakdown JSONB
 ) 
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -35,7 +34,7 @@ BEGIN
     WITH class_fees AS (
         -- ঐ মাদরাসার জন্য নির্ধারিত ফি স্ট্রাকচার
         SELECT 
-            fs.class_id as cid, 
+            fs.class_id, 
             COALESCE(SUM(fs.amount), 0) as total_fixed_fee,
             jsonb_agg(jsonb_build_object(
                 'id', fs.id,
@@ -50,32 +49,32 @@ BEGIN
     student_payments AS (
         -- ঐ নির্দিষ্ট মাসের জন্য জমা হওয়া টাকা
         SELECT 
-            f.student_id as sid, 
+            f.student_id, 
             COALESCE(SUM(f.amount_paid), 0) as total_collected,
-            jsonb_object_agg(COALESCE(f.fee_structure_id::text, 'other'), f.amount_paid) as p_map
+            jsonb_object_agg(COALESCE(f.fee_structure_id::text, 'other'), f.amount_paid) as paid_map
         FROM public.fees f
         WHERE f.madrasah_id = p_madrasah_id AND f.month = p_month
         GROUP BY f.student_id
     )
     SELECT 
-        s.id,
+        s.id as student_id,
         s.student_name,
         s.roll,
         s.class_id,
-        COALESCE(cf.total_fixed_fee, 0)::NUMERIC,
-        COALESCE(sp.total_collected, 0)::NUMERIC,
-        (COALESCE(cf.total_fixed_fee, 0) - COALESCE(sp.total_collected, 0))::NUMERIC,
+        COALESCE(cf.total_fixed_fee, 0)::NUMERIC as total_payable,
+        COALESCE(sp.total_collected, 0)::NUMERIC as total_paid,
+        (COALESCE(cf.total_fixed_fee, 0) - COALESCE(sp.total_collected, 0))::NUMERIC as balance_due,
         CASE 
             WHEN COALESCE(cf.total_fixed_fee, 0) <= 0 THEN 'no_fee'
             WHEN COALESCE(sp.total_collected, 0) >= COALESCE(cf.total_fixed_fee, 0) THEN 'paid'
             WHEN COALESCE(sp.total_collected, 0) > 0 THEN 'partial'
             ELSE 'unpaid'
-        END::TEXT,
-        COALESCE(cf.breakdown, '[]'::jsonb),
-        COALESCE(sp.p_map, '{}'::jsonb)
+        END as status,
+        COALESCE(cf.breakdown, '[]'::jsonb) as fee_breakdown,
+        COALESCE(sp.paid_map, '{}'::jsonb) as paid_map
     FROM public.students s
-    LEFT JOIN class_fees cf ON s.class_id = cf.cid
-    LEFT JOIN student_payments sp ON s.id = sp.sid
+    LEFT JOIN class_fees cf ON s.class_id = cf.class_id
+    LEFT JOIN student_payments sp ON s.id = sp.student_id
     WHERE s.madrasah_id = p_madrasah_id
     AND (p_class_id IS NULL OR s.class_id = p_class_id)
     ORDER BY s.roll ASC NULLS LAST;

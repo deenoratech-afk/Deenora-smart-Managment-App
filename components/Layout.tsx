@@ -1,6 +1,5 @@
 
-import * as React from 'react';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Home, User, BookOpen, Wallet, ShieldCheck, BarChart3, CreditCard, RefreshCw, Smartphone, Bell, X, Info, AlertTriangle, CheckCircle2, Clock, Calculator, ClipboardList, GraduationCap, Banknote, MessageSquare } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { View, Language, Madrasah, Transaction, Profile } from '../types';
@@ -48,7 +47,7 @@ const Layout: React.FC<LayoutProps> = ({ children, currentView, setView, lang, m
     if (tab === 'account' && path === '/account') return true;
     if (tab === 'dashboard' && path === '/admin/dashboard') return true;
     if (tab === 'approvals' && path === '/admin/approvals') return true;
-    if (tab === 'accounting' && path === '/fees') return true;
+    if (tab === 'accounting' && path === '/accounting') return true;
     if (tab === 'attendance' && path === '/attendance') return true;
     if (tab === 'exams' && path === '/exams') return true;
     if (tab === 'wallet' && path === '/wallet') return true;
@@ -119,9 +118,9 @@ const Layout: React.FC<LayoutProps> = ({ children, currentView, setView, lang, m
                 <span className="text-[9px] font-black font-noto opacity-80">পরীক্ষা</span>
               </Link>
               {(role === 'madrasah_admin' || role === 'accountant') && (
-                <Link to="/fees" className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('accounting') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
+                <Link to="/accounting" className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('accounting') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>
                   <Banknote size={20} />
-                  <span className="text-[9px] font-black font-noto opacity-80">ফি কালেকশন</span>
+                  <span className="text-[9px] font-black font-noto opacity-80">হিসাব</span>
                 </Link>
               )}
               <Link to="/classes" className={`relative flex flex-col items-center gap-1 transition-all flex-1 ${isTabActive('classes') ? 'text-[#2563EB]' : 'text-[#94A3B8]'}`}>

@@ -140,69 +140,17 @@ const Exams: React.FC<ExamsProps> = ({ lang, madrasah, onBack, role }) => {
   const handleAddExam = async () => {
     if (!madrasah || !examName || !classId) return;
     setIsSaving(true);
-    try {
-      // 1. Create the exam
-      const { data: newExam, error } = await supabase.from('exams').insert({
-        madrasah_id: madrasah.id,
-        class_id: classId,
-        exam_name: examName,
-        exam_date: examDate
-      }).select().single();
-
-      if (error) throw error;
-
-      // 2. Auto-generate exam fees if structure exists
-      // Find "Exam" category
-      const { data: categories } = await supabase
-        .from('fee_categories')
-        .select('id')
-        .eq('madrasah_id', madrasah.id)
-        .ilike('name', '%Exam%')
-        .maybeSingle();
-
-      if (categories) {
-        const { data: structure } = await supabase
-          .from('fee_structures')
-          .select('*')
-          .eq('madrasah_id', madrasah.id)
-          .eq('class_id', classId)
-          .eq('category_id', categories.id)
-          .maybeSingle();
-
-        if (structure) {
-          // Get students of this class
-          const { data: students } = await supabase
-            .from('students')
-            .select('id')
-            .eq('class_id', classId);
-
-          if (students && students.length > 0) {
-            const month = new Date(examDate).toISOString().slice(0, 7);
-            const feeRecords = students.map(std => ({
-              madrasah_id: madrasah.id,
-              student_id: std.id,
-              class_id: classId,
-              fee_structure_id: structure.id,
-              amount: structure.amount,
-              paid_amount: 0,
-              due_amount: structure.amount,
-              month: month,
-              description: `Exam Fee: ${examName}`,
-              status: 'unpaid'
-            }));
-
-            await supabase.from('fees').insert(feeRecords);
-          }
-        }
-      }
-
+    const { error } = await supabase.from('exams').insert({
+      madrasah_id: madrasah.id,
+      class_id: classId,
+      exam_name: examName,
+      exam_date: examDate
+    });
+    if (!error) {
       setShowAddExam(false);
       fetchExams();
-    } catch (e: any) {
-      alert(e.message);
-    } finally {
-      setIsSaving(false);
     }
+    setIsSaving(false);
   };
 
   const handleAddSubject = async () => {

@@ -3,9 +3,9 @@ const CACHE_NAME = 'deenora-v2-cache-v15';
 const CORE_ASSETS = [
   './',
   './index.html',
-  './src/main.tsx',
+  './index.tsx',
   './manifest.json',
-  './src/index.css'
+  './index.css'
 ];
 
 // On install, cache all core assets immediately

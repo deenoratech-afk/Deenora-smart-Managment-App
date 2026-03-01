@@ -1,6 +1,5 @@
 
-import * as React from 'react';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { offlineService } from './services/offline.service';
 import { useAuth } from './hooks/useAuth';
 import { supabase } from './supabase';
@@ -16,20 +15,20 @@ import AdminPanel from './pages/AdminPanel';
 import WalletSMS from './pages/WalletSMS';
 import DataManagement from './pages/DataManagement';
 import Teachers from './pages/Teachers';
+import Accounting from './pages/Accounting';
 import Attendance from './pages/Attendance';
 import Exams from './pages/Exams';
-import Fees from './pages/Fees';
-import { Routes, Route, useNavigate, useLocation, Navigate, useParams, BrowserRouter } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation, Navigate, useParams } from 'react-router-dom';
 import { View, Class, Student, Language } from './types';
 import { BookOpen, ShieldAlert, Loader2 } from 'lucide-react';
 
-function AppContent() {
+const App: React.FC = () => {
   const { session, profile, madrasah, loading, authError, handleLogout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
-  const [dataVersion, setDataVersion] = React.useState(0); 
-  const [lang, setLang] = React.useState<Language>(() => (localStorage.getItem('app_lang') as Language) || 'bn');
+  const [dataVersion, setDataVersion] = useState(0); 
+  const [lang, setLang] = useState<Language>(() => (localStorage.getItem('app_lang') as Language) || 'bn');
 
   const triggerRefresh = () => setDataVersion(prev => prev + 1);
 
@@ -48,14 +47,13 @@ function AppContent() {
     if (path === '/accounting') return 'accounting';
     if (path === '/attendance') return 'attendance';
     if (path === '/exams') return 'exams';
-    if (path === '/fees') return 'accounting';
     return 'home';
   };
 
   const currentView = getViewFromPath(location.pathname);
   const role = profile?.role || 'teacher';
 
-  React.useEffect(() => {
+  useEffect(() => {
     const handleStatusChange = () => {
       if (navigator.onLine) offlineService.processQueue();
     };
@@ -97,8 +95,7 @@ function AppContent() {
       else if (v === 'admin-panel') navigate('/admin');
       else if (v === 'admin-approvals') navigate('/admin/approvals');
       else if (v === 'admin-dashboard') navigate('/admin/dashboard');
-
-      else if (v === 'accounting') navigate('/fees');
+      else if (v === 'accounting') navigate('/accounting');
       else if (v === 'attendance') navigate('/attendance');
       else if (v === 'exams') navigate('/exams');
     }} lang={lang} madrasah={madrasah} profile={profile}>
@@ -111,7 +108,7 @@ function AppContent() {
             triggerRefresh={triggerRefresh} 
             madrasahId={madrasah?.id} 
             onNavigateToWallet={() => navigate('/wallet')}
-
+            onNavigateToAccounting={() => navigate('/accounting')}
             onNavigateToAttendance={() => navigate('/attendance')}
             onNavigateToExams={() => navigate('/exams')}
           />
@@ -193,33 +190,23 @@ function AppContent() {
         <Route path="/wallet" element={<WalletSMS lang={lang} madrasah={madrasah} triggerRefresh={triggerRefresh} dataVersion={dataVersion} />} />
         <Route path="/data" element={<DataManagement lang={lang} madrasah={madrasah} onBack={() => navigate('/account')} triggerRefresh={triggerRefresh} />} />
         <Route path="/teachers" element={<Teachers lang={lang} madrasah={madrasah} onBack={() => navigate('/account')} />} />
-
+        <Route path="/accounting" element={<Accounting lang={lang} madrasah={madrasah} onBack={() => navigate('/')} role={role} />} />
         <Route path="/attendance" element={<Attendance lang={lang} madrasah={madrasah} onBack={() => navigate('/')} userId={session?.user?.id} />} />
-        <Route path="/fees" element={<Fees lang={lang} madrasah={madrasah} onBack={() => navigate('/')} role={role} />} />
         <Route path="/exams" element={<Exams lang={lang} madrasah={madrasah} onBack={() => navigate('/')} role={role} />} />
         
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Layout>
   );
-}
-
-function App() {
-  return (
-    <BrowserRouter>
-      <AppContent />
-    </BrowserRouter>
-  );
-}
-;
+};
 
 // Helper wrappers to handle params
 const StudentsWrapper: React.FC<any> = ({ lang, dataVersion, triggerRefresh, role, madrasahId }) => {
   const { classId } = useParams();
   const navigate = useNavigate();
-  const [selectedClass, setSelectedClass] = React.useState<Class | null>(null);
+  const [selectedClass, setSelectedClass] = useState<Class | null>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchClass = async () => {
       const { data } = await supabase.from('classes').select('*').eq('id', classId).single();
       if (data) setSelectedClass(data);
@@ -248,9 +235,9 @@ const StudentsWrapper: React.FC<any> = ({ lang, dataVersion, triggerRefresh, rol
 const StudentDetailsWrapper: React.FC<any> = ({ lang, role, madrasahId, triggerRefresh }) => {
   const { studentId } = useParams();
   const navigate = useNavigate();
-  const [student, setStudent] = React.useState<Student | null>(null);
+  const [student, setStudent] = useState<Student | null>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchStudent = async () => {
       const { data } = await supabase.from('students').select('*, classes(*)').eq('id', studentId).single();
       if (data) setStudent(data);
@@ -276,9 +263,9 @@ const StudentDetailsWrapper: React.FC<any> = ({ lang, role, madrasahId, triggerR
 const StudentFormWrapper: React.FC<any> = ({ madrasah, triggerRefresh, lang }) => {
   const { studentId } = useParams();
   const navigate = useNavigate();
-  const [student, setStudent] = React.useState<Student | null>(null);
+  const [student, setStudent] = useState<Student | null>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (studentId) {
       const fetchStudent = async () => {
         const { data } = await supabase.from('students').select('*').eq('id', studentId).single();
