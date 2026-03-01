@@ -1,4 +1,8 @@
 
+-- 0. ENABLE EXTENSIONS
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+CREATE EXTENSION IF NOT EXISTS btree_gin;
+
 -- 1. CRITICAL PERFORMANCE INDICES (Tenant-First)
 -- These indices ensure that RLS filters (which always check madrasah_id) are lightning fast.
 
@@ -7,6 +11,7 @@ CREATE INDEX IF NOT EXISTS idx_students_tenant_class_roll
 ON public.students (madrasah_id, class_id, roll);
 
 -- Students: Optimized for name search within a madrasah
+-- Requires btree_gin for UUID support in GIN and pg_trgm for text search
 CREATE INDEX IF NOT EXISTS idx_students_tenant_name_search 
 ON public.students USING gin (madrasah_id, student_name gin_trgm_ops);
 

@@ -138,7 +138,7 @@ const Home: React.FC<HomeProps> = ({ onStudentClick, lang, dataVersion, triggerR
                 </button>
                 <button onClick={onNavigateToAccounting} className="flex flex-col items-center gap-2 p-3 bg-white rounded-3xl border border-slate-100 shadow-sm active:scale-95 transition-all">
                   <div className="w-10 h-10 bg-emerald-50 text-emerald-500 rounded-xl flex items-center justify-center"><Banknote size={20} /></div>
-                  <span className="text-[8px] font-black text-slate-500 uppercase">হিসাব</span>
+                  <span className="text-[8px] font-black text-slate-500 uppercase">ফি কালেকশন</span>
                 </button>
                 <button onClick={onNavigateToWallet} className="flex flex-col items-center gap-2 p-3 bg-white rounded-3xl border border-slate-100 shadow-sm active:scale-95 transition-all">
                   <div className="w-10 h-10 bg-amber-50 text-amber-500 rounded-xl flex items-center justify-center"><Wallet size={20} /></div>

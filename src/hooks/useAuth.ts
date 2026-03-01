@@ -1,15 +1,16 @@
 
+import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { offlineService } from '../services/offline.service';
 import { Profile, Madrasah } from '../types';
 
 export const useAuth = () => {
-  const [session, setSession] = useState<any>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [madrasah, setMadrasah] = useState<Madrasah | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [authError, setAuthError] = useState<string | null>(null);
+  const [session, setSession] = React.useState<any>(null);
+  const [profile, setProfile] = React.useState<Profile | null>(null);
+  const [madrasah, setMadrasah] = React.useState<Madrasah | null>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [authError, setAuthError] = React.useState<string | null>(null);
 
   const fetchUserProfile = async (userId: string) => {
     try {
@@ -54,35 +55,50 @@ export const useAuth = () => {
     window.location.reload();
   };
 
-  useEffect(() => {
+  React.useEffect(() => {
     const initializeAuth = async () => {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      
-      if (currentSession) {
-        setSession(currentSession);
-        await fetchUserProfile(currentSession.user.id);
-      } else {
-        const teacherSession = localStorage.getItem('teacher_session');
-        if (teacherSession) {
-          const teacherData = JSON.parse(teacherSession);
-          // Teachers usually have their madrasah data embedded or cached
-          const mData = Array.isArray(teacherData.madrasahs) 
-            ? teacherData.madrasahs[0] 
-            : teacherData.madrasahs;
-
-          setMadrasah(mData);
-          setProfile({
-            id: teacherData.id,
-            madrasah_id: teacherData.madrasah_id,
-            full_name: teacherData.name,
-            role: 'teacher',
-            is_active: true,
-            created_at: teacherData.created_at
-          });
-          setSession({ user: { id: teacherData.id } });
+      try {
+        const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          // If there's a session error (like invalid refresh token), sign out to clear local storage
+          console.warn("Session initialization error:", sessionError.message);
+          if (sessionError.message.includes('Refresh Token Not Found') || sessionError.message.includes('invalid_grant')) {
+            await supabase.auth.signOut();
+            localStorage.removeItem('teacher_session');
+          }
+          setLoading(false);
+          return;
         }
+
+        if (currentSession) {
+          setSession(currentSession);
+          await fetchUserProfile(currentSession.user.id);
+        } else {
+          const teacherSession = localStorage.getItem('teacher_session');
+          if (teacherSession) {
+            const teacherData = JSON.parse(teacherSession);
+            const mData = Array.isArray(teacherData.madrasahs) 
+              ? teacherData.madrasahs[0] 
+              : teacherData.madrasahs;
+
+            setMadrasah(mData);
+            setProfile({
+              id: teacherData.id,
+              madrasah_id: teacherData.madrasah_id,
+              full_name: teacherData.name,
+              role: 'teacher',
+              is_active: true,
+              created_at: teacherData.created_at
+            });
+            setSession({ user: { id: teacherData.id } });
+          }
+        }
+      } catch (err) {
+        console.error("Auth initialization failed:", err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     initializeAuth();
