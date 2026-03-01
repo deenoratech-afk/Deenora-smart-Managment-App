@@ -37,10 +37,12 @@ const Fees: React.FC<FeesProps> = ({ lang, madrasah, onBack, role }) => {
   const [students, setStudents] = useState<Student[]>([]);
   
   // Selection states
+  const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [studentFees, setStudentFees] = useState<Fee[]>([]);
   const [selectedFeeIds, setSelectedFeeIds] = useState<Set<string>>(new Set());
+  const [classStudents, setClassStudents] = useState<(Student & { total_due?: number })[]>([]);
 
   // Form states
   const [showAddCategory, setShowAddCategory] = useState(false);
@@ -66,6 +68,48 @@ const Fees: React.FC<FeesProps> = ({ lang, madrasah, onBack, role }) => {
       fetchStructures();
     }
   }, [madrasah?.id]);
+
+  useEffect(() => {
+    if (selectedClassId) {
+      fetchClassStudents(selectedClassId);
+    }
+  }, [selectedClassId]);
+
+  const fetchClassStudents = async (classId: string) => {
+    setLoading(true);
+    try {
+      // Fetch students
+      const { data: studentsData, error: studentsError } = await supabase
+        .from('students')
+        .select('*, classes(class_name)')
+        .eq('class_id', classId)
+        .order('roll', { ascending: true });
+
+      if (studentsError) throw studentsError;
+
+      // Fetch all unpaid fees for these students to calculate due
+      const { data: feesData, error: feesError } = await supabase
+        .from('fees')
+        .select('student_id, due_amount')
+        .eq('class_id', classId)
+        .neq('status', 'paid');
+
+      if (feesError) throw feesError;
+
+      const studentsWithDue = studentsData.map(student => {
+        const studentDue = feesData
+          .filter(f => f.student_id === student.id)
+          .reduce((sum, f) => sum + (f.due_amount || 0), 0);
+        return { ...student, total_due: studentDue };
+      });
+
+      setClassStudents(studentsWithDue);
+    } catch (e) {
+      console.error("Error fetching class students:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchCategories = async () => {
     const { data } = await supabase.from('fee_categories').select('*').eq('madrasah_id', madrasah?.id).order('name');
@@ -97,8 +141,10 @@ const Fees: React.FC<FeesProps> = ({ lang, madrasah, onBack, role }) => {
   };
 
   useEffect(() => {
-    const timer = setTimeout(() => searchStudents(searchQuery), 300);
-    return () => clearTimeout(timer);
+    if (searchQuery) {
+      const timer = setTimeout(() => searchStudents(searchQuery), 300);
+      return () => clearTimeout(timer);
+    }
   }, [searchQuery]);
 
   const fetchStudentFees = async (studentId: string) => {
@@ -155,6 +201,7 @@ const Fees: React.FC<FeesProps> = ({ lang, madrasah, onBack, role }) => {
       }
       
       alert(t('success', lang));
+      if (selectedClassId) fetchClassStudents(selectedClassId);
       setSelectedStudent(null);
       setPaymentAmount('');
       setSearchQuery('');
@@ -254,7 +301,13 @@ const Fees: React.FC<FeesProps> = ({ lang, madrasah, onBack, role }) => {
         {(['collect', 'history', 'setup'] as FeeTab[]).map((tab) => (
           <button
             key={tab}
-            onClick={() => setActiveTab(tab)}
+            onClick={() => {
+              setActiveTab(tab);
+              if (tab !== 'collect') {
+                setSelectedClassId(null);
+                setSelectedStudent(null);
+              }
+            }}
             className={`flex-1 py-3.5 rounded-[1.5rem] text-[11px] font-black uppercase tracking-widest transition-all ${
               activeTab === tab 
                 ? 'bg-white text-blue-600 shadow-md' 
@@ -268,28 +321,59 @@ const Fees: React.FC<FeesProps> = ({ lang, madrasah, onBack, role }) => {
 
       {activeTab === 'collect' && (
         <div className="space-y-6 px-4">
-          {!selectedStudent ? (
-            <div className="space-y-6">
-              <div className="relative group">
-                <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-blue-500 group-focus-within:scale-110 transition-transform" size={22} />
-                <input 
-                  type="text" 
-                  placeholder={t('search_student', lang)}
-                  className="w-full pl-16 pr-6 py-6 bg-white rounded-[2.5rem] outline-none text-slate-800 font-black text-lg shadow-xl border-2 border-transparent focus:border-blue-100 transition-all placeholder:text-slate-300"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
+          {!selectedClassId ? (
+            <div className="space-y-6 animate-in fade-in slide-in-from-top-4">
+              <div className="px-2">
+                <h3 className="text-lg font-black text-slate-800 font-noto">Select Class</h3>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Choose a class to view students</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                {classes.map(cls => (
+                  <button
+                    key={cls.id}
+                    onClick={() => setSelectedClassId(cls.id)}
+                    className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-lg flex flex-col items-center justify-center gap-3 active:scale-95 transition-all group"
+                  >
+                    <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all shadow-inner">
+                      <LayoutGrid size={32} />
+                    </div>
+                    <span className="font-black text-slate-800 font-noto text-center">{cls.class_name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : !selectedStudent ? (
+            <div className="space-y-6 animate-in slide-in-from-right-4">
+              <div className="flex items-center justify-between px-2">
+                <div className="flex items-center gap-3">
+                  <button onClick={() => setSelectedClassId(null)} className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center text-slate-500">
+                    <ArrowLeft size={16} />
+                  </button>
+                  <div>
+                    <h3 className="text-lg font-black text-slate-800 font-noto">
+                      {classes.find(c => c.id === selectedClassId)?.class_name} Students
+                    </h3>
+                  </div>
+                </div>
+                <div className="relative group w-40">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                  <input 
+                    type="text" 
+                    placeholder="Search..."
+                    className="w-full pl-9 pr-3 py-2 bg-slate-100 rounded-xl outline-none text-xs font-bold"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
               </div>
               
               <div className="grid grid-cols-1 gap-3">
-                {students.map(std => (
-                  <button 
+                {loading ? (
+                  <div className="flex justify-center py-10"><Loader2 className="animate-spin text-blue-600" /></div>
+                ) : classStudents.filter(s => s.student_name.toLowerCase().includes(searchQuery.toLowerCase())).map(std => (
+                  <div 
                     key={std.id}
-                    onClick={() => {
-                      setSelectedStudent(std);
-                      fetchStudentFees(std.id);
-                    }}
-                    className="w-full bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-lg flex items-center justify-between group active:scale-[0.98] transition-all"
+                    className="w-full bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-lg flex items-center justify-between group transition-all"
                   >
                     <div className="flex items-center gap-5">
                       <div className="w-14 h-14 bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-600 rounded-3xl flex items-center justify-center shadow-inner border border-white">
@@ -299,21 +383,25 @@ const Fees: React.FC<FeesProps> = ({ lang, madrasah, onBack, role }) => {
                         <h4 className="font-black text-slate-800 font-noto text-lg leading-tight">{std.student_name}</h4>
                         <div className="flex items-center gap-2 mt-1">
                           <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[9px] font-black rounded-full uppercase">Roll: {std.roll}</span>
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{std.classes?.class_name}</span>
+                          {std.total_due && std.total_due > 0 ? (
+                            <span className="px-2 py-0.5 bg-red-100 text-red-600 text-[9px] font-black rounded-full uppercase">Due: ৳{std.total_due}</span>
+                          ) : (
+                            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-600 text-[9px] font-black rounded-full uppercase">Paid</span>
+                          )}
                         </div>
                       </div>
                     </div>
-                    <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-blue-50 group-hover:text-blue-500 transition-colors">
-                      <ChevronRight size={20} />
-                    </div>
-                  </button>
-                ))}
-                {searchQuery && students.length === 0 && (
-                  <div className="text-center py-10 opacity-40">
-                    <Search size={48} className="mx-auto mb-4" />
-                    <p className="font-black uppercase tracking-widest text-xs">No students found</p>
+                    <button 
+                      onClick={() => {
+                        setSelectedStudent(std);
+                        fetchStudentFees(std.id);
+                      }}
+                      className="px-5 py-3 bg-blue-600 text-white text-[10px] font-black rounded-2xl uppercase shadow-lg active:scale-90 transition-all"
+                    >
+                      Collect Fee
+                    </button>
                   </div>
-                )}
+                ))}
               </div>
             </div>
           ) : (
@@ -344,7 +432,7 @@ const Fees: React.FC<FeesProps> = ({ lang, madrasah, onBack, role }) => {
               {/* Fee List */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between px-2">
-                  <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Pending Fees</h4>
+                  <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Select Fee to Collect</h4>
                   <button 
                     onClick={() => setShowQuickAddFee(true)}
                     className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-colors"
